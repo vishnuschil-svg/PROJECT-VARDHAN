@@ -1,0 +1,65 @@
+.notif-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.notif-section {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.notif-section h2 {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.notif-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.toggle-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+}
+
+.toggle-item label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.notif-types {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.notif-type-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+}
+
+.notif-type-item input {
+  cursor: pointer;
+}
+
+.notif-type-item label {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-primary);
+  margin: 0;
+}

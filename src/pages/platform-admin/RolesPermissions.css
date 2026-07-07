@@ -1,0 +1,75 @@
+.roles-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.role-card {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  background: var(--bg-secondary);
+}
+
+.role-header {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.role-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.role-info h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.role-info p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.role-permissions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.permission-matrix {
+  overflow-x: auto;
+}
+
+.matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.matrix-table th,
+.matrix-table td {
+  padding: 12px;
+  text-align: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.matrix-table th {
+  background: var(--bg-tertiary);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.matrix-table tbody tr:hover {
+  background: var(--bg-tertiary);
+}
+
+.feature-name {
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
+}

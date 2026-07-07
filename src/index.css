@@ -1,0 +1,166 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Auth Page Specific */
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #0f172a, #2563eb);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  padding: 32px;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+  text-align: center;
+}
+
+.auth-card h1 {
+  margin: 0;
+  color: #0f172a;
+  letter-spacing: 1px;
+}
+
+.auth-card p {
+  color: #64748b;
+  margin-bottom: 20px;
+}
+
+.auth-card input {
+  width: 100%;
+  padding: 13px;
+  margin-bottom: 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  box-sizing: border-box;
+  font-size: 15px;
+}
+
+.auth-card button {
+  width: 100%;
+  padding: 13px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.auth-links {
+  margin-top: 18px;
+  font-size: 14px;
+}
+
+.auth-links a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.dashboard-page {
+  padding: 40px;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  background: #f4f6fb;
+}
+
+.sidebar {
+  width: 250px;
+  background: #0f172a;
+  color: white;
+  padding: 24px;
+}
+
+.sidebar h2 {
+  margin-top: 0;
+  margin-bottom: 30px;
+}
+
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sidebar a {
+  color: #cbd5e1;
+  text-decoration: none;
+  padding: 12px;
+  border-radius: 10px;
+}
+
+.sidebar a.active,
+.sidebar a:hover {
+  background: #2563eb;
+  color: white;
+}
+
+.main-area {
+  flex: 1;
+}
+
+.topbar {
+  height: 70px;
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+}
+
+.content-area {
+  padding: 28px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.stat-card {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+.stat-card p {
+  color: #64748b;
+  margin: 0;
+}
+
+.stat-card h2 {
+  margin: 12px 0;
+  font-size: 32px;
+}
+
+.stat-card span {
+  color: #94a3b8;
+}

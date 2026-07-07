@@ -1,0 +1,130 @@
+.chit-navigation {
+  position: fixed;
+  left: 0;
+  top: 70px;
+  width: 240px;
+  height: calc(100vh - 70px);
+  background: var(--bg-primary);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  z-index: 999;
+  transition: width 0.3s ease;
+  overflow-y: auto;
+}
+
+.chit-navigation[data-open="false"] {
+  width: 60px;
+}
+
+.chit-nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.chit-nav-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.chit-nav-toggle {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.chit-nav-toggle:hover {
+  background: var(--bg-secondary);
+}
+
+.chit-menu {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  overflow-y: auto;
+}
+
+.chit-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.chit-menu-item:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.chit-menu-item.active {
+  background: var(--accent-color);
+  color: white;
+  font-weight: 600;
+}
+
+.chit-menu-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.chit-menu-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chit-navigation[data-open="false"] .chit-menu-label {
+  display: none;
+}
+
+.chit-nav-footer {
+  padding: 12px;
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.chit-nav-footer p {
+  margin: 0;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .chit-navigation {
+    position: fixed;
+    left: -240px;
+    top: 70px;
+    width: 240px;
+    height: calc(100vh - 70px);
+    background: var(--bg-primary);
+    border-right: 1px solid var(--border-color);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+    transition: left 0.3s ease;
+    z-index: 1000;
+  }
+
+  .chit-navigation[data-open="true"] {
+    left: 0;
+  }
+}

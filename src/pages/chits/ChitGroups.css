@@ -1,0 +1,52 @@
+.group-details-modal {
+  display: grid;
+  gap: 16px;
+}
+
+.detail-row {
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-row label {
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.detail-row span {
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.detail-row input,
+.detail-row select {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border-radius: 10px;
+  padding: 11px 12px;
+  font-size: 14px;
+  outline: none;
+}
+
+.detail-row input:focus,
+.detail-row select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+
+@media (max-width: 640px) {
+  .detail-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}

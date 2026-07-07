@@ -1,0 +1,214 @@
+
+.table-container {
+  width: 100%;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.admin-table thead {
+  background-color: var(--bg-tertiary);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.admin-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.table-header-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sort-icon {
+  opacity: 0.5;
+  font-size: 11px;
+}
+
+.admin-table tbody tr {
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.2s ease;
+}
+
+.admin-table tbody tr:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.admin-table tbody tr.clickable {
+  cursor: pointer;
+}
+
+.admin-table td {
+  padding: 12px 16px;
+  color: var(--text-secondary);
+}
+
+.table-checkbox {
+  width: 40px;
+  text-align: center;
+}
+
+.table-checkbox input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.table-actions-header {
+  width: 120px;
+  text-align: center;
+}
+
+.table-actions {
+  text-align: center;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.action-btn.action-default {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.action-btn.action-default:hover {
+  background-color: var(--border-color);
+}
+
+.action-btn.action-primary {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.action-btn.action-primary:hover {
+  background-color: var(--accent-hover);
+}
+
+.action-btn.action-success {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
+}
+
+.action-btn.action-success:hover {
+  background-color: rgba(16, 185, 129, 0.2);
+}
+
+.action-btn.action-warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--warning-color);
+}
+
+.action-btn.action-warning:hover {
+  background-color: rgba(245, 158, 11, 0.2);
+}
+
+.action-btn.action-danger {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--error-color);
+}
+
+.action-btn.action-danger:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
+.table-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+}
+
+.pagination-info {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-controls button {
+  padding: 6px 12px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-controls button:hover:not(:disabled) {
+  background-color: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+}
+
+.pagination-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-current {
+  padding: 6px 12px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.loader {
+  display: inline-block;
+  color: var(--text-tertiary);
+}
+
+@media (max-width: 768px) {
+  .admin-table {
+    font-size: 12px;
+  }
+
+  .admin-table th,
+  .admin-table td {
+    padding: 8px 12px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .table-pagination {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+}
+
