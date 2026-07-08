@@ -1,81 +1,88 @@
-import { useState } from "react";
 import { NavLink } from "react-router-dom";
+import { getAccessibleModules, isPlatformOwner, PLATFORM_NAME } from "../../config/erpModules";
+import { getProductsWithSubscriptionState } from "../../config/productLicensing";
+import { useAuth } from "../../hooks/useAuth";
 
-const MENU_STRUCTURE = [
-  {
-    id: "dashboard",
-    label: "Dashboard",
-    icon: "📊",
-    path: "/dashboard",
-    type: "link"
-  },
-  {
-    id: "products",
-    label: "ERP PRODUCTS",
-    type: "section",
-    items: [
-      { label: "MITRA NIDHI CHITI PRO", icon: "🏦", path: "/chits" },
-      { label: "School ERP", icon: "🎓", path: "/products/school" },
-      { label: "College ERP", icon: "🎒", path: "/products/college" },
-      { label: "Finance ERP", icon: "💰", path: "/products/finance" },
-      { label: "Hospital ERP", icon: "🏥", path: "/products/hospital" },
-      { label: "Apartment ERP", icon: "🏢", path: "/products/apartment" },
-      { label: "Inventory ERP", icon: "📦", path: "/products/inventory" },
-      { label: "HR & Payroll", icon: "👥", path: "/products/hr" },
-      { label: "CRM", icon: "👔", path: "/products/crm" }
-    ]
-  },
-  {
-    id: "platform",
-    label: "PLATFORM",
-    type: "section",
-    items: [
-      { label: "Platform Admin", icon: "⚙️", path: "/admin" },
-      { label: "Customers", icon: "👤", path: "/admin/customers" },
-      { label: "Module Management", icon: "🔧", path: "/admin/modules" },
-      { label: "License Management", icon: "📜", path: "/admin/licenses" },
-      { label: "Subscription", icon: "💳", path: "/admin/subscription" },
-      { label: "Notifications", icon: "🔔", path: "/admin/notifications" },
-      { label: "Support", icon: "🆘", path: "/admin/support" },
-      { label: "Audit Logs", icon: "📋", path: "/admin/audit-logs" }
-    ]
-  },
-  {
-    id: "system",
-    label: "SYSTEM",
-    type: "section",
-    items: [
-      { label: "Settings", icon: "⚡", path: "/admin/settings" },
-      { label: "Profile", icon: "👤", path: "/profile" },
-      { label: "Logout", icon: "🚪", path: "/logout" }
-    ]
-  }
+const PLATFORM_MENU = [
+  { label: "Platform Admin", icon: "AD", path: "/admin" },
+  { label: "Customers", icon: "CU", path: "/admin/customers" },
+  { label: "Branches", icon: "BR", path: "/admin/branches" },
+  { label: "Departments", icon: "DP", path: "/admin/departments" },
+  { label: "Designations", icon: "DS", path: "/admin/designations" },
+  { label: "Employees", icon: "EM", path: "/admin/employees" },
+  { label: "Product Catalog", icon: "PC", path: "/admin/products" },
+  { label: "Module Management", icon: "MD", path: "/admin/modules" },
+  { label: "License Management", icon: "LC", path: "/admin/licenses" },
+  { label: "Subscription", icon: "SB", path: "/admin/subscription" },
+  { label: "Notifications", icon: "NT", path: "/admin/notifications" },
+  { label: "Support", icon: "SP", path: "/admin/support" },
+  { label: "Audit Logs", icon: "AL", path: "/admin/audit-logs" },
+];
+
+const SYSTEM_MENU = [
+  { label: "Settings", icon: "ST", path: "/admin/settings" },
+  { label: "Profile", icon: "PR", path: "/profile" },
+  { label: "Logout", icon: "LO", path: "/logout" },
 ];
 
 function Sidebar({ isOpen, onClose }) {
-  const [expandedSections, setExpandedSections] = useState({});
+  const { profile, role, modules, activeWorkspace } = useAuth();
+  const canViewPlatform = isPlatformOwner(profile, role);
+  const productMenu = canViewPlatform
+    ? getProductsWithSubscriptionState(activeWorkspace)
+    : getAccessibleModules(modules, profile, role);
 
-  const toggleSection = (id) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [id]: !prev[id]
-    }));
-  };
+  const menuStructure = [
+    {
+      id: "dashboard",
+      label: "Dashboard",
+      icon: "DB",
+      path: "/dashboard",
+      type: "link",
+    },
+    {
+      id: "products",
+      label: "ERP PRODUCTS",
+      type: "section",
+      items: [
+        { label: "Product Catalog", icon: "PC", path: "/products/catalog" },
+        ...productMenu
+          .filter((module) => canViewPlatform || module.subscribed !== false)
+          .map((module) => ({
+        label: module.name,
+        icon: module.shortName,
+        path: module.path,
+          })),
+      ],
+    },
+    canViewPlatform && {
+      id: "platform",
+      label: "PLATFORM",
+      type: "section",
+      items: PLATFORM_MENU,
+    },
+    {
+      id: "system",
+      label: "SYSTEM",
+      type: "section",
+      items: canViewPlatform ? SYSTEM_MENU : SYSTEM_MENU.filter((item) => item.path !== "/admin/settings"),
+    },
+  ].filter(Boolean);
 
   const handleLinkClick = () => {
     if (window.innerWidth <= 768) {
-      onClose();
+      onClose?.();
     }
   };
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isOpen ? "open" : ""}`}>
       <div className="sidebar-header">
-        <h2>VARDHAN ERP</h2>
+        <h2>{PLATFORM_NAME}</h2>
       </div>
 
       <div className="sidebar-content">
-        {MENU_STRUCTURE.map((item) => {
+        {menuStructure.map((item) => {
           if (item.type === "link") {
             return (
               <div key={item.id} className="sidebar-section">
@@ -94,7 +101,6 @@ function Sidebar({ isOpen, onClose }) {
           }
 
           if (item.type === "section") {
-            const isExpanded = expandedSections[item.id];
             return (
               <div key={item.id} className="sidebar-section">
                 <h3 className="sidebar-section-title">{item.label}</h3>

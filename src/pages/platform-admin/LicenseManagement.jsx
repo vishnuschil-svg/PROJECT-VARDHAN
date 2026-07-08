@@ -1,32 +1,49 @@
 import AdminLayout from "../../components/platform-admin/AdminLayout";
 import Table from "../../components/common/Table";
 import Badge from "../../components/common/Badge";
+import { getLicenseRows } from "../../config/productLicensing";
 
 function LicenseManagement() {
-  const licenses = [
-    { id: 1, company: "Tech Solutions", type: "Professional", count: "50", used: "48", expiry: "2024-12-31", status: "active" },
-    { id: 2, company: "Finance Innovations", type: "Enterprise", count: "100", used: "95", expiry: "2024-11-30", status: "warning" }
-  ];
+  const licenses = getLicenseRows();
 
   const columns = [
-    { key: "company", label: "Company", width: "150px" },
-    { key: "type", label: "Type", width: "120px" },
-    { key: "count", label: "Total", width: "80px" },
+    { key: "company", label: "Customer", width: "170px" },
+    { key: "product", label: "Product", width: "180px" },
+    {
+      key: "productCode",
+      label: "Code",
+      width: "100px",
+      render: (val) => <Badge label={val} variant="primary" size="small" />,
+    },
+    { key: "licenseKey", label: "License Key", width: "160px" },
+    { key: "plan", label: "Plan", width: "110px" },
+    { key: "seats", label: "Seats", width: "80px" },
     { key: "used", label: "Used", width: "80px" },
     { key: "expiry", label: "Expires", width: "120px" },
-    { key: "status", label: "Status", width: "100px", render: (val) => <Badge label={val} variant={val === "active" ? "success" : "warning"} size="small" /> }
+    {
+      key: "status",
+      label: "Status",
+      width: "100px",
+      render: (val) => (
+        <Badge
+          label={val}
+          variant={val === "active" ? "success" : val === "trial" ? "warning" : "error"}
+          size="small"
+        />
+      ),
+    },
   ];
 
   const actions = [
-    { icon: "➕", label: "Add", onClick: () => {}, variant: "success" },
-    { icon: "🔄", label: "Renew", onClick: () => {}, variant: "primary" },
-    { icon: "✏️", label: "Edit", onClick: () => {}, variant: "default" }
+    { icon: "Add", label: "Add", onClick: () => {}, variant: "success" },
+    { icon: "Renew", label: "Renew", onClick: () => {}, variant: "primary" },
+    { icon: "Edit", label: "Edit", onClick: () => {}, variant: "default" },
   ];
 
   return (
-    <AdminLayout 
-      title="License Management" 
-      subtitle="Manage software licenses for customers"
+    <AdminLayout
+      title="License Management"
+      subtitle="View all product licenses across customer tenants"
     >
       <div style={{ background: "var(--bg-primary)", borderRadius: 12, overflow: "hidden" }}>
         <Table columns={columns} data={licenses} actions={actions} />

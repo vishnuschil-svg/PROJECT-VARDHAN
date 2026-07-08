@@ -1,6 +1,6 @@
-import { createContext, useEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
-import { DEV_AUTH_BYPASS, DEV_MOCK_DATA } from "../config/devAccess";
+import { createContext, useCallback, useEffect, useState } from "react";
+import { DEV_AUTH_BYPASS } from "../config/devAccess";
+import { PermissionService, SessionService, WorkspaceService } from "../services/auth";
 
 export const AuthContext = createContext(null);
 
@@ -11,57 +11,89 @@ export function AuthProvider({ children }) {
   const [company, setCompany] = useState(null);
   const [role, setRole] = useState(null);
   const [modules, setModules] = useState(null);
+  const [workspaceOptions, setWorkspaceOptions] = useState([]);
+  const [activeWorkspace, setActiveWorkspace] = useState(null);
+  const [permissions, setPermissions] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  async function loadUser() {
-    // Development bypass mode
-    if (DEV_AUTH_BYPASS) {
-      console.log("[DEV MODE] Auth bypass enabled - using mock data");
-      setUser(DEV_MOCK_DATA.user);
-      setProfile(DEV_MOCK_DATA.profile);
-      setCompany(DEV_MOCK_DATA.company);
-      setRole(DEV_MOCK_DATA.role);
-      setModules(DEV_MOCK_DATA.modules);
+  const clearAuthState = useCallback(() => {
+    setUser(null);
+    setProfile(null);
+    setCompany(null);
+    setRole(null);
+    setModules(null);
+    setWorkspaceOptions([]);
+    setActiveWorkspace(null);
+    setPermissions(null);
+  }, []);
+
+  const switchWorkspace = useCallback(
+    (workspaceId) => {
+      const nextSession = SessionService.switchWorkspace(
+        {
+          user,
+          profile,
+          company,
+          role,
+          modules,
+          workspaceOptions,
+          activeWorkspace,
+        },
+        workspaceId
+      );
+
+      if (nextSession.activeWorkspace) {
+        setActiveWorkspace(nextSession.activeWorkspace);
+        setPermissions(nextSession.permissions);
+      }
+    },
+    [activeWorkspace, company, modules, profile, role, user, workspaceOptions]
+  );
+
+  const applySession = useCallback((session) => {
+    if (!session?.user) {
+      clearAuthState();
       setLoading(false);
       return;
     }
 
-    const { data } = await supabase.auth.getUser();
+    setUser(session.user);
+    setProfile(session.profile);
+    setCompany(session.company);
+    setRole(session.role);
+    setModules(session.modules);
+    setWorkspaceOptions(session.workspaceOptions);
+    setActiveWorkspace(session.activeWorkspace);
+    setPermissions(session.permissions);
+    setLoading(false);
+  }, [clearAuthState]);
 
-    const currentUser = data.user;
+  const login = useCallback(async (credentials) => {
+    const session = await SessionService.login(credentials);
+    applySession(session);
+    return session;
+  }, [applySession]);
 
-    setUser(currentUser);
+  const logout = useCallback(async () => {
+    await SessionService.logout();
+    clearAuthState();
+  }, [clearAuthState]);
 
-    if (currentUser) {
-
-      const { data: profileData } = await supabase
-        .from("user_profiles")
-        .select("*")
-        .eq("id", currentUser.id)
-        .single();
-
-      setProfile(profileData);
-
+  const loadUser = useCallback(async () => {
+    if (DEV_AUTH_BYPASS) {
+      console.log("[DEV MODE] Auth bypass enabled - using mock data");
     }
 
-    setLoading(false);
+    const session = await SessionService.refreshSession();
+    applySession(session);
 
-  }
+  }, [applySession]);
 
   useEffect(() => {
 
     loadUser();
 
-    // Only set up listener if not in dev bypass mode
-    if (!DEV_AUTH_BYPASS) {
-      const { data: listener } = supabase.auth.onAuthStateChange(() => {
-        loadUser();
-      });
-
-      return () => listener.subscription.unsubscribe();
-    }
-
-  }, []);
+  }, [loadUser]);
 
   return (
 
@@ -72,8 +104,27 @@ export function AuthProvider({ children }) {
         company,
         role,
         modules,
+        permissions,
+        workspaceOptions,
+        activeWorkspace,
+        activeTenantContext: WorkspaceService.getActiveTenantContext(activeWorkspace),
+        activeTenantId: activeWorkspace?.tenant_id || activeWorkspace?.tenantId || null,
+        activeDataScope: activeWorkspace?.data_scope || activeWorkspace?.dataScope || null,
         loading,
+        login,
+        logout,
+        clearAuthState,
         loadUser,
+        switchWorkspace,
+        refreshSession: loadUser,
+        can: (action, moduleId) => PermissionService.can({
+          action,
+          moduleId,
+          permissions,
+          profile,
+          role,
+          modules,
+        }),
       }}
     >
       {children}

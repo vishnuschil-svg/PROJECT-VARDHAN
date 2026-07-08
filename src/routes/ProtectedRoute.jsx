@@ -1,21 +1,45 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { DEV_AUTH_BYPASS } from "../config/devAccess";
+import {
+  evaluateModuleRoute,
+  evaluatePermissionRoute,
+  evaluatePlatformRoute,
+  evaluateProtectedRoute,
+} from "./guards/routeGuards";
 
-function ProtectedRoute({ children }) {
-  const { user, profile, loading } = useAuth();
+function ProtectedRoute({ children, moduleId, platformOnly = false, permission }) {
+  const { user, profile, role, modules, permissions, loading } = useAuth();
+  const protectedResult = evaluateProtectedRoute({ user, profile, role, loading });
 
-  if (loading) return <div style={{ padding: 40 }}>Loading...</div>;
+  if (protectedResult.loading) return <div style={{ padding: 40 }}>Loading...</div>;
 
-  // Development bypass - allow access to protected pages
-  if (DEV_AUTH_BYPASS && user) {
-    return children;
+  if (protectedResult.redirectTo) {
+    return <Navigate to={protectedResult.redirectTo} replace />;
   }
 
-  if (!user) return <Navigate to="/login" replace />;
+  const platformResult = evaluatePlatformRoute({ platformOnly, profile, role });
 
-  if (profile?.status !== "approved") {
-    return <Navigate to="/login" replace />;
+  if (platformResult.redirectTo) {
+    return <Navigate to={platformResult.redirectTo} replace />;
+  }
+
+  const moduleResult = evaluateModuleRoute({ moduleId, modules, profile, role });
+
+  if (moduleResult.redirectTo) {
+    return <Navigate to={moduleResult.redirectTo} replace />;
+  }
+
+  const permissionResult = evaluatePermissionRoute({
+    action: permission,
+    moduleId,
+    permissions,
+    profile,
+    role,
+    modules,
+  });
+
+  if (permissionResult.redirectTo) {
+    return <Navigate to={permissionResult.redirectTo} replace />;
   }
 
   return children;

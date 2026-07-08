@@ -1,5 +1,7 @@
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import WelcomeSection from "../../components/dashboard/WelcomeSection";
+import MyBusinessWorkspace from "../../components/dashboard/MyBusinessWorkspace";
+import BusinessHealthDashboard from "../../components/dashboard/BusinessHealthDashboard";
 import QuickStats from "../../components/dashboard/QuickStats";
 import ModuleGrid from "../../components/dashboard/ModuleGrid";
 import RecentActivity from "../../components/dashboard/RecentActivity";
@@ -13,6 +15,8 @@ function Dashboard() {
     <DashboardLayout>
       <div className="dashboard-page">
         <WelcomeSection />
+        <MyBusinessWorkspace />
+        <BusinessHealthDashboard />
         <QuickStats />
 
         <div className="dashboard-grid">

@@ -6,7 +6,9 @@
 }
 
 .admin-main {
-  background: var(--bg-secondary);
+  background:
+    radial-gradient(circle at 92% 0%, rgba(37, 99, 235, 0.12), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(238, 243, 251, 0.88));
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -17,9 +19,12 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 24px;
-  padding: 24px;
-  background: var(--bg-primary);
-  border-bottom: 1px solid var(--border-color);
+  padding: 28px;
+  background:
+    radial-gradient(circle at 90% 0%, rgba(243, 201, 105, 0.2), transparent 28%),
+    linear-gradient(135deg, #07111f, #102044 58%, #1d4ed8);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.28);
+  box-shadow: var(--shadow-md);
 }
 
 .admin-header-left {
@@ -29,15 +34,15 @@
 .admin-title {
   margin: 0;
   font-size: 24px;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: -0.5px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0;
 }
 
 .admin-subtitle {
   margin: 4px 0 0;
   font-size: 13px;
-  color: var(--text-tertiary);
+  color: rgba(226, 232, 240, 0.82);
 }
 
 .admin-header-actions {

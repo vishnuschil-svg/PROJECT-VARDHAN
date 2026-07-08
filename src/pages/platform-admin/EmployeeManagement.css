@@ -1,0 +1,22 @@
+.employee-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.employee-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .employee-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .employee-modal-actions {
+    flex-direction: column-reverse;
+  }
+}

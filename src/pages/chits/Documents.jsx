@@ -1,3 +1,4 @@
+import { Download, Eye, FileText } from "lucide-react";
 import ChitLayout from "../../components/chit/ChitLayout";
 import "./Documents.css";
 
@@ -16,14 +17,14 @@ function Documents() {
       <div className="documents-list">
         {documents.map((doc) => (
           <div key={doc.id} className="document-item">
-            <div className="doc-icon">📄</div>
+            <div className="doc-icon"><FileText size={24} /></div>
             <div className="doc-info">
               <h3>{doc.name}</h3>
-              <p>{doc.size} • {new Date(doc.date).toLocaleDateString()}</p>
+              <p>{doc.size} / {new Date(doc.date).toLocaleDateString("en-IN")}</p>
             </div>
             <div className="doc-actions">
-              <button className="doc-btn">👁️ View</button>
-              <button className="doc-btn">⬇️ Download</button>
+              <button className="doc-btn" type="button"><Eye size={15} /> View</button>
+              <button className="doc-btn" type="button"><Download size={15} /> Download</button>
             </div>
           </div>
         ))}

@@ -1,4 +1,5 @@
 import { useAuth } from "../../hooks/useAuth";
+import { PLATFORM_NAME } from "../../config/erpModules";
 
 function WelcomeSection() {
   const { profile } = useAuth();
@@ -13,7 +14,7 @@ function WelcomeSection() {
       <div className="welcome-content">
         <h1 className="welcome-title">{greeting}, {profile?.full_name}! 👋</h1>
         <p className="welcome-subtitle">
-          Welcome back to your ERP Platform dashboard. Let's build something amazing today.
+          Welcome back to your {PLATFORM_NAME} dashboard. Let's build something amazing today.
         </p>
       </div>
     </div>

@@ -1,0 +1,73 @@
+.upgrade-subscription {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.upgrade-hero {
+  padding: 32px;
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 84% 8%, rgba(243, 201, 105, 0.28), transparent 32%),
+    linear-gradient(135deg, #07111f, #102044 56%, #1d4ed8);
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  border-radius: var(--vds-radius-2xl, 22px);
+  box-shadow: var(--vds-shadow-lg, 0 22px 54px rgba(7, 17, 31, 0.14));
+}
+
+.upgrade-hero h1 {
+  margin: 14px 0 8px;
+  font-size: clamp(26px, 4vw, 42px);
+  letter-spacing: 0;
+}
+
+.upgrade-hero p {
+  max-width: 760px;
+  margin: 0;
+  color: rgba(226, 232, 240, 0.86);
+  line-height: 1.6;
+}
+
+.upgrade-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.upgrade-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.upgrade-plan-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: var(--vds-radius-xl, 18px);
+  box-shadow: var(--vds-shadow-md, 0 14px 34px rgba(7, 17, 31, 0.1));
+}
+
+.upgrade-plan-card span {
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.upgrade-plan-card strong {
+  color: var(--text-primary);
+  font-size: 26px;
+}
+
+.upgrade-plan-card p {
+  min-height: 58px;
+  margin: 0;
+  color: var(--text-tertiary);
+  font-size: 13px;
+  line-height: 1.5;
+}

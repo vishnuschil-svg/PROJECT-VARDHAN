@@ -2,12 +2,12 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 0;
 }
 
 .form-label {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 800;
   color: var(--text-primary);
   display: flex;
   align-items: center;
@@ -22,13 +22,22 @@
 .form-select,
 .form-textarea {
   padding: 10px 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background-color: var(--bg-primary);
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  border-radius: var(--vds-radius-md, 10px);
+  background: rgba(255, 255, 255, 0.96);
   color: var(--text-primary);
   font-size: 13px;
   font-family: inherit;
   transition: all 0.2s ease;
+  min-height: var(--vds-control-height-md, 40px);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.02);
+}
+
+.form-input:hover:not(:disabled),
+.form-select:hover:not(:disabled),
+.form-textarea:hover:not(:disabled) {
+  border-color: rgba(37, 99, 235, 0.34);
+  background: #ffffff;
 }
 
 .form-input:focus,
@@ -36,7 +45,7 @@
 .form-textarea:focus {
   outline: none;
   border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px var(--accent-light);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
 }
 
 .form-input:disabled,
@@ -51,6 +60,7 @@
 .form-select.error,
 .form-textarea.error {
   border-color: var(--error-color);
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
 }
 
 .form-select {

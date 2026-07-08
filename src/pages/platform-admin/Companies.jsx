@@ -1,99 +1,132 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import AdminLayout from "../../components/platform-admin/AdminLayout";
 import Table from "../../components/common/Table";
-import Button from "../../components/common/Button";
 import Badge from "../../components/common/Badge";
 import Modal from "../../components/common/Modal";
 import FormField from "../../components/common/FormField";
+import {
+  ORGANIZATION_COMPANIES,
+  ORGANIZATION_STATUS_VARIANTS,
+  getVisibleOrganizationRecords,
+} from "../../config/organizationAccess";
+import { CUSTOMER_DATA_SCOPES } from "../../config/customerAccess";
+import { isPlatformOwner } from "../../config/erpModules";
+import { useAuth } from "../../hooks/useAuth";
+import "./OrganizationManagement.css";
 
 function Companies() {
-  const [companies, setCompanies] = useState([
-    {
-      id: 1,
-      name: "Tech Solutions Pvt Ltd",
-      owner: "Rajesh Kumar",
-      mobile: "+91 9876543210",
-      email: "info@techsolutions.com",
-      type: "IT Services",
-      modules: 5,
-      subscription: "Enterprise",
-      license: "Active",
-      status: "approved",
-      created: "2024-01-15"
-    },
-    {
-      id: 2,
-      name: "Finance Innovations Inc",
-      owner: "Priya Sharma",
-      mobile: "+91 8765432109",
-      email: "contact@financeinno.com",
-      type: "Finance",
-      modules: 3,
-      subscription: "Professional",
-      license: "Active",
-      status: "approved",
-      created: "2024-02-20"
-    }
-  ]);
+  const { profile, role, company } = useAuth();
+  const [selectedCompanyId, setSelectedCompanyId] = useState(null);
+  const visibleCompanies = useMemo(
+    () =>
+      getVisibleOrganizationRecords(
+        ORGANIZATION_COMPANIES,
+        profile,
+        role,
+        company,
+        isPlatformOwner
+      ),
+    [company, profile, role]
+  );
 
-  const [selectedCompany, setSelectedCompany] = useState(null);
-  const [showModal, setShowModal] = useState(false);
+  const selectedCompany = ORGANIZATION_COMPANIES.find(
+    (record) => record.id === selectedCompanyId
+  );
+
+  const summary = useMemo(
+    () => ({
+      total: visibleCompanies.length,
+      active: visibleCompanies.filter((record) => record.status === "active").length,
+      demo: visibleCompanies.filter(
+        (record) => record.dataScope === CUSTOMER_DATA_SCOPES.DEMO_SANDBOX
+      ).length,
+      tenantMode: isPlatformOwner(profile, role) ? "Platform Owner" : "Tenant Admin",
+    }),
+    [profile, role, visibleCompanies]
+  );
 
   const columns = [
-    { key: "name", label: "Company Name", width: "180px" },
-    { key: "owner", label: "Owner", width: "120px" },
-    { key: "email", label: "Email", width: "150px" },
-    { key: "type", label: "Type", width: "100px" },
-    { key: "modules", label: "Modules", width: "80px", render: (val) => <Badge label={`${val} Enabled`} variant="primary" size="small" /> },
-    { key: "subscription", label: "Subscription", width: "120px", render: (val) => <Badge label={val} variant="info" size="small" /> },
-    { key: "status", label: "Status", width: "100px", render: (val) => (
-      <Badge
-        label={val.charAt(0).toUpperCase() + val.slice(1)}
-        variant={val === "approved" ? "success" : val === "pending" ? "warning" : "error"}
-        size="small"
-      />
-    )},
-    { key: "created", label: "Created", width: "100px" }
+    { key: "companyName", label: "Company Name", width: "190px" },
+    { key: "companyCode", label: "Code", width: "90px" },
+    { key: "gstNumber", label: "GST Number", width: "150px" },
+    { key: "pan", label: "PAN", width: "120px" },
+    { key: "address", label: "Address", width: "180px" },
+    { key: "contact", label: "Contact Number", width: "140px" },
+    { key: "email", label: "Email", width: "180px" },
+    {
+      key: "logo",
+      label: "Logo",
+      width: "80px",
+      render: (value) => <span className="organization-logo">{value}</span>,
+    },
+    {
+      key: "status",
+      label: "Status",
+      width: "100px",
+      render: (value) => (
+        <Badge
+          label={value.charAt(0).toUpperCase() + value.slice(1)}
+          variant={ORGANIZATION_STATUS_VARIANTS[value] || "default"}
+          size="small"
+        />
+      ),
+    },
   ];
 
   const actions = [
-    { icon: "👁️", label: "View", onClick: (row) => { setSelectedCompany(row); setShowModal(true); }, variant: "default" },
-    { icon: "✏️", label: "Edit", onClick: () => {}, variant: "default" },
-    { icon: "✅", label: "Approve", onClick: () => {}, variant: "success" },
-    { icon: "❌", label: "Reject", onClick: () => {}, variant: "danger" },
-    { icon: "⏸️", label: "Suspend", onClick: () => {}, variant: "warning" },
-    { icon: "🔄", label: "Activate", onClick: () => {}, variant: "success" },
-    { icon: "🗑️", label: "Delete", onClick: () => {}, variant: "danger" }
+    {
+      icon: "View",
+      label: "View company",
+      onClick: (row) => setSelectedCompanyId(row.id),
+      variant: "default",
+    },
   ];
 
   return (
-    <AdminLayout 
-      title="Companies" 
-      subtitle="Manage all registered companies on the platform"
-      actions={<Button variant="primary" icon="➕">New Company</Button>}
+    <AdminLayout
+      title="Company Management"
+      subtitle="Manage organization companies with reusable tenant isolation"
     >
-      <div style={{ background: "var(--bg-primary)", borderRadius: 12, overflow: "hidden" }}>
-        <Table columns={columns} data={companies} actions={actions} />
+      <div className="organization-summary-grid">
+        <div className="organization-summary-card">
+          <span>Total Companies</span>
+          <strong>{summary.total}</strong>
+        </div>
+        <div className="organization-summary-card">
+          <span>Active Companies</span>
+          <strong>{summary.active}</strong>
+        </div>
+        <div className="organization-summary-card">
+          <span>Demo Companies</span>
+          <strong>{summary.demo}</strong>
+        </div>
+        <div className="organization-summary-card">
+          <span>Access Mode</span>
+          <strong>{summary.tenantMode}</strong>
+        </div>
+      </div>
+
+      <div className="organization-table-shell">
+        <Table columns={columns} data={visibleCompanies} actions={actions} />
       </div>
 
       <Modal
-        isOpen={showModal}
+        isOpen={Boolean(selectedCompany)}
         title="Company Details"
-        onClose={() => setShowModal(false)}
+        onClose={() => setSelectedCompanyId(null)}
         size="large"
       >
         {selectedCompany && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            <FormField label="Company Name" value={selectedCompany.name} disabled />
-            <FormField label="Owner Name" value={selectedCompany.owner} disabled />
-            <FormField label="Email" type="email" value={selectedCompany.email} disabled />
-            <FormField label="Mobile" value={selectedCompany.mobile} disabled />
-            <FormField label="Business Type" value={selectedCompany.type} disabled />
-            <FormField label="Subscription" value={selectedCompany.subscription} disabled />
-            <FormField label="License Status" value={selectedCompany.license} disabled />
+          <div className="organization-detail-grid">
+            <FormField label="Company Name" value={selectedCompany.companyName} disabled />
+            <FormField label="Company Code" value={selectedCompany.companyCode} disabled />
+            <FormField label="GST Number" value={selectedCompany.gstNumber || "Not provided"} disabled />
+            <FormField label="PAN" value={selectedCompany.pan || "Not provided"} disabled />
+            <FormField label="Address" value={selectedCompany.address} disabled />
+            <FormField label="Contact Number" value={selectedCompany.contact} disabled />
+            <FormField label="Email" value={selectedCompany.email} disabled />
+            <FormField label="Logo" value={selectedCompany.logo} disabled />
             <FormField label="Status" value={selectedCompany.status} disabled />
-            <FormField label="Created Date" value={selectedCompany.created} disabled />
-            <FormField label="Modules Enabled" value={`${selectedCompany.modules}`} disabled />
           </div>
         )}
       </Modal>

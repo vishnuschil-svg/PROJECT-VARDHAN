@@ -1,78 +1,104 @@
+import { useNavigate } from "react-router-dom";
 import ChitLayout from "../../components/chit/ChitLayout";
 import Button from "../../components/common/Button";
 import Badge from "../../components/common/Badge";
-import { mockChitGroups, mockChitDashboardStats } from "../../config/chitMockData";
+import { CHIT_PRODUCT_NAME } from "../../config/erpModules";
+import {
+  CHIT_STATUS_VARIANTS,
+  PHASE_ONE_CHIT_GROUPS,
+  calculateChitDashboardStats,
+  formatCurrency,
+  getTenantChitGroups,
+} from "../../config/chitPhaseOneData";
+import { useAuth } from "../../hooks/useAuth";
 import "./ChitDashboard.css";
 
 function ChitDashboard() {
-  const stats = mockChitDashboardStats;
+  const navigate = useNavigate();
+  const { activeTenantContext } = useAuth();
+  const tenantGroups = getTenantChitGroups(PHASE_ONE_CHIT_GROUPS, activeTenantContext);
+  const stats = calculateChitDashboardStats(tenantGroups);
 
   const statCards = [
-    { label: "Active Chit Groups", value: stats.active_groups, icon: "👥", color: "primary" },
-    { label: "Total Members", value: stats.total_members, icon: "👤", color: "info" },
-    { label: "Total Value Managed", value: `₹${(stats.total_value_managed / 100000).toFixed(1)}L`, icon: "💰", color: "success" },
-    { label: "Monthly Collections", value: `₹${(stats.monthly_collections / 1000).toFixed(0)}K`, icon: "📊", color: "warning" },
-    { label: "Pending Collections", value: `₹${(stats.pending_collections / 1000).toFixed(0)}K`, icon: "⏳", color: "error" },
-    { label: "Payouts Processed", value: `₹${(stats.total_payouts_processed / 1000).toFixed(0)}K`, icon: "💳", color: "primary" },
+    { label: "Total Active Chits", value: stats.total_active_chits, tone: "primary" },
+    { label: "Total Members", value: stats.total_members, tone: "info" },
+    { label: "Today's Collections", value: formatCurrency(stats.todays_collections), tone: "success" },
+    { label: "Pending Collections", value: formatCurrency(stats.pending_collections), tone: "warning" },
+    { label: "Upcoming Auctions", value: stats.upcoming_auctions, tone: "primary" },
+    { label: "Monthly Business", value: formatCurrency(stats.monthly_business), tone: "success" },
+    { label: "Outstanding Amount", value: formatCurrency(stats.outstanding_amount), tone: "error" },
   ];
 
   return (
     <ChitLayout
       title="Chit Dashboard"
-      subtitle="Overview of all chit groups and activities"
-      actions={<Button variant="primary" icon="➕">New Chit Group</Button>}
+      subtitle={`${CHIT_PRODUCT_NAME} - ${activeTenantContext?.workspace_label || "Tenant"} workspace`}
+      actions={
+        <Button variant="primary" onClick={() => navigate("/chits/groups")}>
+          Create Group
+        </Button>
+      }
     >
       <div className="chit-dashboard">
-        {/* Stats Grid */}
+        <div className="chit-tenant-banner">
+          <div>
+            <span>{activeTenantContext?.workspace_label || "Workspace"}</span>
+            <strong>{activeTenantContext?.tenant_id || "No active tenant"}</strong>
+          </div>
+          <Badge
+            label={activeTenantContext?.data_scope || "no_scope"}
+            variant={activeTenantContext?.data_scope === "demo_sandbox" ? "warning" : "success"}
+            size="small"
+          />
+        </div>
+
         <div className="chit-stats-grid">
-          {statCards.map((stat, idx) => (
-            <div key={idx} className="chit-stat-card">
-              <div className="stat-icon">{stat.icon}</div>
-              <div className="stat-content">
-                <p className="stat-label">{stat.label}</p>
-                <h3 className="stat-value">{stat.value}</h3>
-              </div>
+          {statCards.map((stat) => (
+            <div key={stat.label} className={`chit-stat-card tone-${stat.tone}`}>
+              <p className="stat-label">{stat.label}</p>
+              <h3 className="stat-value">{stat.value}</h3>
             </div>
           ))}
         </div>
 
-        {/* Quick Actions */}
-        <div className="chit-quick-section">
-          <h2>⚡ Quick Actions</h2>
-          <div className="chit-quick-actions">
-            <Button variant="primary" icon="➕" fullWidth>Create New Chit Group</Button>
-            <Button variant="default" icon="👤" fullWidth>Add New Member</Button>
-            <Button variant="default" icon="💰" fullWidth>Record Collection</Button>
-            <Button variant="default" icon="🎯" fullWidth>Create Auction</Button>
-            <Button variant="default" icon="📄" fullWidth>Generate Receipt</Button>
-            <Button variant="default" icon="📋" fullWidth>View Reports</Button>
+        <section className="chit-quick-section">
+          <div className="section-heading-row">
+            <div>
+              <h2>Active Chit Groups</h2>
+              <p>Phase 1 focuses on dashboard and chit group lifecycle.</p>
+            </div>
           </div>
-        </div>
 
-        {/* Recent Chit Groups */}
-        <div className="chit-quick-section">
-          <h2>📋 Active Chit Groups</h2>
           <div className="chit-groups-list">
-            {mockChitGroups.filter(g => g.status === "active").map((group) => (
-              <div key={group.id} className="chit-group-item">
-                <div className="group-info">
-                  <h3>{group.group_name}</h3>
-                  <p>{group.description}</p>
-                  <div className="group-details">
-                    <span className="detail">🏷️ ₹{group.chit_value.toLocaleString()}</span>
-                    <span className="detail">👥 {group.member_count} members</span>
-                    <span className="detail">📅 {group.duration_months} months</span>
-                    <span className="detail">💵 ₹{group.monthly_installment.toLocaleString()}/month</span>
+            {tenantGroups.length === 0 ? (
+              <div className="empty-chit-state">
+                No chit groups found for the active tenant workspace.
+              </div>
+            ) : (
+              tenantGroups.slice(0, 4).map((group) => (
+                <div key={group.id} className="chit-group-item">
+                  <div className="group-info">
+                    <h3>{group.chit_name}</h3>
+                    <p>{group.chit_code}</p>
+                    <div className="group-details">
+                      <span className="detail">{formatCurrency(group.chit_value)}</span>
+                      <span className="detail">{group.total_members} members</span>
+                      <span className="detail">{group.total_months} months</span>
+                      <span className="detail">{formatCurrency(group.monthly_amount)} monthly</span>
+                    </div>
+                  </div>
+                  <div className="group-actions">
+                    <Badge
+                      label={group.status}
+                      variant={CHIT_STATUS_VARIANTS[group.status] || "default"}
+                      size="medium"
+                    />
                   </div>
                 </div>
-                <div className="group-actions">
-                  <Badge label="Active" variant="success" size="medium" />
-                  <Button variant="default" size="small" icon="👁️">View</Button>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
-        </div>
+        </section>
       </div>
     </ChitLayout>
   );

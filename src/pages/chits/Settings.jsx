@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FileText, Settings as SettingsIcon, Wallet } from "lucide-react";
 import ChitLayout from "../../components/chit/ChitLayout";
 import Button from "../../components/common/Button";
 import FormField from "../../components/common/FormField";
@@ -22,51 +23,51 @@ function ChitSettings() {
     >
       <div className="settings-sections">
         <div className="settings-section">
-          <h2>💰 Financial Settings</h2>
+          <h2><Wallet size={18} /> Financial Settings</h2>
           <div className="settings-form">
             <FormField
               label="Foreman Commission (%)"
               type="number"
               value={settings.foreman_commission_percentage}
-              onChange={(val) => setSettings({...settings, foreman_commission_percentage: val})}
+              onChange={(val) => setSettings({ ...settings, foreman_commission_percentage: val })}
             />
           </div>
         </div>
 
         <div className="settings-section">
-          <h2>⚙️ Feature Toggles</h2>
+          <h2><SettingsIcon size={18} /> Feature Toggles</h2>
           <div className="feature-toggles">
             <div className="toggle-feature">
               <label>Enable Running Chit Migration</label>
-              <input type="checkbox" checked={settings.enable_running_chit} onChange={(e) => setSettings({...settings, enable_running_chit: e.target.checked})} />
+              <input type="checkbox" checked={settings.enable_running_chit} onChange={(event) => setSettings({ ...settings, enable_running_chit: event.target.checked })} />
             </div>
             <div className="toggle-feature">
               <label>Enable Auctions</label>
-              <input type="checkbox" checked={settings.enable_auctions} onChange={(e) => setSettings({...settings, enable_auctions: e.target.checked})} />
+              <input type="checkbox" checked={settings.enable_auctions} onChange={(event) => setSettings({ ...settings, enable_auctions: event.target.checked })} />
             </div>
             <div className="toggle-feature">
               <label>Allow Partial Payments</label>
-              <input type="checkbox" checked={settings.enable_partial_payments} onChange={(e) => setSettings({...settings, enable_partial_payments: e.target.checked})} />
+              <input type="checkbox" checked={settings.enable_partial_payments} onChange={(event) => setSettings({ ...settings, enable_partial_payments: event.target.checked })} />
             </div>
             <div className="toggle-feature">
               <label>Require Member KYC</label>
-              <input type="checkbox" checked={settings.require_member_kyc} onChange={(e) => setSettings({...settings, require_member_kyc: e.target.checked})} />
+              <input type="checkbox" checked={settings.require_member_kyc} onChange={(event) => setSettings({ ...settings, require_member_kyc: event.target.checked })} />
             </div>
             <div className="toggle-feature">
               <label>Auto-Generate Receipts</label>
-              <input type="checkbox" checked={settings.auto_generate_receipts} onChange={(e) => setSettings({...settings, auto_generate_receipts: e.target.checked})} />
+              <input type="checkbox" checked={settings.auto_generate_receipts} onChange={(event) => setSettings({ ...settings, auto_generate_receipts: event.target.checked })} />
             </div>
           </div>
         </div>
 
         <div className="settings-section">
-          <h2>📄 Receipt Settings</h2>
+          <h2><FileText size={18} /> Receipt Settings</h2>
           <div className="settings-form">
             <FormField
               label="Receipt Format"
               type="select"
               value={settings.receipt_format}
-              onChange={(val) => setSettings({...settings, receipt_format: val})}
+              onChange={(val) => setSettings({ ...settings, receipt_format: val })}
               options={[
                 { value: "detailed", label: "Detailed" },
                 { value: "simple", label: "Simple" },

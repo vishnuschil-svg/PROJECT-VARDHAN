@@ -5,18 +5,20 @@
 }
 
 .admin-stat-card {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 18px;
   padding: 20px;
   display: flex;
   gap: 16px;
   align-items: flex-start;
+  box-shadow: var(--shadow-md);
 }
 
 .stat-icon {
   font-size: 32px;
-  opacity: 0.8;
+  opacity: 1;
+  color: var(--accent-color);
 }
 
 .stat-content {
@@ -56,10 +58,11 @@
 }
 
 .admin-section {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 18px;
   padding: 20px;
+  box-shadow: var(--shadow-md);
 }
 
 .admin-section h2 {
@@ -85,8 +88,9 @@
   display: flex;
   gap: 12px;
   padding: 12px;
-  background: var(--bg-secondary);
-  border-radius: 8px;
+  background: rgba(239, 246, 255, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 12px;
 }
 
 .activity-icon {

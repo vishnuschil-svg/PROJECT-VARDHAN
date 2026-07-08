@@ -1,21 +1,43 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
+import {
+  Bell,
+  ClipboardList,
+  CreditCard,
+  FileBarChart,
+  FileText,
+  Folder,
+  Gift,
+  Landmark,
+  LayoutDashboard,
+  Scale,
+  ReceiptText,
+  Settings,
+  Target,
+  TrendingUp,
+  Users,
+  WalletCards,
+} from "lucide-react";
+import { CHIT_PRODUCT_NAME } from "../../config/erpModules";
 import "./ChitNavigation.css";
 
 const CHIT_MENU = [
-  { label: "Dashboard", icon: "📊", path: "/chits" },
-  { label: "Chit Batches", icon: "👥", path: "/chits/groups" },
-  { label: "Members", icon: "👤", path: "/chits/members" },
-  { label: "Collections", icon: "💰", path: "/chits/collections" },
-  { label: "Pending Collections", icon: "⏳", path: "/chits/collections/pending" },
-  { label: "Auctions", icon: "🎯", path: "/chits/auctions" },
-  { label: "Payouts", icon: "💳", path: "/chits/payouts" },
-  { label: "Dividends", icon: "📈", path: "/chits/dividends" },
-  { label: "Payment Receipts", icon: "📄", path: "/chits/receipts" },
-  { label: "Reports", icon: "📋", path: "/chits/reports" },
-  { label: "Documents", icon: "📁", path: "/chits/documents" },
-  { label: "Reminders", icon: "🔔", path: "/chits/notifications" },
-  { label: "Settings", icon: "⚙️", path: "/chits/settings" },
+  { label: "Dashboard", icon: LayoutDashboard, path: "/chits" },
+  { label: "Chit Batches", icon: ClipboardList, path: "/chits/groups" },
+  { label: "Members", icon: Users, path: "/chits/members" },
+  { label: "Member Ledger", icon: Landmark, path: "/chits/member-ledger" },
+  { label: "Collections", icon: WalletCards, path: "/chits/collections" },
+  { label: "Pending Collections", icon: ReceiptText, path: "/chits/collections/pending" },
+  { label: "Auctions", icon: Target, path: "/chits/auctions" },
+  { label: "Finance & Accounts", icon: Scale, path: "/chits/finance" },
+  { label: "Lucky Draw", icon: Gift, path: "/chits/lucky-draw" },
+  { label: "Payouts", icon: CreditCard, path: "/chits/payouts" },
+  { label: "Dividends", icon: TrendingUp, path: "/chits/dividends" },
+  { label: "Payment Receipts", icon: FileText, path: "/chits/receipts" },
+  { label: "Reports", icon: FileBarChart, path: "/chits/reports" },
+  { label: "Documents", icon: Folder, path: "/chits/documents" },
+  { label: "Reminders", icon: Bell, path: "/chits/notifications" },
+  { label: "Settings", icon: Settings, path: "/chits/settings" },
 ];
 
 function ChitNavigation() {
@@ -24,28 +46,39 @@ function ChitNavigation() {
   return (
     <nav className="chit-navigation" data-open={isOpen}>
       <div className="chit-nav-header">
-        <h3>🏪 CHIT MANAGEMENT</h3>
-        <button className="chit-nav-toggle" onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? "◀" : "▶"}
+        <h3>Chit Management ERP</h3>
+        <button
+          className="chit-nav-toggle"
+          type="button"
+          aria-label={isOpen ? "Collapse chit navigation" : "Expand chit navigation"}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? "<" : ">"}
         </button>
       </div>
 
       <div className="chit-menu">
-        {CHIT_MENU.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) => `chit-menu-item ${isActive ? "active" : ""}`}
-            title={item.label}
-          >
-            <span className="chit-menu-icon">{item.icon}</span>
-            <span className="chit-menu-label">{item.label}</span>
-          </NavLink>
-        ))}
+        {CHIT_MENU.map((item) => {
+          const Icon = item.icon;
+
+          return (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={({ isActive }) => `chit-menu-item ${isActive ? "active" : ""}`}
+              title={item.label}
+            >
+              <span className="chit-menu-icon">
+                <Icon size={17} />
+              </span>
+              <span className="chit-menu-label">{item.label}</span>
+            </NavLink>
+          );
+        })}
       </div>
 
       <div className="chit-nav-footer">
-        <p>VARDHAN CHIT MANAGEMENT</p>
+        <p>{CHIT_PRODUCT_NAME}</p>
       </div>
     </nav>
   );

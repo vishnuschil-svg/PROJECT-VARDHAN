@@ -1,0 +1,275 @@
+.lucky-draw-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.lucky-draw-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 22px;
+  padding: 24px;
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 86% 12%, rgba(243, 201, 105, 0.26), transparent 32%),
+    linear-gradient(135deg, #07111f, #102044 54%, #1d4ed8);
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  border-radius: 22px;
+  box-shadow: var(--vds-shadow-lg, 0 22px 54px rgba(7, 17, 31, 0.14));
+}
+
+.lucky-draw-eyebrow {
+  color: rgba(243, 201, 105, 0.9);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.lucky-draw-hero h2 {
+  margin: 8px 0 6px;
+  font-size: 28px;
+}
+
+.lucky-draw-hero p {
+  max-width: 720px;
+  margin: 0;
+  color: rgba(226, 232, 240, 0.86);
+}
+
+.lucky-draw-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(110px, 1fr));
+  gap: 12px;
+}
+
+.lucky-draw-kpis div,
+.draw-integrity-card {
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+}
+
+.lucky-draw-kpis span {
+  display: block;
+  color: rgba(226, 232, 240, 0.78);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.lucky-draw-kpis strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 26px;
+}
+
+.draw-stage {
+  min-height: 360px;
+  display: grid;
+  place-items: center;
+  padding: 34px;
+  background:
+    radial-gradient(circle at center, rgba(212, 175, 55, 0.14), transparent 34%),
+    linear-gradient(180deg, #ffffff, #f8fbff);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 24px;
+  box-shadow: var(--vds-shadow-md, 0 14px 34px rgba(7, 17, 31, 0.1));
+  position: relative;
+  overflow: hidden;
+}
+
+.draw-orb {
+  width: 132px;
+  height: 132px;
+  display: grid;
+  place-items: center;
+  color: #f3c969;
+  background: linear-gradient(135deg, #07111f, #1d4ed8);
+  border: 5px solid rgba(212, 175, 55, 0.44);
+  border-radius: 999px;
+  box-shadow: 0 24px 70px rgba(29, 78, 216, 0.28);
+  animation: drawPulse 1.8s ease-in-out infinite;
+}
+
+.draw-stage-content {
+  max-width: 720px;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+
+.draw-stage-content h2 {
+  margin: 18px 0 8px;
+  color: var(--text-primary);
+  font-size: clamp(28px, 5vw, 54px);
+}
+
+.draw-stage-content p {
+  margin: 0;
+  color: var(--text-tertiary);
+  font-size: 15px;
+}
+
+.draw-progress {
+  height: 10px;
+  margin-top: 24px;
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.draw-progress span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #d4af37, #f3c969, #10b981);
+  border-radius: inherit;
+  transition: width 120ms linear;
+}
+
+.confetti-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.confetti-layer span {
+  position: absolute;
+  left: calc((var(--i) * 37) % 100 * 1%);
+  top: -20px;
+  width: 10px;
+  height: 18px;
+  background: hsl(calc(var(--i) * 32), 86%, 58%);
+  opacity: 0;
+  transform: rotate(calc(var(--i) * 18deg));
+}
+
+.has-winner .confetti-layer span {
+  animation: confettiFall 1.9s ease-out forwards;
+  animation-delay: calc((var(--i) % 8) * 70ms);
+}
+
+.winner-announcement {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 18px;
+}
+
+.winner-card,
+.poster-preview,
+.draw-table-section {
+  padding: 22px;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 18px;
+  box-shadow: var(--vds-shadow-md, 0 14px 34px rgba(7, 17, 31, 0.1));
+}
+
+.winner-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--accent-color);
+}
+
+.winner-card span,
+.poster-preview span {
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.winner-card h2,
+.poster-preview strong {
+  display: block;
+  margin: 6px 0;
+  color: var(--text-primary);
+  font-size: 28px;
+}
+
+.winner-card p,
+.poster-preview p {
+  margin: 0;
+  color: var(--text-tertiary);
+}
+
+.poster-preview {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  background:
+    radial-gradient(circle at right top, rgba(243, 201, 105, 0.24), transparent 36%),
+    linear-gradient(135deg, #07111f, #102044 58%, #1d4ed8);
+}
+
+.poster-preview span,
+.poster-preview p {
+  color: rgba(226, 232, 240, 0.78);
+}
+
+.poster-preview strong {
+  color: #ffffff;
+}
+
+.draw-integrity-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.draw-integrity-card {
+  display: flex;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--accent-color);
+  border-color: rgba(148, 163, 184, 0.22);
+  box-shadow: var(--vds-shadow-sm, 0 6px 16px rgba(7, 17, 31, 0.06));
+}
+
+.draw-integrity-card strong {
+  display: block;
+  color: var(--text-primary);
+}
+
+.draw-integrity-card p {
+  margin: 4px 0 0;
+  color: var(--text-tertiary);
+  font-size: 13px;
+}
+
+@keyframes drawPulse {
+  50% {
+    transform: scale(1.04) rotate(3deg);
+  }
+}
+
+@keyframes confettiFall {
+  0% {
+    opacity: 1;
+    transform: translateY(-30px) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(430px) rotate(540deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .lucky-draw-hero,
+  .winner-announcement {
+    grid-template-columns: 1fr;
+  }
+
+  .lucky-draw-hero {
+    flex-direction: column;
+  }
+
+  .lucky-draw-kpis,
+  .draw-integrity-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -4,8 +4,11 @@
   top: 70px;
   width: 240px;
   height: calc(100vh - 70px);
-  background: var(--bg-primary);
-  border-right: 1px solid var(--border-color);
+  background:
+    radial-gradient(circle at top left, rgba(212, 175, 55, 0.18), transparent 35%),
+    linear-gradient(180deg, #07111f 0%, #0b1730 48%, #102044 100%);
+  border-right: 1px solid rgba(212, 175, 55, 0.24);
+  box-shadow: 14px 0 36px rgba(7, 17, 31, 0.26);
   display: flex;
   flex-direction: column;
   z-index: 999;
@@ -21,39 +24,47 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 8px;
-  border-bottom: 1px solid var(--border-color);
+  padding: 16px 10px 14px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.18);
 }
 
 .chit-nav-header h3 {
   margin: 0;
   font-size: 14px;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-weight: 800;
+  color: #ffffff;
   white-space: nowrap;
+  letter-spacing: 0;
 }
 
 .chit-nav-toggle {
-  background: none;
-  border: none;
-  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
-  font-size: 14px;
-  padding: 4px 8px;
-  border-radius: 4px;
+  font-size: 18px;
+  font-weight: 900;
+  padding: 0;
+  border-radius: 8px;
   transition: background 0.2s;
 }
 
 .chit-nav-toggle:hover {
-  background: var(--bg-secondary);
+  background: rgba(212, 175, 55, 0.16);
+  color: #ffffff;
 }
 
 .chit-menu {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 8px;
+  gap: 6px;
+  padding: 12px 10px;
   overflow-y: auto;
 }
 
@@ -61,29 +72,52 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  color: var(--text-secondary);
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: rgba(226, 232, 240, 0.76);
   text-decoration: none;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 700;
   transition: all 0.2s;
   white-space: nowrap;
+  border: 1px solid transparent;
+  position: relative;
 }
 
 .chit-menu-item:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border-color: rgba(212, 175, 55, 0.18);
+  transform: translateX(2px);
 }
 
 .chit-menu-item.active {
-  background: var(--accent-color);
-  color: white;
-  font-weight: 600;
+  background:
+    linear-gradient(135deg, rgba(29, 78, 216, 0.95), rgba(37, 99, 235, 0.86)),
+    linear-gradient(90deg, rgba(212, 175, 55, 0.34), transparent);
+  color: #ffffff;
+  font-weight: 800;
+  border-color: rgba(243, 201, 105, 0.38);
+  box-shadow: 0 14px 28px rgba(29, 78, 216, 0.28);
+}
+
+.chit-menu-item.active::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 999px;
+  background: #f3c969;
 }
 
 .chit-menu-icon {
-  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
 }
 
@@ -98,16 +132,17 @@
 }
 
 .chit-nav-footer {
-  padding: 12px;
-  border-top: 1px solid var(--border-color);
+  padding: 14px 12px;
+  border-top: 1px solid rgba(212, 175, 55, 0.18);
   text-align: center;
 }
 
 .chit-nav-footer p {
   margin: 0;
   font-size: 10px;
-  color: var(--text-tertiary);
-  font-weight: 600;
+  color: rgba(243, 201, 105, 0.82);
+  font-weight: 800;
+  letter-spacing: 0.4px;
 }
 
 @media (max-width: 768px) {
@@ -117,9 +152,8 @@
     top: 70px;
     width: 240px;
     height: calc(100vh - 70px);
-    background: var(--bg-primary);
-    border-right: 1px solid var(--border-color);
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+    border-right: 1px solid rgba(212, 175, 55, 0.24);
+    box-shadow: 18px 0 48px rgba(7, 17, 31, 0.32);
     transition: left 0.3s ease;
     z-index: 1000;
   }

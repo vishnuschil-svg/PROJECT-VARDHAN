@@ -14,9 +14,10 @@ function Button({
   return (
     <button
       type={type}
-      className={`btn btn-${variant} btn-${size} ${fullWidth ? "btn-full-width" : ""}`}
+      className={`btn btn-${variant} btn-${size} ${fullWidth ? "btn-full-width" : ""} ${loading ? "btn-loading" : ""}`}
       onClick={onClick}
       disabled={disabled || loading}
+      aria-busy={loading}
     >
       {icon && <span className="btn-icon">{icon}</span>}
       {loading ? "Loading..." : children}

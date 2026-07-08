@@ -1,0 +1,202 @@
+.product-catalog {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.product-catalog-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px;
+  background:
+    radial-gradient(circle at right top, rgba(243, 201, 105, 0.22), transparent 34%),
+    linear-gradient(135deg, #07111f, #102044 56%, #1d4ed8);
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  border-radius: var(--vds-radius-2xl, 22px);
+  box-shadow: var(--vds-shadow-lg, 0 22px 54px rgba(7, 17, 31, 0.14));
+  color: #ffffff;
+}
+
+.product-catalog-eyebrow {
+  color: rgba(243, 201, 105, 0.9);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.product-catalog-summary h2 {
+  margin: 8px 0 6px;
+  font-size: 26px;
+  letter-spacing: 0;
+}
+
+.product-catalog-summary p {
+  max-width: 680px;
+  margin: 0;
+  color: rgba(226, 232, 240, 0.86);
+}
+
+.product-catalog-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(130px, 1fr));
+  gap: 12px;
+}
+
+.product-catalog-kpis div {
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+}
+
+.product-catalog-kpis span {
+  display: block;
+  color: rgba(226, 232, 240, 0.78);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.product-catalog-kpis strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 26px;
+}
+
+.product-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 18px;
+}
+
+.product-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: var(--vds-radius-xl, 18px);
+  box-shadow: var(--vds-shadow-md, 0 14px 34px rgba(7, 17, 31, 0.1));
+  position: relative;
+  overflow: hidden;
+}
+
+.product-card::before {
+  content: "";
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 150px;
+  height: 150px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.18), transparent 65%);
+  pointer-events: none;
+}
+
+.product-card-locked {
+  filter: saturate(0.88);
+}
+
+.product-card-locked::after {
+  content: "Locked";
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  padding: 5px 10px;
+  color: #8a6400;
+  background: rgba(212, 175, 55, 0.16);
+  border: 1px solid rgba(212, 175, 55, 0.32);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.product-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.product-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  color: var(--accent-color);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.18), rgba(37, 99, 235, 0.12));
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.product-card h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 17px;
+}
+
+.product-card-header p,
+.product-card-description {
+  margin: 0;
+  color: var(--text-tertiary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.product-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.product-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.product-plan {
+  padding: 10px;
+  background: rgba(239, 246, 255, 0.76);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 12px;
+}
+
+.product-plan span {
+  display: block;
+  color: var(--text-tertiary);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.product-plan strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.product-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: auto;
+}
+
+@media (max-width: 768px) {
+  .product-catalog-summary {
+    flex-direction: column;
+  }
+
+  .product-catalog-kpis {
+    grid-template-columns: 1fr;
+  }
+}

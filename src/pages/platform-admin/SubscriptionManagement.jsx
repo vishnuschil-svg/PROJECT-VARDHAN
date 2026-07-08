@@ -2,32 +2,49 @@ import AdminLayout from "../../components/platform-admin/AdminLayout";
 import Table from "../../components/common/Table";
 import Badge from "../../components/common/Badge";
 import Button from "../../components/common/Button";
+import { getSubscriptionRows } from "../../config/productLicensing";
 
 function SubscriptionManagement() {
-  const subscriptions = [
-    { id: 1, company: "Tech Solutions", plan: "Enterprise", amount: "$5,000/mo", status: "active", renewalDate: "2024-07-15", users: "100" },
-    { id: 2, company: "Finance Innovations", plan: "Professional", amount: "$2,000/mo", status: "active", renewalDate: "2024-07-20", users: "50" }
-  ];
+  const subscriptions = getSubscriptionRows();
 
   const columns = [
-    { key: "company", label: "Company", width: "150px" },
-    { key: "plan", label: "Plan", width: "120px" },
-    { key: "amount", label: "Amount", width: "120px", render: (val) => <Badge label={val} variant="primary" size="small" /> },
-    { key: "users", label: "Users", width: "80px" },
-    { key: "status", label: "Status", width: "100px", render: (val) => <Badge label={val} variant="success" size="small" /> },
-    { key: "renewalDate", label: "Renewal", width: "120px" }
+    { key: "customerName", label: "Customer", width: "170px" },
+    { key: "productName", label: "Product", width: "190px" },
+    {
+      key: "productCode",
+      label: "Code",
+      width: "100px",
+      render: (val) => <Badge label={val} variant="primary" size="small" />,
+    },
+    { key: "planType", label: "Plan", width: "120px" },
+    { key: "billingCycle", label: "Billing", width: "110px" },
+    { key: "seatsUsage", label: "Seats", width: "90px" },
+    {
+      key: "status",
+      label: "Status",
+      width: "100px",
+      render: (val) => (
+        <Badge
+          label={val}
+          variant={val === "active" ? "success" : val === "trial" ? "warning" : "error"}
+          size="small"
+        />
+      ),
+    },
+    { key: "expiresOn", label: "Expires", width: "120px" },
   ];
 
   const actions = [
-    { icon: "✏️", label: "Edit", onClick: () => {}, variant: "default" },
-    { icon: "💳", label: "Upgrade", onClick: () => {}, variant: "success" },
-    { icon: "⏸️", label: "Pause", onClick: () => {}, variant: "warning" }
+    { icon: "Edit", label: "Edit", onClick: () => {}, variant: "default" },
+    { icon: "Assign", label: "Assign", onClick: () => {}, variant: "success" },
+    { icon: "Pause", label: "Pause", onClick: () => {}, variant: "warning" },
   ];
 
   return (
-    <AdminLayout 
-      title="Subscription Management" 
-      subtitle="Manage customer subscriptions and plans"
+    <AdminLayout
+      title="Subscription Management"
+      subtitle="Assign independent product subscriptions to customers"
+      actions={<Button variant="primary">Assign Subscription</Button>}
     >
       <div style={{ background: "var(--bg-primary)", borderRadius: 12, overflow: "hidden" }}>
         <Table columns={columns} data={subscriptions} actions={actions} />

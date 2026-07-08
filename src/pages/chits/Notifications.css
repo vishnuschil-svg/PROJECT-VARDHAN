@@ -5,17 +5,18 @@
 }
 
 .notif-section {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 20px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(239, 246, 255, 0.82));
+  border: 1px solid var(--chit-border);
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: var(--chit-shadow);
 }
 
 .notif-section h2 {
   margin: 0 0 16px;
   font-size: 16px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--chit-navy-900);
 }
 
 .notif-form {
@@ -33,7 +34,7 @@
 
 .toggle-item label {
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--chit-navy-900);
   font-size: 13px;
 }
 
@@ -49,8 +50,9 @@
   align-items: center;
   gap: 12px;
   padding: 8px;
-  background: var(--bg-secondary);
-  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 12px;
 }
 
 .notif-type-item input {
@@ -60,6 +62,6 @@
 .notif-type-item label {
   cursor: pointer;
   font-size: 13px;
-  color: var(--text-primary);
+  color: var(--chit-navy-900);
   margin: 0;
 }
