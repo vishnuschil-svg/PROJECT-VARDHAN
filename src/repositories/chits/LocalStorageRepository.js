@@ -35,7 +35,9 @@ export class LocalStorageRepository extends ChitRepositoryContract {
     });
     const next = [
       entity,
-      ...this.readAll().filter((item) => item.id !== entity.id),
+      ...this.readAll().filter(
+        (item) => !(item.id === entity.id && item.scope_key === entity.scope_key)
+      ),
     ];
 
     this.writeAll(next);
@@ -60,7 +62,9 @@ export class LocalStorageRepository extends ChitRepositoryContract {
       scope_key: scope.scope_key,
       updated_at: new Date().toISOString(),
     });
-    const next = existing.map((item) => (item.id === id ? updated : item));
+    const next = existing.map((item) =>
+      item.id === id && item.scope_key === scope.scope_key ? updated : item
+    );
 
     this.writeAll(next);
     return updated;

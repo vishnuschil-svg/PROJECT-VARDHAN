@@ -4,20 +4,17 @@ import ChitLayout from "../../components/chit/ChitLayout";
 import Table from "../../components/common/Table";
 import Button from "../../components/common/Button";
 import Badge from "../../components/common/Badge";
-import {
-  PHASE_TWO_CHIT_MEMBERS,
-  getTenantMembers,
-} from "../../config/chitMemberData";
 import { formatCurrency } from "../../config/chitPhaseOneData";
 import { useAuth } from "../../hooks/useAuth";
 import { buildCollectionReceipts, useTenantCollections } from "../../services/chitCollectionsStore";
+import { listTenantMembers } from "../../services/chitDataService";
 import "./Receipts.css";
 
 function Receipts() {
   const { activeTenantContext } = useAuth();
   const collections = useTenantCollections(activeTenantContext);
   const tenantMembers = useMemo(
-    () => getTenantMembers(PHASE_TWO_CHIT_MEMBERS, activeTenantContext),
+    () => listTenantMembers(activeTenantContext),
     [activeTenantContext]
   );
   const receipts = useMemo(

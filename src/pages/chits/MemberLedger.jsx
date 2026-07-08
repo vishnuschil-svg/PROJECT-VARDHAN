@@ -15,12 +15,6 @@ import Badge from "../../components/common/Badge";
 import Button from "../../components/common/Button";
 import Table from "../../components/common/Table";
 import {
-  PHASE_TWO_CHIT_MEMBERS,
-} from "../../config/chitMemberData";
-import {
-  PHASE_ONE_CHIT_GROUPS,
-} from "../../config/chitPhaseOneData";
-import {
   buildMemberLedger,
   buildPassbookPayload,
   buildPassbookWhatsAppMessage,
@@ -35,6 +29,7 @@ import {
 import { CHIT_PRODUCT_NAME, isPlatformOwner } from "../../config/erpModules";
 import { useAuth } from "../../hooks/useAuth";
 import { useTenantCollections } from "../../services/chitCollectionsStore";
+import { listVisibleGroups, listVisibleMembers } from "../../services/chitDataService";
 import "./MemberLedger.css";
 
 function MemberLedger() {
@@ -52,8 +47,8 @@ function MemberLedger() {
   const visibleRecords = useMemo(
     () =>
       getLedgerVisibleRecords({
-        members: PHASE_TWO_CHIT_MEMBERS,
-        groups: PHASE_ONE_CHIT_GROUPS,
+        members: listVisibleMembers(activeTenantContext, platformOwner),
+        groups: listVisibleGroups(activeTenantContext, platformOwner),
         activeTenantContext,
         platformOwner,
       }),

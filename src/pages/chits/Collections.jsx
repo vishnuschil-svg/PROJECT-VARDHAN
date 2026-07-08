@@ -7,14 +7,10 @@ import Badge from "../../components/common/Badge";
 import Modal from "../../components/common/Modal";
 import FormField from "../../components/common/FormField";
 import {
-  PHASE_TWO_CHIT_MEMBERS,
   getMemberGroupName,
-  getTenantMembers,
 } from "../../config/chitMemberData";
 import {
-  PHASE_ONE_CHIT_GROUPS,
   formatCurrency,
-  getTenantChitGroups,
 } from "../../config/chitPhaseOneData";
 import {
   buildReceiptNumber,
@@ -28,6 +24,7 @@ import {
 import { CHIT_PRODUCT_NAME } from "../../config/erpModules";
 import { useAuth } from "../../hooks/useAuth";
 import { saveCollection as saveSharedCollection, useTenantCollections } from "../../services/chitCollectionsStore";
+import { listTenantGroups, listTenantMembers } from "../../services/chitDataService";
 import "./Collections.css";
 
 const EMPTY_COLLECTION = {
@@ -53,12 +50,12 @@ function Collections() {
   const [receiptPreview, setReceiptPreview] = useState(null);
 
   const tenantGroups = useMemo(
-    () => getTenantChitGroups(PHASE_ONE_CHIT_GROUPS, activeTenantContext),
+    () => listTenantGroups(activeTenantContext),
     [activeTenantContext]
   );
 
   const tenantMembers = useMemo(
-    () => getTenantMembers(PHASE_TWO_CHIT_MEMBERS, activeTenantContext),
+    () => listTenantMembers(activeTenantContext),
     [activeTenantContext]
   );
 

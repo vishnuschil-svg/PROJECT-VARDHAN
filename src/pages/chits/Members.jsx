@@ -1,5 +1,5 @@
 import { Eye, Pencil, Search, UserPlus, Users } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ChitLayout from "../../components/chit/ChitLayout";
 import Table from "../../components/common/Table";
 import Button from "../../components/common/Button";
@@ -8,22 +8,17 @@ import Modal from "../../components/common/Modal";
 import FormField from "../../components/common/FormField";
 import Tabs from "../../components/common/Tabs";
 import {
-  PHASE_TWO_CHIT_MEMBERS,
   MEMBER_STATUS,
   MEMBER_STATUS_VARIANTS,
   getMemberGroupName,
   getMemberSummary,
   getNextMemberNumber,
-  getTenantMembers,
   maskAadhaarNumber,
   maskAccountNumber,
 } from "../../config/chitMemberData";
-import {
-  PHASE_ONE_CHIT_GROUPS,
-  getTenantChitGroups,
-} from "../../config/chitPhaseOneData";
 import { CHIT_PRODUCT_NAME } from "../../config/erpModules";
 import { useAuth } from "../../hooks/useAuth";
+import { listTenantGroups, listTenantMembers, saveTenantMember } from "../../services/chitDataService";
 import "./Members.css";
 
 const EMPTY_MEMBER = {
@@ -47,7 +42,8 @@ const EMPTY_MEMBER = {
 
 function Members() {
   const { activeTenantContext } = useAuth();
-  const [members, setMembers] = useState(PHASE_TWO_CHIT_MEMBERS);
+  const [members, setMembers] = useState([]);
+  const [groups, setGroups] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [groupFilter, setGroupFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -56,15 +52,13 @@ function Members() {
   const [formData, setFormData] = useState(EMPTY_MEMBER);
   const [formError, setFormError] = useState("");
 
-  const tenantGroups = useMemo(
-    () => getTenantChitGroups(PHASE_ONE_CHIT_GROUPS, activeTenantContext),
-    [activeTenantContext]
-  );
+  useEffect(() => {
+    setGroups(listTenantGroups(activeTenantContext));
+    setMembers(listTenantMembers(activeTenantContext));
+  }, [activeTenantContext]);
 
-  const tenantMembers = useMemo(
-    () => getTenantMembers(members, activeTenantContext),
-    [activeTenantContext, members]
-  );
+  const tenantGroups = useMemo(() => groups, [groups]);
+  const tenantMembers = useMemo(() => members, [members]);
 
   const summary = useMemo(
     () => getMemberSummary(tenantMembers, tenantGroups),
@@ -159,21 +153,16 @@ function Members() {
       data_scope: activeTenantContext?.data_scope,
     };
 
-    setMembers((currentMembers) => {
-      if (modalMode === "edit") {
-        return currentMembers.map((member) =>
-          member.id === payload.id ? { ...member, ...payload } : member
-        );
-      }
-
-      return [
-        {
-          id: `member-${Date.now()}`,
-          ...payload,
-        },
-        ...currentMembers,
-      ];
-    });
+    saveTenantMember(
+      modalMode === "edit"
+        ? payload
+        : {
+            id: `member-${Date.now()}`,
+            ...payload,
+          },
+      activeTenantContext
+    );
+    setMembers(listTenantMembers(activeTenantContext));
 
     closeFormModal();
   };

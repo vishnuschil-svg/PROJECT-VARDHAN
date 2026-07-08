@@ -1,13 +1,22 @@
 import { MessageCircle, Pencil, ReceiptText } from "lucide-react";
+import { useMemo } from "react";
 import ChitLayout from "../../components/chit/ChitLayout";
 import Table from "../../components/common/Table";
 import Badge from "../../components/common/Badge";
-import { mockCollections } from "../../config/chitMockData";
 import { formatCurrency } from "../../config/chitPhaseOneData";
+import { useAuth } from "../../hooks/useAuth";
+import { useTenantCollections } from "../../services/chitCollectionsStore";
+import { listTenantMembers } from "../../services/chitDataService";
 import "./PendingCollections.css";
 
 function PendingCollections() {
-  const pendingCollections = mockCollections.filter((collection) => collection.is_partial);
+  const { activeTenantContext } = useAuth();
+  const collections = useTenantCollections(activeTenantContext);
+  const tenantMembers = useMemo(
+    () => listTenantMembers(activeTenantContext),
+    [activeTenantContext]
+  );
+  const pendingCollections = collections.filter((collection) => collection.is_partial);
   const pendingTotal = pendingCollections.reduce(
     (sum, collection) => sum + Number(collection.pending_amount || 0),
     0
@@ -18,7 +27,7 @@ function PendingCollections() {
       key: "member_id",
       label: "Member",
       width: "150px",
-      render: (value) => (value === "member-001" ? "Rajesh Kumar" : "Priya Sharma"),
+      render: (value) => tenantMembers.find((member) => member.id === value)?.member_name || "-",
     },
     { key: "collection_month", label: "Month", width: "110px", sortable: true },
     {

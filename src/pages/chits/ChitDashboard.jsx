@@ -5,18 +5,17 @@ import Badge from "../../components/common/Badge";
 import { CHIT_PRODUCT_NAME } from "../../config/erpModules";
 import {
   CHIT_STATUS_VARIANTS,
-  PHASE_ONE_CHIT_GROUPS,
   calculateChitDashboardStats,
   formatCurrency,
-  getTenantChitGroups,
 } from "../../config/chitPhaseOneData";
 import { useAuth } from "../../hooks/useAuth";
+import { listTenantGroups } from "../../services/chitDataService";
 import "./ChitDashboard.css";
 
 function ChitDashboard() {
   const navigate = useNavigate();
   const { activeTenantContext } = useAuth();
-  const tenantGroups = getTenantChitGroups(PHASE_ONE_CHIT_GROUPS, activeTenantContext);
+  const tenantGroups = listTenantGroups(activeTenantContext);
   const stats = calculateChitDashboardStats(tenantGroups);
 
   const statCards = [

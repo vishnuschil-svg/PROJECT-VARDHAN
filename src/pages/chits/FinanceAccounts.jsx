@@ -17,9 +17,6 @@ import ChitLayout from "../../components/chit/ChitLayout";
 import Badge from "../../components/common/Badge";
 import Table from "../../components/common/Table";
 import {
-  PHASE_ONE_CHIT_GROUPS,
-} from "../../config/chitPhaseOneData";
-import {
   buildFinanceAccountsEngine,
   EXPENSE_CATEGORIES,
   formatFinanceCurrency,
@@ -30,6 +27,7 @@ import {
 import { CHIT_PRODUCT_NAME, isPlatformOwner } from "../../config/erpModules";
 import { useAuth } from "../../hooks/useAuth";
 import { useTenantCollections } from "../../services/chitCollectionsStore";
+import { listVisibleGroups } from "../../services/chitDataService";
 import "./FinanceAccounts.css";
 
 function FinanceAccounts() {
@@ -39,7 +37,7 @@ function FinanceAccounts() {
   const visibleGroups = useMemo(
     () =>
       getFinanceVisibleGroups({
-        groups: PHASE_ONE_CHIT_GROUPS,
+        groups: listVisibleGroups(activeTenantContext, platformOwner),
         activeTenantContext,
         platformOwner,
       }),

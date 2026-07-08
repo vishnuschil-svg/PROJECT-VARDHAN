@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ChitLayout from "../../components/chit/ChitLayout";
 import Table from "../../components/common/Table";
 import Modal from "../../components/common/Modal";
@@ -8,13 +8,12 @@ import FormField from "../../components/common/FormField";
 import {
   CHIT_GROUP_STATUS,
   CHIT_STATUS_VARIANTS,
-  PHASE_ONE_CHIT_GROUPS,
   formatCurrency,
   getNextGroupCode,
-  getTenantChitGroups,
 } from "../../config/chitPhaseOneData";
 import { CHIT_PRODUCT_NAME } from "../../config/erpModules";
 import { useAuth } from "../../hooks/useAuth";
+import { listTenantGroups, saveTenantGroup, updateTenantGroup } from "../../services/chitDataService";
 import "./ChitGroups.css";
 
 const EMPTY_GROUP = {
@@ -31,15 +30,16 @@ const EMPTY_GROUP = {
 
 function ChitGroups() {
   const { activeTenantContext } = useAuth();
-  const [groups, setGroups] = useState(PHASE_ONE_CHIT_GROUPS);
+  const [groups, setGroups] = useState([]);
   const [modalMode, setModalMode] = useState(null);
   const [formData, setFormData] = useState(EMPTY_GROUP);
   const [error, setError] = useState("");
 
-  const tenantGroups = useMemo(
-    () => getTenantChitGroups(groups, activeTenantContext),
-    [activeTenantContext, groups]
-  );
+  useEffect(() => {
+    setGroups(listTenantGroups(activeTenantContext));
+  }, [activeTenantContext]);
+
+  const tenantGroups = useMemo(() => groups, [groups]);
 
   const openCreate = () => {
     setFormData({
@@ -113,31 +113,23 @@ function ChitGroups() {
       data_scope: activeTenantContext?.data_scope,
     };
 
-    setGroups((currentGroups) => {
-      if (modalMode === "edit") {
-        return currentGroups.map((group) =>
-          group.id === payload.id ? { ...group, ...payload } : group
-        );
-      }
-
-      return [
-        {
-          id: `chit-${Date.now()}`,
-          ...payload,
-        },
-        ...currentGroups,
-      ];
-    });
+    saveTenantGroup(
+      modalMode === "edit"
+        ? payload
+        : {
+            id: `chit-${Date.now()}`,
+            ...payload,
+          },
+      activeTenantContext
+    );
+    setGroups(listTenantGroups(activeTenantContext));
 
     closeModal();
   };
 
   const updateStatus = (row, status) => {
-    setGroups((currentGroups) =>
-      currentGroups.map((group) =>
-        group.id === row.id ? { ...group, status } : group
-      )
-    );
+    updateTenantGroup(row.id, { status }, activeTenantContext);
+    setGroups(listTenantGroups(activeTenantContext));
   };
 
   const columns = [

@@ -4,8 +4,7 @@ import ChitLayout from "../../components/chit/ChitLayout";
 import Badge from "../../components/common/Badge";
 import Button from "../../components/common/Button";
 import Table from "../../components/common/Table";
-import { PHASE_TWO_CHIT_MEMBERS, getMemberGroupName, getTenantMembers } from "../../config/chitMemberData";
-import { PHASE_ONE_CHIT_GROUPS, getTenantChitGroups } from "../../config/chitPhaseOneData";
+import { getMemberGroupName } from "../../config/chitMemberData";
 import {
   LUCKY_DRAW_DURATION_MS,
   createCongratulationPosterSvg,
@@ -16,6 +15,7 @@ import {
 } from "../../config/chitLuckyDraw";
 import { CHIT_PRODUCT_NAME } from "../../config/erpModules";
 import { useAuth } from "../../hooks/useAuth";
+import { listTenantGroups, listTenantMembers } from "../../services/chitDataService";
 import "./LuckyDraw.css";
 
 function LuckyDraw() {
@@ -30,12 +30,12 @@ function LuckyDraw() {
   const progressTimerRef = useRef(null);
 
   const tenantGroups = useMemo(
-    () => getTenantChitGroups(PHASE_ONE_CHIT_GROUPS, activeTenantContext),
+    () => listTenantGroups(activeTenantContext),
     [activeTenantContext]
   );
 
   const tenantMembers = useMemo(
-    () => getTenantMembers(PHASE_TWO_CHIT_MEMBERS, activeTenantContext),
+    () => listTenantMembers(activeTenantContext),
     [activeTenantContext]
   );
 

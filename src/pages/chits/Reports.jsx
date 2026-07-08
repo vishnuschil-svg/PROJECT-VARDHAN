@@ -12,14 +12,6 @@ import Badge from "../../components/common/Badge";
 import Button from "../../components/common/Button";
 import Table from "../../components/common/Table";
 import {
-  PHASE_TWO_CHIT_MEMBERS,
-  getTenantMembers,
-} from "../../config/chitMemberData";
-import {
-  PHASE_ONE_CHIT_GROUPS,
-  getTenantChitGroups,
-} from "../../config/chitPhaseOneData";
-import {
   buildReportsEngine,
   createReportCsv,
   createReportExportText,
@@ -30,6 +22,7 @@ import {
 import { CHIT_PRODUCT_NAME } from "../../config/erpModules";
 import { useAuth } from "../../hooks/useAuth";
 import { useTenantCollections } from "../../services/chitCollectionsStore";
+import { listTenantGroups, listTenantMembers } from "../../services/chitDataService";
 import "./Reports.css";
 
 function Reports() {
@@ -39,11 +32,11 @@ function Reports() {
   const [searchTerm, setSearchTerm] = useState("");
 
   const tenantGroups = useMemo(
-    () => getTenantChitGroups(PHASE_ONE_CHIT_GROUPS, activeTenantContext),
+    () => listTenantGroups(activeTenantContext),
     [activeTenantContext]
   );
   const tenantMembers = useMemo(
-    () => getTenantMembers(PHASE_TWO_CHIT_MEMBERS, activeTenantContext),
+    () => listTenantMembers(activeTenantContext),
     [activeTenantContext]
   );
   const reports = useMemo(
