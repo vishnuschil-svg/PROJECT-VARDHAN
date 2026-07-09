@@ -2,7 +2,17 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { DEV_AUTH_BYPASS } from "../../config/devAccess";
 import { useAuth } from "../../hooks/useAuth";
-import { loginUser } from "../../services/authService";
+
+const DEMO_AUTH_STORAGE_KEY = "vardhan.demo.auth.session.v1";
+const DEMO_EMAIL = "admin@vardhan.com";
+const DEMO_PASSWORD = "admin123";
+const DEMO_AUTH_STATE = {
+  isAuthenticated: true,
+  email: DEMO_EMAIL,
+  role: "PLATFORM_OWNER",
+  tenant_id: "platform-owner",
+  data_scope: "platform_owner",
+};
 
 function Login() {
   const navigate = useNavigate();
@@ -21,14 +31,18 @@ function Login() {
     setMessage("");
 
     try {
-      if (!DEV_AUTH_BYPASS) {
-        await loginUser(form.email, form.password);
-        await loadUser();
+      const email = form.email.trim().toLowerCase();
+
+      if (email !== DEMO_EMAIL || form.password !== DEMO_PASSWORD) {
+        setMessage("Invalid demo credentials");
+        return;
       }
 
+      window.localStorage.setItem(DEMO_AUTH_STORAGE_KEY, JSON.stringify(DEMO_AUTH_STATE));
+      await loadUser();
       navigate("/dashboard", { replace: true });
     } catch (error) {
-      setMessage(error.message || "Unable to login. Please try again.");
+      setMessage("Invalid demo credentials");
     } finally {
       setLoading(false);
     }

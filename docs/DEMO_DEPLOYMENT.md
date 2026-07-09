@@ -19,7 +19,19 @@ Required for the current localStorage demo:
 
 ```ini
 VITE_DEV_AUTH_BYPASS=false
+VITE_APP_MODE=demo
 ```
+
+Hosted demo login:
+
+```txt
+Email: admin@vardhan.com
+Password: admin123
+```
+
+This demo login runs without Supabase and opens a Platform Owner session for demo review.
+
+If `VITE_APP_MODE=demo` is set, or if Supabase env vars are blank, the app automatically uses demo authentication.
 
 Reserved for future Supabase integration:
 
