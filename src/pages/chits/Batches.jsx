@@ -62,7 +62,7 @@ function Batches() {
 
   return (
     <ChitLayout
-      title="Batch Management"
+      title="Chit Batches"
       subtitle="Organizer-level batches without branch hierarchy"
       actions={<Button variant="primary" onClick={openCreate}>Create Batch</Button>}
     >

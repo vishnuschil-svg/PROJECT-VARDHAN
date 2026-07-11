@@ -12,7 +12,7 @@ import { RuleSetValidator } from "../domain/chit/validators/RuleSetValidator.js"
 export function getChitCreationModes() {
   return [
     { id: "AI_DESIGN", title: "AI Design - Beginner Mode", description: "Answer simple questions and compare three local rule-based proposals." },
-    { id: "IMPORT_EXISTING_PLAN", title: "Import Existing Plan", description: "Use image, PDF, CSV, Excel or JSON capture with owner confirmation." },
+    { id: "IMPORT_EXISTING_PLAN", title: "Import Existing Pattern", description: "Use image, PDF, CSV, Excel or JSON capture with owner confirmation." },
     { id: "USE_SAVED_TEMPLATE", title: "Use Saved Template", description: "Reuse a tenant-isolated confirmed organizer template." },
     { id: "ADVANCED_MANUAL_DESIGNER", title: "Advanced Manual Designer", description: "Configure every month, rule and override manually." },
   ];

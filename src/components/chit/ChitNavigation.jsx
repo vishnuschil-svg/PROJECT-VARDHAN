@@ -25,7 +25,7 @@ import "./ChitNavigation.css";
 const CHIT_MENU = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/chits" },
   { label: "Chit Groups", icon: ClipboardList, path: "/chits/groups" },
-  { label: "Batches", icon: Layers3, path: "/chits/batches" },
+  { label: "Chit Batches", icon: Layers3, path: "/chits/batches" },
   { label: "Members", icon: Users, path: "/chits/members" },
   { label: "Member Ledger", icon: Landmark, path: "/chits/member-ledger" },
   { label: "Collections", icon: WalletCards, path: "/chits/collections" },
