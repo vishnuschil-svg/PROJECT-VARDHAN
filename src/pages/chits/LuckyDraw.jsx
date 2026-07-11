@@ -16,6 +16,7 @@ import {
 import { CHIT_PRODUCT_NAME } from "../../config/erpModules";
 import { useAuth } from "../../hooks/useAuth";
 import { listTenantGroups, listTenantMembers } from "../../services/chitDataService";
+import { confirmLuckyDrawWinner, listLuckyDrawResults } from "../../services/luckyDrawService";
 import "./LuckyDraw.css";
 
 function LuckyDraw() {
@@ -45,11 +46,12 @@ function LuckyDraw() {
   );
 
   useEffect(() => {
+    setDrawHistory(listLuckyDrawResults(activeTenantContext).map((draw) => normalizeDrawForUi(draw, tenantGroups, tenantMembers)));
     return () => {
       clearInterval(drawTimerRef.current);
       clearInterval(progressTimerRef.current);
     };
-  }, []);
+  }, [activeTenantContext, tenantGroups, tenantMembers]);
 
   const startDraw = () => {
     if (!eligibleMembers.length || isDrawing) return;
@@ -75,10 +77,17 @@ function LuckyDraw() {
       clearInterval(drawTimerRef.current);
       clearInterval(progressTimerRef.current);
 
-      const record = createLuckyDrawRecord({
-        selection,
+      const group = tenantGroups.find((item) => item.id === selection.winner?.chit_group_id) || tenantGroups[0];
+      const result = confirmLuckyDrawWinner({
         activeTenantContext,
+        group,
+        members: tenantMembers,
+        monthNumber: 1,
+        deterministicSeed: selection.randomValue,
       });
+      const record = result.success
+        ? normalizeDrawForUi(result.draw, tenantGroups, tenantMembers)
+        : createLuckyDrawRecord({ selection, activeTenantContext });
       const audit = createLuckyDrawAudit(record);
 
       setHighlightedMember(selection.winner);
@@ -276,6 +285,21 @@ function LuckyDraw() {
       </div>
     </ChitLayout>
   );
+}
+
+function normalizeDrawForUi(draw, groups, members) {
+  const member = members.find((item) => item.id === (draw.memberId || draw.member_id));
+  const group = groups.find((item) => item.id === (draw.groupId || draw.group_id));
+  return {
+    ...draw,
+    draw_number: draw.draw_number || `LD-${draw.id}`,
+    winner_name: member?.member_name || "Winner",
+    winner_number: member?.member_number || "",
+    chit_group_id: group?.id || draw.groupId || draw.group_id,
+    eligible_count: draw.eligible_count || 0,
+    random_value: draw.random_value || draw.randomValue || "",
+    created_at: draw.created_at || draw.createdAt || new Date().toISOString(),
+  };
 }
 
 export default LuckyDraw;

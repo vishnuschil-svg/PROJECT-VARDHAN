@@ -1,4 +1,4 @@
-import { LocalStorageRepository } from "./LocalStorageRepository";
+import { LocalStorageRepository } from "./LocalStorageRepository.js";
 
 export const AuctionRepository = new LocalStorageRepository({
   storageKey: "vardhan.chit.auctions.v1",

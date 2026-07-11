@@ -3,207 +3,251 @@ import {
   ArrowUpFromLine,
   Banknote,
   BookOpen,
-  CheckCircle2,
-  ClipboardCheck,
+  Download,
   FileBarChart,
   Landmark,
   ReceiptText,
-  Scale,
+  Search,
   ShieldCheck,
   Wallet,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import ChitLayout from "../../components/chit/ChitLayout";
 import Badge from "../../components/common/Badge";
+import Button from "../../components/common/Button";
 import Table from "../../components/common/Table";
-import {
-  buildFinanceAccountsEngine,
-  EXPENSE_CATEGORIES,
-  formatFinanceCurrency,
-  getFinanceVisibleGroups,
-  INCOME_CATEGORIES,
-  VOUCHER_TYPES,
-} from "../../config/chitFinanceAccounts";
-import { CHIT_PRODUCT_NAME, isPlatformOwner } from "../../config/erpModules";
+import { CHIT_PRODUCT_NAME } from "../../config/erpModules";
 import { useAuth } from "../../hooks/useAuth";
-import { useTenantCollections } from "../../services/chitCollectionsStore";
-import { listVisibleGroups } from "../../services/chitDataService";
+import { formatFinanceCurrency, getFinancePageModel } from "../../services/financeService";
 import "./FinanceAccounts.css";
 
 function FinanceAccounts() {
-  const { activeTenantContext, profile, role } = useAuth();
-  const platformOwner = isPlatformOwner(profile, role);
-  const collections = useTenantCollections(activeTenantContext);
-  const visibleGroups = useMemo(
-    () =>
-      getFinanceVisibleGroups({
-        groups: listVisibleGroups(activeTenantContext, platformOwner),
-        activeTenantContext,
-        platformOwner,
-      }),
-    [activeTenantContext, platformOwner]
-  );
+  const { activeTenantContext } = useAuth();
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [error, setError] = useState("");
   const finance = useMemo(
-    () => buildFinanceAccountsEngine(visibleGroups, collections),
-    [collections, visibleGroups]
+    () => getFinancePageModel(activeTenantContext, { query, filter }),
+    [activeTenantContext, query, filter]
   );
 
+  const exportFinance = () => {
+    try {
+      const csv = buildCsv(finance.transactions);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `finance-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err.message || "Unable to export finance rows.");
+    }
+  };
+
+  const transactionColumns = [
+    { key: "date", label: "Date", width: "120px", render: formatDate },
+    { key: "type", label: "Type", width: "130px" },
+    { key: "category", label: "Category", width: "160px" },
+    { key: "description", label: "Description", width: "240px" },
+    { key: "amount", label: "Amount", width: "130px", render: formatFinanceCurrency },
+    { key: "payment_mode", label: "Mode", width: "110px" },
+    { key: "reference", label: "Reference", width: "150px" },
+    { key: "status", label: "Status", width: "120px", render: renderStatus },
+  ];
   const cashColumns = [
     { key: "date", label: "Date", width: "120px", render: formatDate },
-    { key: "particulars", label: "Particulars", width: "220px" },
+    { key: "particulars", label: "Particulars", width: "230px" },
     { key: "cash_in", label: "Cash In", width: "130px", render: formatFinanceCurrency },
     { key: "cash_out", label: "Cash Out", width: "130px", render: formatFinanceCurrency },
     { key: "balance", label: "Balance", width: "130px", render: formatFinanceCurrency },
   ];
-
   const bankColumns = [
-    { key: "bank_name", label: "Bank Account", width: "230px" },
-    { key: "account_number", label: "Account No", width: "140px" },
+    { key: "date", label: "Date", width: "120px", render: formatDate },
+    { key: "bank_name", label: "Bank Account", width: "190px" },
+    { key: "account_number", label: "Account", width: "120px" },
     { key: "deposits", label: "Deposits", width: "130px", render: formatFinanceCurrency },
     { key: "withdrawals", label: "Withdrawals", width: "130px", render: formatFinanceCurrency },
-    { key: "transfers", label: "Transfers", width: "130px", render: formatFinanceCurrency },
-    { key: "balance", label: "Balance", width: "140px", render: formatFinanceCurrency },
-    {
-      key: "reconciled",
-      label: "Reconciliation",
-      width: "130px",
-      render: (value) => <Badge label={value ? "Done" : "Pending"} variant={value ? "success" : "warning"} size="small" />,
-    },
+    { key: "balance", label: "Balance", width: "130px", render: formatFinanceCurrency },
   ];
-
-  const expenseColumns = [
-    { key: "date", label: "Date", width: "120px", render: formatDate },
-    { key: "category", label: "Category", width: "150px" },
-    { key: "description", label: "Description", width: "220px" },
-    { key: "amount", label: "Amount", width: "130px", render: formatFinanceCurrency },
-    { key: "payment_mode", label: "Mode", width: "100px" },
-    { key: "status", label: "Status", width: "140px", render: (value) => <Badge label={value} variant={value === "Posted" ? "success" : "warning"} size="small" /> },
-  ];
-
   const incomeColumns = [
     { key: "date", label: "Date", width: "120px", render: formatDate },
-    { key: "receipt_no", label: "Receipt", width: "110px" },
+    { key: "receipt_no", label: "Receipt", width: "150px" },
     { key: "category", label: "Category", width: "160px" },
-    { key: "description", label: "Description", width: "220px" },
+    { key: "description", label: "Description", width: "240px" },
     { key: "amount", label: "Amount", width: "130px", render: formatFinanceCurrency },
   ];
-
-  const voucherColumns = [
-    { key: "type", label: "Voucher Type", width: "160px" },
+  const expenseColumns = [
     { key: "date", label: "Date", width: "120px", render: formatDate },
-    { key: "narration", label: "Narration", width: "240px" },
-    { key: "debit", label: "Debit", width: "140px" },
-    { key: "credit", label: "Credit", width: "140px" },
+    { key: "category", label: "Category", width: "160px" },
+    { key: "description", label: "Description", width: "240px" },
     { key: "amount", label: "Amount", width: "130px", render: formatFinanceCurrency },
-    { key: "status", label: "Status", width: "120px", render: (value) => <Badge label={value} variant="primary" size="small" /> },
+    { key: "payment_mode", label: "Mode", width: "110px" },
+    { key: "status", label: "Status", width: "120px", render: renderStatus },
+  ];
+  const commissionColumns = [
+    { key: "date", label: "Date", width: "120px", render: formatDate },
+    { key: "sourceId", label: "Auction", width: "180px" },
+    { key: "rate", label: "Rate", width: "90px", render: (value) => `${value}%` },
+    { key: "amount", label: "Commission", width: "150px", render: formatFinanceCurrency },
+    { key: "status", label: "Status", width: "120px", render: renderStatus },
+  ];
+  const ledgerColumns = [
+    { key: "date", label: "Date", width: "120px", render: formatDate },
+    { key: "account", label: "Ledger", width: "220px" },
+    { key: "debit", label: "Debit", width: "130px", render: formatFinanceCurrency },
+    { key: "credit", label: "Credit", width: "130px", render: formatFinanceCurrency },
+    { key: "reference", label: "Reference", width: "160px" },
   ];
 
   return (
     <ChitLayout
       title="Finance & Accounts"
-      subtitle={`${CHIT_PRODUCT_NAME} integrated cash, bank, voucher and reporting engine`}
+      subtitle={`${CHIT_PRODUCT_NAME} production accounting engine`}
+      actions={
+        <Button variant="primary" icon={<Download size={16} />} onClick={exportFinance}>
+          Export Ready
+        </Button>
+      }
     >
       <div className="finance-page">
         <section className="finance-hero">
           <div>
-            <span>Phase 8 accounting control room</span>
-            <h2>Finance & Accounts Engine</h2>
-            <p>
-              Cash book, bank book, expenses, income, vouchers, daily closing and reports
-              stay aligned with tenant-visible chit operations.
-            </p>
+            <span>Production accounting control room</span>
+            <h2>Finance Module</h2>
+            <p>Collections automatically update cash, bank, income, profit, ledger, reports, dashboard, activity and notification data through repository-backed services.</p>
           </div>
           <div className="finance-security-chip">
             <ShieldCheck size={18} />
-            <strong>{activeTenantContext?.workspace_label || "Platform Owner"}</strong>
-            <span>{activeTenantContext?.tenant_id || "All tenant data"}</span>
+            <strong>{activeTenantContext?.workspace_label || "Tenant Workspace"}</strong>
+            <span>{activeTenantContext?.tenant_id || "No tenant selected"}</span>
           </div>
         </section>
 
+        {error && <div className="finance-error-state">{error}</div>}
+
         <section className="finance-dashboard-grid">
-          <FinanceKpi icon={<Wallet size={20} />} label="Cash in Hand" value={finance.dashboard.cash_in_hand} tone="good" />
-          <FinanceKpi icon={<Landmark size={20} />} label="Bank Balance" value={finance.dashboard.bank_balance} tone="primary" />
-          <FinanceKpi icon={<ArrowDownToLine size={20} />} label="Today's Income" value={finance.dashboard.todays_income} tone="good" />
-          <FinanceKpi icon={<ArrowUpFromLine size={20} />} label="Today's Expenses" value={finance.dashboard.todays_expenses} tone="warning" />
-          <FinanceKpi icon={<Scale size={20} />} label="Net Balance" value={finance.dashboard.net_balance} tone="primary" />
-          <FinanceKpi icon={<FileBarChart size={20} />} label="Monthly Profit" value={finance.dashboard.monthly_profit} tone={finance.dashboard.monthly_profit >= 0 ? "good" : "risk"} />
+          {finance.summaryCards.map((card) => (
+            <FinanceKpi
+              key={card.key}
+              icon={getSummaryIcon(card.key)}
+              label={card.label}
+              value={card.value}
+              tone={card.tone}
+            />
+          ))}
+        </section>
+
+        <section className="finance-control-bar">
+          <label>
+            <Search size={16} />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search transactions, ledger, receipt, mode"
+            />
+          </label>
+          <div>
+            {finance.filters.map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                className={filter === item.value ? "active" : ""}
+                onClick={() => setFilter(item.value)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <FinancePanel title="Financial Summary" subtitle="Filtered transaction register with export-ready rows.">
+          {finance.transactions.length ? (
+            <Table columns={transactionColumns} data={finance.transactions} />
+          ) : (
+            <EmptyFinanceState title={finance.emptyState.title} message={finance.emptyState.message} />
+          )}
+        </FinancePanel>
+
+        <section className="finance-book-grid">
+          <FinancePanel title="Cash Book" subtitle="Cash receipts, cash payments and cash in hand.">
+            <MiniGrid items={[
+              ["Cash In", finance.cashBook.cashIn, "good"],
+              ["Cash Out", finance.cashBook.cashOut, "warning"],
+              ["Cash in Hand", finance.cashBook.cashInHand, "primary"],
+            ]} />
+            <Table columns={cashColumns} data={finance.cashRows} />
+          </FinancePanel>
+
+          <FinancePanel title="Bank Book" subtitle="Bank deposits, withdrawals and balance.">
+            <MiniGrid items={[
+              ["Bank In", finance.bankBook.bankIn, "good"],
+              ["Bank Out", finance.bankBook.bankOut, "warning"],
+              ["Bank Balance", finance.bankBook.bankBalance, "primary"],
+            ]} />
+            <Table columns={bankColumns} data={finance.bankRows} />
+          </FinancePanel>
         </section>
 
         <section className="finance-book-grid">
-          <FinancePanel title="Cash Book" subtitle="Opening balance, cash in/out and daily closing.">
-            <div className="finance-mini-grid">
-              <MiniStat label="Opening Balance" value={finance.cashBook.opening_balance} />
-              <MiniStat label="Cash In" value={finance.cashBook.cash_in} tone="good" />
-              <MiniStat label="Cash Out" value={finance.cashBook.cash_out} tone="warning" />
-              <MiniStat label="Closing Balance" value={finance.cashBook.closing_balance} tone="primary" />
-            </div>
-            <Table columns={cashColumns} data={finance.cashBook.entries} />
+          <FinancePanel title="Income Register" subtitle="Collection income and other credited entries.">
+            <Table columns={incomeColumns} data={finance.incomeRows} />
           </FinancePanel>
-
-          <FinancePanel title="Bank Book" subtitle="Multiple accounts, deposits, withdrawals, transfers and reconciliation.">
-            <div className="finance-mini-grid">
-              <MiniStat label="Deposits" value={finance.bankBook.deposits} tone="good" />
-              <MiniStat label="Withdrawals" value={finance.bankBook.withdrawals} tone="warning" />
-              <MiniStat label="Transfers" value={finance.bankBook.transfers} tone="primary" />
-              <MiniStat label="Reconciliation" text={finance.bankBook.reconciliation ? "Complete" : "Pending"} tone={finance.bankBook.reconciliation ? "good" : "warning"} />
-            </div>
-            <Table columns={bankColumns} data={finance.bankBook.accounts} />
+          <FinancePanel title="Expense Register" subtitle="Operating expenses and debited entries.">
+            <Table columns={expenseColumns} data={finance.expenseRows} />
           </FinancePanel>
-        </section>
-
-        <section className="finance-taxonomy-grid">
-          <TaxonomyCard icon={<ArrowUpFromLine size={20} />} title="Expense Categories" items={EXPENSE_CATEGORIES} tone="warning" />
-          <TaxonomyCard icon={<ArrowDownToLine size={20} />} title="Income Categories" items={INCOME_CATEGORIES} tone="good" />
-          <TaxonomyCard icon={<ReceiptText size={20} />} title="Voucher System" items={VOUCHER_TYPES} tone="primary" />
         </section>
 
         <section className="finance-book-grid">
-          <FinancePanel title="Expense Management" subtitle="Office rent, salary, utilities and operating expenses.">
-            <Table columns={expenseColumns} data={finance.expenses} />
+          <FinancePanel title="Commission Register" subtitle="Auction commission calculations from domain engine.">
+            <Table columns={commissionColumns} data={finance.commissionRows} />
           </FinancePanel>
-
-          <FinancePanel title="Income Management" subtitle="Registration fees, penalties, interest and other income.">
-            <Table columns={incomeColumns} data={finance.income} />
+          <FinancePanel title="Profit Register" subtitle="Income, expense, commission, pending collection and net profit.">
+            <div className="finance-profit-register">
+              <MiniStat label="Income" value={finance.profit.income} tone="good" />
+              <MiniStat label="Expense" value={finance.profit.expense} tone="warning" />
+              <MiniStat label="Commission" value={finance.profit.commission} tone="primary" />
+              <MiniStat label="Pending" value={finance.profit.pendingCollection} tone="warning" />
+              <MiniStat label="Net Profit" value={finance.profit.netProfit} tone={finance.profit.netProfit >= 0 ? "good" : "risk"} />
+            </div>
           </FinancePanel>
         </section>
 
-        <FinancePanel title="Voucher System" subtitle="Receipt, payment, journal and contra vouchers.">
-          <Table columns={voucherColumns} data={finance.vouchers} />
+        <FinancePanel title="General Ledger" subtitle="Debit, credit, reference and trial-balance readiness.">
+          <Table columns={ledgerColumns} data={finance.ledgerRows} />
         </FinancePanel>
 
         <section className="finance-closing-report-grid">
           <div className="daily-closing-card">
             <div className="finance-section-header">
               <div>
-                <h3>Daily Closing</h3>
-                <p>Verify collections, cash, bank, expenses, receipts and difference.</p>
+                <h3>Day Closing</h3>
+                <p>Daily income, expense, closing balance and difference.</p>
               </div>
-              <Badge label={finance.dailyClosing.difference === 0 ? "Balanced" : "Difference"} variant={finance.dailyClosing.difference === 0 ? "success" : "warning"} size="small" />
+              <Badge label={finance.closing.day.status} variant={finance.closing.day.status === "Balanced" ? "success" : "warning"} size="small" />
             </div>
             <div className="daily-closing-grid">
-              <ClosingItem label="Collections" value={finance.dailyClosing.collections} />
-              <ClosingItem label="Cash" value={finance.dailyClosing.cash} />
-              <ClosingItem label="Bank" value={finance.dailyClosing.bank} />
-              <ClosingItem label="Expenses" value={finance.dailyClosing.expenses} />
-              <ClosingItem label="Receipts" text={finance.dailyClosing.receipts} />
-              <ClosingItem label="Difference" value={finance.dailyClosing.difference} tone={finance.dailyClosing.difference === 0 ? "good" : "warning"} />
+              <ClosingItem label="Today's Income" value={finance.closing.day.todaysIncome} />
+              <ClosingItem label="Today's Expense" value={finance.closing.day.todaysExpense} />
+              <ClosingItem label="Closing Balance" value={finance.closing.day.closingBalance} />
+              <ClosingItem label="Difference" value={finance.closing.day.difference} tone={finance.closing.day.difference === 0 ? "good" : "warning"} />
             </div>
           </div>
 
           <div className="finance-reports-card">
             <div className="finance-section-header">
               <div>
-                <h3>Reports</h3>
-                <p>Cash book, bank book, day book, income & expense, profit & loss and outstanding.</p>
+                <h3>Month Closing</h3>
+                <p>Month profit status and report update readiness.</p>
               </div>
+              <Badge label={finance.closing.month.status} variant={finance.closing.month.status === "Profitable" ? "success" : "warning"} size="small" />
             </div>
             <div className="finance-report-list">
-              <ReportRow icon={<BookOpen size={16} />} label="Cash Book" count={finance.reports.cash_book.length} />
-              <ReportRow icon={<Banknote size={16} />} label="Bank Book" count={finance.reports.bank_book.length} />
-              <ReportRow icon={<ClipboardCheck size={16} />} label="Day Book" count={finance.reports.day_book.length} />
-              <ReportRow icon={<ReceiptText size={16} />} label="Income & Expense" count={finance.reports.income_expense.length} />
-              <ReportRow icon={<FileBarChart size={16} />} label="Profit & Loss" count={finance.reports.profit_loss.length} />
-              <ReportRow icon={<Scale size={16} />} label="Outstanding" count={finance.reports.outstanding.length} />
+              <ReportRow icon={<BookOpen size={16} />} label="Cash Book" count={finance.cashRows.length} />
+              <ReportRow icon={<Banknote size={16} />} label="Bank Book" count={finance.bankRows.length} />
+              <ReportRow icon={<ReceiptText size={16} />} label="Income Register" count={finance.incomeRows.length} />
+              <ReportRow icon={<FileBarChart size={16} />} label="Ledger" count={finance.ledgerRows.length} />
             </div>
           </div>
         </section>
@@ -236,24 +280,22 @@ function FinancePanel({ title, subtitle, children }) {
   );
 }
 
+function MiniGrid({ items }) {
+  return (
+    <div className="finance-mini-grid">
+      {items.map(([label, value, tone]) => (
+        <MiniStat key={label} label={label} value={value} tone={tone} />
+      ))}
+    </div>
+  );
+}
+
 function MiniStat({ label, value, text, tone = "neutral" }) {
   return (
     <div className={`finance-mini-stat tone-${tone}`}>
       <span>{label}</span>
       <strong>{text || formatFinanceCurrency(value)}</strong>
     </div>
-  );
-}
-
-function TaxonomyCard({ icon, title, items, tone }) {
-  return (
-    <article className={`finance-taxonomy-card tone-${tone}`}>
-      <div>{icon}</div>
-      <h3>{title}</h3>
-      <div className="finance-chip-list">
-        {items.map((item) => <span key={item}>{item}</span>)}
-      </div>
-    </article>
   );
 }
 
@@ -276,8 +318,43 @@ function ReportRow({ icon, label, count }) {
   );
 }
 
+function EmptyFinanceState({ title, message }) {
+  return (
+    <div className="finance-empty-state">
+      <FileBarChart size={34} />
+      <h3>{title}</h3>
+      <p>{message}</p>
+    </div>
+  );
+}
+
+function renderStatus(value) {
+  return <Badge label={value || "Posted"} variant={value === "Posted" || value === "Calculated" ? "success" : "warning"} size="small" />;
+}
+
+function getSummaryIcon(key) {
+  const icons = {
+    cashInHand: <Wallet size={20} />,
+    bankBalance: <Landmark size={20} />,
+    todaysIncome: <ArrowDownToLine size={20} />,
+    todaysExpense: <ArrowUpFromLine size={20} />,
+    todaysProfit: <FileBarChart size={20} />,
+    monthProfit: <FileBarChart size={20} />,
+  };
+  return icons[key] || <FileBarChart size={20} />;
+}
+
 function formatDate(value) {
+  if (!value) return "-";
   return new Date(value).toLocaleDateString("en-IN");
+}
+
+function buildCsv(rows) {
+  const headers = ["date", "type", "category", "description", "amount", "payment_mode", "reference", "status"];
+  const body = rows.map((row) =>
+    headers.map((header) => `"${String(row[header] ?? "").replaceAll("\"", "\"\"")}"`).join(",")
+  );
+  return [headers.join(","), ...body].join("\n");
 }
 
 export default FinanceAccounts;

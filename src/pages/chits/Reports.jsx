@@ -1,5 +1,4 @@
 import {
-  Download,
   FileSpreadsheet,
   FileText,
   Printer,
@@ -10,73 +9,62 @@ import { useMemo, useState } from "react";
 import ChitLayout from "../../components/chit/ChitLayout";
 import Badge from "../../components/common/Badge";
 import Button from "../../components/common/Button";
-import Table from "../../components/common/Table";
-import {
-  buildReportsEngine,
-  createReportCsv,
-  createReportExportText,
-  createReportPrintHtml,
-  getReportHeaders,
-  toTitle,
-} from "../../config/chitReportsEngine";
+import ReportExportMenu from "../../components/reports/ReportExportMenu";
+import ReportFilters from "../../components/reports/ReportFilters";
+import ReportSummary from "../../components/reports/ReportSummary";
+import ReportTable from "../../components/reports/ReportTable";
+import { DEFAULT_REPORT_FILTERS } from "../../reports/ReportFilters";
 import { CHIT_PRODUCT_NAME } from "../../config/erpModules";
 import { useAuth } from "../../hooks/useAuth";
-import { useTenantCollections } from "../../services/chitCollectionsStore";
-import { listTenantGroups, listTenantMembers } from "../../services/chitDataService";
+import {
+  exportEnterpriseReport,
+  getReportsPageModel,
+} from "../../services/reportsService";
 import "./Reports.css";
 
 function Reports() {
   const { activeTenantContext } = useAuth();
-  const collections = useTenantCollections(activeTenantContext);
-  const [selectedReportId, setSelectedReportId] = useState("daily_report");
+  const [selectedReportId, setSelectedReportId] = useState("business-summary");
   const [searchTerm, setSearchTerm] = useState("");
-
-  const tenantGroups = useMemo(
-    () => listTenantGroups(activeTenantContext),
-    [activeTenantContext]
-  );
-  const tenantMembers = useMemo(
-    () => listTenantMembers(activeTenantContext),
-    [activeTenantContext]
-  );
-  const reports = useMemo(
-    () => buildReportsEngine({
-      groups: tenantGroups,
-      members: tenantMembers,
-      collections,
-      activeTenantContext,
+  const [filters, setFilters] = useState(DEFAULT_REPORT_FILTERS);
+  const [error, setError] = useState("");
+  const model = useMemo(
+    () => getReportsPageModel(activeTenantContext, {
+      selectedReportId,
+      filters,
+      search: searchTerm,
     }),
-    [activeTenantContext, collections, tenantGroups, tenantMembers]
+    [activeTenantContext, selectedReportId, filters, searchTerm]
   );
-  const selectedReport = reports.find((report) => report.id === selectedReportId) || reports[0];
-  const filteredReports = reports.filter((report) => {
-    const search = searchTerm.trim().toLowerCase();
-    return !search || [report.title, report.category].some((value) => value.toLowerCase().includes(search));
-  });
-  const columns = buildColumns(selectedReport?.rows || []);
+  const selectedReport = model.selectedReport;
+
+  const mergeFilters = (patch) => {
+    setFilters((current) => ({
+      ...current,
+      ...patch,
+      dateRange: { ...current.dateRange, ...(patch.dateRange || {}) },
+      amount: { ...current.amount, ...(patch.amount || {}) },
+    }));
+  };
 
   const exportReport = (format) => {
-    if (!selectedReport) return;
+    try {
+      const result = exportEnterpriseReport(selectedReport.id, format, filters, activeTenantContext);
 
-    if (format === "print") {
-      const printWindow = window.open("", "_blank", "noopener,noreferrer");
-      if (!printWindow) return;
-      printWindow.document.write(createReportPrintHtml(selectedReport));
-      printWindow.document.close();
-      return;
+      if (format === "Print") {
+        const printWindow = window.open("", "_blank", "noopener,noreferrer");
+        if (!printWindow) return;
+        printWindow.document.write(result.content);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        return;
+      }
+
+      downloadExport(result.fileName, result.content, result.mimeType);
+    } catch (err) {
+      setError(err.message || "Unable to export report.");
     }
-
-    const isExcel = format === "excel";
-    const content = isExcel ? createReportCsv(selectedReport) : createReportExportText(selectedReport);
-    const type = isExcel ? "text/csv;charset=utf-8" : "application/pdf";
-    const extension = isExcel ? "csv" : "pdf";
-    const blob = new Blob([content], { type });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${selectedReport.id}.${extension}`;
-    link.click();
-    URL.revokeObjectURL(url);
   };
 
   return (
@@ -90,8 +78,7 @@ function Reports() {
             <span>Tenant-aware reporting console</span>
             <h2>Reports Engine</h2>
             <p>
-              Daily, monthly, yearly, ledger, collection, auction, dividend, finance
-              and outstanding reports are generated from current workspace data.
+              Business, collection, ledger, passbook, auction, receipt and finance reports are generated from the same repository data used by dashboard, collections, receipts and finance.
             </p>
           </div>
           <div className="reports-security-chip">
@@ -100,6 +87,8 @@ function Reports() {
             <span>{activeTenantContext?.tenant_id || "No tenant selected"}</span>
           </div>
         </section>
+
+        {error && <div className="report-error-state">{error}</div>}
 
         <section className="reports-workbench">
           <aside className="reports-catalog">
@@ -113,7 +102,7 @@ function Reports() {
             </div>
 
             <div className="reports-list">
-              {filteredReports.map((report) => (
+              {model.reports.map((report) => (
                 <button
                   key={report.id}
                   type="button"
@@ -122,7 +111,7 @@ function Reports() {
                 >
                   <span>{report.category}</span>
                   <strong>{report.title}</strong>
-                  <small>{report.rows.length} rows</small>
+                  <small>{report.status}</small>
                 </button>
               ))}
             </div>
@@ -134,40 +123,44 @@ function Reports() {
                 <Badge label={selectedReport?.category || "Report"} variant="primary" size="small" />
                 <h3>{selectedReport?.title}</h3>
                 <p>
-                  Generated {new Date(selectedReport?.generated_at).toLocaleString("en-IN")} /
-                  {" "}{selectedReport?.workspace_label}
+                  Generated {new Date(selectedReport?.generatedAt).toLocaleString("en-IN")} /
+                  {" "}{selectedReport?.module}
                 </p>
               </div>
               <div className="report-export-actions">
-                <Button variant="default" icon={<FileText size={16} />} onClick={() => exportReport("pdf")}>
+                <Button variant="default" icon={<FileText size={16} />} onClick={() => exportReport("PDF")}>
                   PDF
                 </Button>
-                <Button variant="default" icon={<FileSpreadsheet size={16} />} onClick={() => exportReport("excel")}>
+                <Button variant="default" icon={<FileSpreadsheet size={16} />} onClick={() => exportReport("Excel")}>
                   Excel
                 </Button>
-                <Button variant="primary" icon={<Printer size={16} />} onClick={() => exportReport("print")}>
+                <Button variant="primary" icon={<Printer size={16} />} onClick={() => exportReport("Print")}>
                   Print
                 </Button>
               </div>
             </div>
 
-            <div className="report-summary-grid">
-              <div>
-                <span>Total Reports</span>
-                <strong>{reports.length}</strong>
+            <ReportFilters filters={filters} options={model.filters} onChange={mergeFilters} />
+            <ReportExportMenu formats={model.exportFormats} onExport={exportReport} />
+            <ReportSummary model={model} report={selectedReport} />
+
+            {(selectedReport.validation.errors.length > 0 || selectedReport.validation.warnings.length > 0) && (
+              <div className="report-validation-panel">
+                {selectedReport.validation.errors.map((item) => <span className="error" key={item}>{item}</span>)}
+                {selectedReport.validation.warnings.map((item) => <span key={item}>{item}</span>)}
               </div>
-              <div>
-                <span>Rows</span>
-                <strong>{selectedReport?.rows.length || 0}</strong>
-              </div>
-              <div>
-                <span>Export</span>
-                <strong><Download size={18} /> Ready</strong>
-              </div>
-            </div>
+            )}
 
             <div className="report-table-card">
-              <Table columns={columns} data={selectedReport?.rows || []} />
+              {selectedReport.rows.length ? (
+                <ReportTable report={selectedReport} />
+              ) : (
+                <div className="report-empty-state">
+                  <FileText size={34} />
+                  <h3>{model.emptyState.title}</h3>
+                  <p>{model.emptyState.message}</p>
+                </div>
+              )}
             </div>
           </main>
         </section>
@@ -176,20 +169,14 @@ function Reports() {
   );
 }
 
-function buildColumns(rows) {
-  return getReportHeaders(rows).map((header) => ({
-    key: header,
-    label: toTitle(header),
-    width: header.length > 16 ? "180px" : "140px",
-    render: (value) => formatReportValue(header, value),
-  }));
-}
-
-function formatReportValue(key, value) {
-  if (typeof value !== "number") return value || "-";
-  const moneyKeys = ["amount", "cash", "bank", "income", "expense", "balance", "pending", "collection", "profit", "dividend", "lift", "outstanding", "target", "value"];
-  const isMoney = moneyKeys.some((item) => key.toLowerCase().includes(item));
-  return isMoney ? `Rs ${Number(value || 0).toLocaleString("en-IN")}` : Number(value || 0).toLocaleString("en-IN");
+function downloadExport(fileName, content, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 export default Reports;

@@ -37,17 +37,10 @@ import {
   buildBusinessHealthDashboard,
   getHealthTone,
 } from "../../config/chitBusinessHealth";
-import {
-  PHASE_TWO_CHIT_MEMBERS,
-  getTenantMembers,
-} from "../../config/chitMemberData";
-import {
-  PHASE_ONE_CHIT_GROUPS,
-  formatCurrency,
-  getTenantChitGroups,
-} from "../../config/chitPhaseOneData";
+import { formatCurrency } from "../../config/chitPhaseOneData";
 import { CHIT_PRODUCT_NAME } from "../../config/erpModules";
 import { useAuth } from "../../hooks/useAuth";
+import { listTenantGroups, listTenantMembers } from "../../services/chitDataService";
 import "./BusinessHealthDashboard.css";
 
 const CARD_DEFINITIONS = [
@@ -76,11 +69,11 @@ function BusinessHealthDashboard() {
   const { activeTenantContext } = useAuth();
 
   const tenantGroups = useMemo(
-    () => getTenantChitGroups(PHASE_ONE_CHIT_GROUPS, activeTenantContext),
+    () => listTenantGroups(activeTenantContext),
     [activeTenantContext]
   );
   const tenantMembers = useMemo(
-    () => getTenantMembers(PHASE_TWO_CHIT_MEMBERS, activeTenantContext),
+    () => listTenantMembers(activeTenantContext),
     [activeTenantContext]
   );
   const health = useMemo(

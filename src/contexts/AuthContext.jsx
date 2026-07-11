@@ -1,5 +1,4 @@
 import { createContext, useCallback, useEffect, useState } from "react";
-import { DEV_AUTH_BYPASS } from "../config/devAccess";
 import { PermissionService, SessionService, WorkspaceService } from "../services/auth";
 
 export const AuthContext = createContext(null);
@@ -80,10 +79,6 @@ export function AuthProvider({ children }) {
   }, [clearAuthState]);
 
   const loadUser = useCallback(async () => {
-    if (DEV_AUTH_BYPASS) {
-      console.log("[DEV MODE] Auth bypass enabled - using mock data");
-    }
-
     const session = await SessionService.refreshSession();
     applySession(session);
 

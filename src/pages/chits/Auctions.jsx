@@ -26,7 +26,6 @@ import {
   buildAuctionReports,
   calculateAuctionFinancials,
   createAuctionAuditLog,
-  createAuctionRecord,
   getAuctionDashboardStats,
   getEligibleAuctionMembers,
   selectAuctionLuckyWinner,
@@ -34,6 +33,7 @@ import {
 import { CHIT_PRODUCT_NAME } from "../../config/erpModules";
 import { useAuth } from "../../hooks/useAuth";
 import { listTenantGroups, listTenantMembers } from "../../services/chitDataService";
+import { confirmAuctionWinner, getAuctionWorkspace } from "../../services/auctionService";
 import "./Auctions.css";
 
 const EMPTY_AUCTION = {
@@ -100,11 +100,13 @@ function Auctions() {
   const reports = buildAuctionReports(auctions);
 
   useEffect(() => {
+    const workspace = getAuctionWorkspace({ activeTenantContext, groups: tenantGroups, members: tenantMembers });
+    setAuctions(workspace.auctions.map((auction) => normalizeAuctionForUi(auction, tenantGroups, tenantMembers)));
     return () => {
       clearInterval(drawTimerRef.current);
       clearInterval(progressTimerRef.current);
     };
-  }, []);
+  }, [activeTenantContext, tenantGroups, tenantMembers]);
 
   const openStartAuction = () => {
     const group = tenantGroups[0];
@@ -146,13 +148,19 @@ function Auctions() {
       return;
     }
 
-    const record = createAuctionRecord({
-      formData,
-      group: selectedGroup,
-      winner: selectedWinner,
+    const result = confirmAuctionWinner({
       activeTenantContext,
-      eligibleCount: eligibleMembers.length,
+      group: selectedGroup,
+      members: tenantMembers,
+      monthNumber: Number(String(formData.auction_month).split("-").pop() || formData.auction_month || 1),
+      bidAmount: Number(formData.bid_amount || formData.starting_bid || 0),
+      winnerId: formData.winner_id,
     });
+    if (!result.success) {
+      setFormError(result.message);
+      return;
+    }
+    const record = normalizeAuctionForUi(result.auction, tenantGroups, tenantMembers);
     const audit = createAuctionAuditLog(record, "manual_auction_completed");
 
     setAuctions((current) => [record, ...current]);
@@ -193,15 +201,20 @@ function Auctions() {
       clearInterval(drawTimerRef.current);
       clearInterval(progressTimerRef.current);
 
-      const record = createAuctionRecord({
-        formData,
-        group: selectedGroup,
-        winner: selection.winner,
+      const result = confirmAuctionWinner({
         activeTenantContext,
-        eligibleCount: eligibleMembers.length,
-        randomValue: selection.randomValue,
-        winnerIndex: selection.winnerIndex,
+        group: selectedGroup,
+        members: tenantMembers,
+        monthNumber: Number(String(formData.auction_month).split("-").pop() || formData.auction_month || 1),
+        bidAmount: Number(formData.bid_amount || formData.starting_bid || 0),
+        winnerId: selection.winner.id,
       });
+      if (!result.success) {
+        setFormError(result.message);
+        setIsDrawing(false);
+        return;
+      }
+      const record = normalizeAuctionForUi(result.auction, tenantGroups, tenantMembers);
       const audit = createAuctionAuditLog(record, "lucky_draw_auction_completed");
 
       setAuctions((current) => [record, ...current]);
@@ -628,6 +641,23 @@ function ReportCard({ title, rows, empty, renderRow }) {
       </div>
     </div>
   );
+}
+
+function normalizeAuctionForUi(auction, groups, members) {
+  const group = groups.find((item) => item.id === (auction.group_id || auction.chit_group_id));
+  const member = members.find((item) => item.id === (auction.winner_member_id || auction.memberId || auction.member_id));
+  return {
+    ...auction,
+    chit_group_id: auction.chit_group_id || auction.group_id,
+    chit_group_name: group?.chit_name || "Chit Group",
+    winner_name: member?.member_name || "Winner",
+    winner_number: member?.member_number || "",
+    auction_type: auction.winner_mode || auction.winnerMode || auction.auction_type || AUCTION_TYPES.MANUAL,
+    winner_payable: auction.payout_amount || auction.payoutAmount || auction.prize_amount || 0,
+    dividend: auction.dividend_amount || auction.dividend || 0,
+    remaining_distribution: auction.payout_amount || auction.prize_amount || 0,
+    status: String(auction.status || "completed").toLowerCase(),
+  };
 }
 
 export default Auctions;

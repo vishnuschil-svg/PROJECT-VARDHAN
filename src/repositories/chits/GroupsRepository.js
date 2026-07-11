@@ -1,4 +1,4 @@
-import { LocalStorageRepository } from "./LocalStorageRepository";
+import { LocalStorageRepository } from "./LocalStorageRepository.js";
 
 export const GroupsRepository = new LocalStorageRepository({
   storageKey: "vardhan.chit.groups.v1",

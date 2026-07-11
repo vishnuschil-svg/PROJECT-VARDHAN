@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import ChitLayout from "../../components/chit/ChitLayout";
 import Table from "../../components/common/Table";
 import Modal from "../../components/common/Modal";
 import Button from "../../components/common/Button";
 import Badge from "../../components/common/Badge";
 import FormField from "../../components/common/FormField";
+import ChitStudioLauncher from "../../components/chitStudio/ChitStudioLauncher";
 import {
   CHIT_GROUP_STATUS,
   CHIT_STATUS_VARIANTS,
@@ -29,6 +31,7 @@ const EMPTY_GROUP = {
 };
 
 function ChitGroups() {
+  const [searchParams] = useSearchParams();
   const { activeTenantContext } = useAuth();
   const [groups, setGroups] = useState([]);
   const [modalMode, setModalMode] = useState(null);
@@ -186,9 +189,14 @@ function ChitGroups() {
       title="Chit Group Management"
       subtitle={`${CHIT_PRODUCT_NAME} - ${activeTenantContext?.workspace_label || "Tenant"} groups`}
       actions={
-        <Button variant="primary" onClick={openCreate}>
-          Create Group
-        </Button>
+        <>
+          <ChitStudioLauncher
+            activeTenantContext={activeTenantContext}
+            onCreated={() => setGroups(listTenantGroups(activeTenantContext))}
+            showCreateGroupButton
+            defaultOpen={searchParams.get("create") === "1"}
+          />
+        </>
       }
     >
       <div className="chit-group-page">

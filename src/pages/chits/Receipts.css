@@ -4,9 +4,43 @@
   gap: 18px;
 }
 
+.receipt-toast {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-weight: 900;
+}
+
+.receipt-toast.success {
+  color: #047857;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.24);
+}
+
+.receipt-toast.error {
+  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.receipt-toast button {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 999px;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.76);
+  cursor: pointer;
+}
+
 .receipts-summary {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
 }
 
@@ -44,8 +78,84 @@
   overflow: hidden;
 }
 
+.receipt-empty-state {
+  display: grid;
+  place-items: center;
+  min-height: 280px;
+  padding: 36px 20px;
+  text-align: center;
+}
+
+.receipt-empty-state svg {
+  color: var(--chit-gold-600);
+}
+
+.receipt-empty-state h3 {
+  margin: 10px 0 4px;
+  color: var(--chit-navy-900);
+}
+
+.receipt-empty-state p {
+  max-width: 460px;
+  margin: 0 0 16px;
+  color: #64748b;
+}
+
+.production-receipt-preview {
+  display: grid;
+  justify-items: center;
+  overflow: auto;
+  max-height: 70vh;
+  padding: 16px;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 18% 8%, rgba(212, 175, 55, 0.16), transparent 32%),
+    linear-gradient(180deg, #f8fbff, #eef3fb);
+}
+
+.production-receipt-preview .receipt-template {
+  max-width: min(860px, 100%);
+  box-sizing: border-box;
+  box-shadow: 0 26px 70px rgba(15, 23, 42, 0.16);
+}
+
+.production-receipt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.production-receipt-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 9px 12px;
+  border: 1px solid rgba(212, 175, 55, 0.34);
+  border-radius: 12px;
+  color: var(--chit-navy-900);
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.production-receipt-actions button:hover {
+  border-color: var(--chit-gold-500);
+  transform: translateY(-1px);
+}
+
 @media (max-width: 760px) {
   .receipts-summary {
     grid-template-columns: 1fr;
+  }
+
+  .production-receipt-actions {
+    justify-content: stretch;
+  }
+
+  .production-receipt-actions button {
+    flex: 1 1 140px;
   }
 }

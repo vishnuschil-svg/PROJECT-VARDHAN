@@ -4,8 +4,8 @@ import {
   INSURANCE_CRM,
   PRIVATE_HOSTELS_ERP,
   SCHOOL_ERP,
-} from "./erpModules";
-import { CUSTOMER_ACCESS_SEED } from "./customerAccess";
+} from "./erpModules.js";
+import { CUSTOMER_ACCESS_SEED } from "./customerAccess.js";
 
 export const PRODUCT_STATUS = {
   ACTIVE: "Active",

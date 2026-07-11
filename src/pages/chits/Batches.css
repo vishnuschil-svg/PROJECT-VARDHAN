@@ -1,0 +1,128 @@
+.batches-page {
+  display: grid;
+  gap: 18px;
+}
+
+.batch-success,
+.batch-error,
+.batch-empty,
+.batch-summary-card {
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--chit-shadow, 0 18px 46px rgba(7, 17, 31, 0.12));
+}
+
+.batch-success {
+  padding: 12px 14px;
+  color: #047857;
+  font-weight: 900;
+}
+
+.batch-error {
+  margin-bottom: 12px;
+  padding: 10px;
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.batch-empty {
+  display: grid;
+  gap: 8px;
+  padding: 22px;
+}
+
+.batch-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.batch-card-wrap,
+.batch-summary-card {
+  min-width: 0;
+}
+
+.batch-summary-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.batch-summary-card h3 {
+  margin: 4px 0;
+  color: #07111f;
+}
+
+.batch-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.batch-summary-grid div {
+  padding: 10px;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.batch-summary-card span,
+.batch-summary-grid span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.batch-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.batch-actions button {
+  min-height: 34px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 10px;
+  background: #ffffff;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.batch-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.batch-form label,
+.batch-group-picker {
+  display: grid;
+  gap: 6px;
+  color: #334155;
+  font-weight: 800;
+}
+
+.batch-form input,
+.batch-form textarea,
+.batch-form select {
+  min-height: 38px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.batch-group-picker {
+  grid-column: 1 / -1;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+@media (max-width: 760px) {
+  .batch-grid,
+  .batch-form,
+  .batch-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}

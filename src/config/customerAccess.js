@@ -3,7 +3,7 @@ import {
   FINANCE_ERP,
   HOSPITAL_ERP,
   SCHOOL_ERP,
-} from "./erpModules";
+} from "./erpModules.js";
 
 export const CUSTOMER_TYPES = {
   DEMO_CUSTOMER: "demo_customer",

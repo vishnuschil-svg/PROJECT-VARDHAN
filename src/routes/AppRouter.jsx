@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import ErrorBoundary from "../components/common/ErrorBoundary";
 import ProtectedRoute from "./ProtectedRoute";
 import { CHIT_MANAGEMENT_ERP } from "../config/erpModules";
 
@@ -34,6 +35,7 @@ const SystemSettings = lazy(() => import("../pages/platform-admin/SystemSettings
 
 const ChitDashboard = lazy(() => import("../pages/chits/ChitDashboard"));
 const ChitGroups = lazy(() => import("../pages/chits/ChitGroups"));
+const Batches = lazy(() => import("../pages/chits/Batches"));
 const Members = lazy(() => import("../pages/chits/Members"));
 const MemberLedger = lazy(() => import("../pages/chits/MemberLedger"));
 const Collections = lazy(() => import("../pages/chits/Collections"));
@@ -56,8 +58,9 @@ function RouteFallback() {
 function AppRouter() {
   return (
     <BrowserRouter>
-      <Suspense fallback={<RouteFallback />}>
-        <Routes>
+      <ErrorBoundary>
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -279,6 +282,14 @@ function AppRouter() {
           }
         />
         <Route
+          path="/chits/batches"
+          element={
+            <ProtectedRoute moduleId={CHIT_MANAGEMENT_ERP}>
+              <Batches />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/chits/members"
           element={
             <ProtectedRoute moduleId={CHIT_MANAGEMENT_ERP}>
@@ -393,8 +404,9 @@ function AppRouter() {
 
         {/* Catch all - redirect to dashboard */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </Suspense>
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 }

@@ -1,7 +1,10 @@
 import ChitNavigation from "./ChitNavigation";
+import VardhanAIFloatingAssistant from "../ai/VardhanAIFloatingAssistant";
+import { useAuth } from "../../hooks/useAuth";
 import "./ChitLayout.css";
 
 function ChitLayout({ title, subtitle, actions, children }) {
+  const { activeTenantContext } = useAuth();
   return (
     <div className="chit-layout">
       <ChitNavigation />
@@ -17,6 +20,7 @@ function ChitLayout({ title, subtitle, actions, children }) {
         )}
         <div className="chit-page-content">{children}</div>
       </div>
+      <VardhanAIFloatingAssistant activeTenantContext={activeTenantContext} />
     </div>
   );
 }

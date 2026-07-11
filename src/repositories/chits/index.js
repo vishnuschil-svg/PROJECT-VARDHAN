@@ -1,10 +1,10 @@
-export { AuctionRepository } from "./AuctionRepository";
-export { CollectionsRepository } from "./CollectionsRepository";
-export { FinanceRepository } from "./FinanceRepository";
-export { GroupsRepository } from "./GroupsRepository";
-export { MembersRepository } from "./MembersRepository";
-export { ReceiptsRepository } from "./ReceiptsRepository";
-export { ReportsRepository } from "./ReportsRepository";
+export { AuctionRepository } from "./AuctionRepository.js";
+export { CollectionsRepository } from "./CollectionsRepository.js";
+export { FinanceRepository } from "./FinanceRepository.js";
+export { GroupsRepository } from "./GroupsRepository.js";
+export { MembersRepository } from "./MembersRepository.js";
+export { ReceiptsRepository } from "./ReceiptsRepository.js";
+export { ReportsRepository } from "./ReportsRepository.js";
 export {
   ChitRepositoryContract,
   createPage,
@@ -12,4 +12,4 @@ export {
   hasTenantScope,
   normalizePagination,
   requireTenantScope,
-} from "./repositoryContracts";
+} from "./repositoryContracts.js";

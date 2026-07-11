@@ -1,91 +1,180 @@
-import { Download, Eye, FileText, MessageCircle, Printer } from "lucide-react";
-import { useMemo } from "react";
+import { FileText, ReceiptText, X } from "lucide-react";
+import { useMemo, useState } from "react";
 import ChitLayout from "../../components/chit/ChitLayout";
-import Table from "../../components/common/Table";
 import Button from "../../components/common/Button";
-import Badge from "../../components/common/Badge";
+import Modal from "../../components/common/Modal";
+import ReceiptActions from "../../components/receipts/ReceiptActions";
+import ReceiptHistory from "../../components/receipts/ReceiptHistory";
+import ReceiptPreview from "../../components/receipts/ReceiptPreview";
 import { formatCurrency } from "../../config/chitPhaseOneData";
 import { useAuth } from "../../hooks/useAuth";
-import { buildCollectionReceipts, useTenantCollections } from "../../services/chitCollectionsStore";
-import { listTenantMembers } from "../../services/chitDataService";
+import {
+  generateReceipt,
+  getReceiptActions,
+  getReceiptPageModel,
+  trackReceiptReprint,
+} from "../../services/receiptService";
 import "./Receipts.css";
 
 function Receipts() {
-  const { activeTenantContext } = useAuth();
-  const collections = useTenantCollections(activeTenantContext);
-  const tenantMembers = useMemo(
-    () => listTenantMembers(activeTenantContext),
-    [activeTenantContext]
-  );
-  const receipts = useMemo(
-    () => buildCollectionReceipts(collections),
-    [collections]
+  const { activeTenantContext, profile } = useAuth();
+  const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [version, setVersion] = useState(0);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const pageModel = useMemo(
+    () => getReceiptPageModel(activeTenantContext),
+    [activeTenantContext, version]
   );
 
-  const columns = [
-    { key: "receipt_number", label: "Receipt #", width: "130px", sortable: true },
-    {
-      key: "member_id",
-      label: "Member",
-      width: "150px",
-      render: (value) => tenantMembers.find((member) => member.id === value)?.member_name || "-",
-    },
-    { key: "amount", label: "Amount", width: "120px", render: (value) => formatCurrency(value) },
-    {
-      key: "payment_date",
-      label: "Date",
-      width: "130px",
-      render: (value) => new Date(value).toLocaleDateString("en-IN"),
-    },
-    { key: "payment_method", label: "Method", width: "130px" },
-    {
-      key: "can_print_pdf",
-      label: "PDF",
-      width: "80px",
-      render: (value) => (
-        <Badge label={value ? "Ready" : "No"} variant={value ? "success" : "error"} size="small" />
-      ),
-    },
-  ];
+  const generateNextReceipt = () => {
+    setIsGenerating(true);
+    setError("");
 
-  const actions = [
-    { icon: <Eye size={15} />, label: "View", onClick: () => {}, variant: "default" },
-    { icon: <Printer size={15} />, label: "Print", onClick: () => {}, variant: "primary" },
-    { icon: <MessageCircle size={15} />, label: "WhatsApp", onClick: () => {}, variant: "success" },
-    { icon: <Download size={15} />, label: "Download", onClick: () => {}, variant: "default" },
-  ];
+    try {
+      const result = generateReceipt({
+        activeTenantContext,
+        createdBy: profile?.full_name || "VARDHAN Collector",
+      });
+
+      if (!result.validation.isValid) {
+        setError(result.validation.errors[0]);
+        return;
+      }
+
+      setSelectedReceipt(result.receipt);
+      setSuccess("Receipt generated and saved.");
+      setVersion((current) => current + 1);
+      window.setTimeout(() => setSuccess(""), 3000);
+    } catch (err) {
+      setError(err.message || "Unable to generate receipt.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const openPrint = (receipt) => {
+    const tracked = trackReceiptReprint(receipt, activeTenantContext);
+    if (!tracked.success) {
+      setError(tracked.message);
+      return;
+    }
+
+    const actions = getReceiptActions(receipt);
+    const printWindow = window.open("", "_blank", "noopener,noreferrer");
+    if (!printWindow) return;
+
+    printWindow.document.write(actions.printHtml);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    setVersion((current) => current + 1);
+  };
+
+  const downloadReceipt = (receipt) => {
+    const actions = getReceiptActions(receipt);
+    downloadTextFile(actions.pdf.fileName, actions.pdf.html, actions.pdf.mimeType);
+  };
+
+  const shareWhatsApp = (receipt) => {
+    const actions = getReceiptActions(receipt);
+    window.open(actions.whatsappLink, "_blank", "noopener,noreferrer");
+  };
+
+  const markReprint = (receipt) => {
+    const tracked = trackReceiptReprint(receipt, activeTenantContext);
+    if (!tracked.success) {
+      setError(tracked.message);
+      return;
+    }
+
+    setSuccess("Receipt reprint tracked.");
+    setVersion((current) => current + 1);
+    window.setTimeout(() => setSuccess(""), 3000);
+  };
 
   return (
     <ChitLayout
       title="Receipts"
-      subtitle="Payment receipts and documents"
+      subtitle="Production receipt preview, print, download and WhatsApp sharing"
       actions={
-        <Button variant="primary" icon={<FileText size={16} />}>
+        <Button variant="primary" icon={<FileText size={16} />} onClick={generateNextReceipt} loading={isGenerating}>
           Generate Receipt
         </Button>
       }
     >
       <div className="receipts-page">
+        {success && <div className="receipt-toast success">{success}</div>}
+        {error && (
+          <div className="receipt-toast error">
+            <span>{error}</span>
+            <button type="button" onClick={() => setError("")}>
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
         <div className="receipts-summary">
-          <div>
-            <span>Total Receipts</span>
-            <strong>{receipts.length}</strong>
-          </div>
-          <div>
-            <span>Receipt Value</span>
-            <strong>{formatCurrency(receipts.reduce((sum, receipt) => sum + Number(receipt.amount || 0), 0))}</strong>
-          </div>
-          <div>
-            <span>PDF Ready</span>
-            <strong>{receipts.filter((receipt) => receipt.can_print_pdf).length}</strong>
-          </div>
+          {pageModel.summary.map((item) => (
+            <div key={item.label}>
+              <span>{item.label}</span>
+              <strong>{typeof item.value === "number" && item.label.includes("Value") ? formatCurrency(item.value) : item.value}</strong>
+            </div>
+          ))}
         </div>
+
         <div className="receipts-table-card">
-          <Table columns={columns} data={receipts} actions={actions} />
+          {pageModel.receipts.length ? (
+            <ReceiptHistory
+              receipts={pageModel.receipts}
+              onPreview={setSelectedReceipt}
+              onPrint={openPrint}
+              onDownload={downloadReceipt}
+              onWhatsApp={shareWhatsApp}
+              onReprint={markReprint}
+            />
+          ) : (
+            <div className="receipt-empty-state">
+              <ReceiptText size={36} />
+              <h3>{pageModel.emptyState.title}</h3>
+              <p>{pageModel.emptyState.message}</p>
+              <Button variant="primary" icon={<FileText size={16} />} onClick={generateNextReceipt} loading={isGenerating}>
+                Generate From Collection
+              </Button>
+            </div>
+          )}
         </div>
       </div>
+
+      <Modal
+        isOpen={Boolean(selectedReceipt)}
+        title="Receipt Preview"
+        size="large"
+        onClose={() => setSelectedReceipt(null)}
+        footer={
+          <ReceiptActions
+            receipt={selectedReceipt}
+            activeTenantContext={activeTenantContext}
+            onError={setError}
+            onReprint={() => setVersion((current) => current + 1)}
+          />
+        }
+      >
+        <ReceiptPreview receipt={selectedReceipt} />
+      </Modal>
     </ChitLayout>
   );
+}
+
+function downloadTextFile(fileName, content, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 export default Receipts;

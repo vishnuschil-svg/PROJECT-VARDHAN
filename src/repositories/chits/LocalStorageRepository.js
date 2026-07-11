@@ -3,7 +3,7 @@ import {
   createPage,
   getTenantScope,
   requireTenantScope,
-} from "./repositoryContracts";
+} from "./repositoryContracts.js";
 
 export class LocalStorageRepository extends ChitRepositoryContract {
   constructor({
