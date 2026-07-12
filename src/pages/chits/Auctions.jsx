@@ -2,7 +2,6 @@ import {
   Award,
   CalendarDays,
   ClipboardList,
-  History,
   Play,
   Search,
   ShieldCheck,
@@ -21,7 +20,6 @@ import {
 } from "../../config/chitPhaseOneData";
 import {
   AUCTION_DRAW_DURATION_MS,
-  AUCTION_STATUS,
   AUCTION_TYPES,
   buildAuctionReports,
   calculateAuctionFinancials,
@@ -90,7 +88,6 @@ function Auctions() {
     [auctions, formData.chit_group_id, tenantMembers]
   );
 
-  const selectedWinner = eligibleMembers.find((member) => member.id === formData.winner_id);
   const projectedFinancials = calculateAuctionFinancials({
     group: selectedGroup,
     bidAmount: formData.bid_amount || formData.starting_bid,

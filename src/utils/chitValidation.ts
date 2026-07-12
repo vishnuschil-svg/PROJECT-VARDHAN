@@ -158,7 +158,7 @@ export const isValidEmail = (email: string): boolean => {
 export const isValidPhone = (phone: string): boolean => {
   // Accept 10-digit Indian phone numbers
   const phoneRegex = /^[6-9]\d{9}$/;
-  return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''));
+  return phoneRegex.test(phone.replace(/[\s-()]/g, ''));
 };
 
 export const isValidAadhaarMask = (mask: string): boolean => {
@@ -276,8 +276,6 @@ export const calculatePercentage = (value: number, total: number): number => {
  */
 export const isInCurrentFinancialYear = (date: string, startMonth: number = 4): boolean => {
   const d = new Date(date);
-  const today = new Date();
-
   const yearStart = new Date(d.getFullYear(), startMonth - 1, 1);
   const yearEnd = new Date(d.getFullYear() + 1, startMonth - 1, 0);
 

@@ -7,7 +7,6 @@ import {
   Search,
   ShieldCheck,
   UserRound,
-  WalletCards,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import ChitLayout from "../../components/chit/ChitLayout";

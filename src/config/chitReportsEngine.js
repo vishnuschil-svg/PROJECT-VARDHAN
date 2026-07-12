@@ -1,5 +1,5 @@
 import { buildFinanceAccountsEngine, formatFinanceCurrency } from "./chitFinanceAccounts";
-import { buildMemberLedger, formatLedgerCurrency } from "./chitMemberLedger";
+import { buildMemberLedger } from "./chitMemberLedger";
 
 export const REPORT_EXPORT_FORMATS = {
   PDF: "pdf",

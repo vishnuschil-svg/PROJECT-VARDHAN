@@ -1,3 +1,4 @@
+import { useId } from "react";
 import "./FormField.css";
 
 function FormField({
@@ -12,6 +13,8 @@ function FormField({
   options = [],
   rows = 4
 }) {
+  const controlId = `field-${useId().replaceAll(":", "")}`;
+  const errorId = `${controlId}-error`;
   const handleChange = (e) => {
     onChange?.(e.target.value);
   };
@@ -19,7 +22,7 @@ function FormField({
   return (
     <div className="form-field">
       {label && (
-        <label className="form-label">
+        <label className="form-label" htmlFor={controlId}>
           {label}
           {required && <span className="form-required">*</span>}
         </label>
@@ -27,6 +30,9 @@ function FormField({
 
       {type === "select" ? (
         <select
+          id={controlId}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? errorId : undefined}
           className={`form-input form-select ${error ? "error" : ""}`}
           value={value}
           onChange={handleChange}
@@ -41,6 +47,9 @@ function FormField({
         </select>
       ) : type === "textarea" ? (
         <textarea
+          id={controlId}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? errorId : undefined}
           className={`form-input form-textarea ${error ? "error" : ""}`}
           placeholder={placeholder}
           value={value}
@@ -51,6 +60,7 @@ function FormField({
       ) : type === "checkbox" ? (
         <div className="form-checkbox-wrapper">
           <input
+            id={controlId}
             type="checkbox"
             checked={value}
             onChange={handleChange}
@@ -60,6 +70,9 @@ function FormField({
         </div>
       ) : (
         <input
+          id={controlId}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? errorId : undefined}
           type={type}
           className={`form-input ${error ? "error" : ""}`}
           placeholder={placeholder}
@@ -69,7 +82,7 @@ function FormField({
         />
       )}
 
-      {error && <p className="form-error">{error}</p>}
+      {error && <p className="form-error" id={errorId} role="alert">{error}</p>}
     </div>
   );
 }

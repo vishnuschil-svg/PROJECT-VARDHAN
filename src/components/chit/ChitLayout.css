@@ -62,6 +62,7 @@
   position: relative;
   z-index: 1;
 }
+.chit-breadcrumbs{display:flex;align-items:center;gap:7px;margin-bottom:9px;color:rgba(255,255,255,.64);font-size:11px}.chit-breadcrumbs a{color:#d8ceff;text-decoration:none}.chit-breadcrumbs b{color:#fff}
 
 .chit-page-title {
   margin: 0 0 4px;
@@ -370,7 +371,7 @@
   }
 
   .chit-page-content {
-    padding: 18px;
+    padding: 18px 18px 84px;
   }
 
   .chit-page-title {

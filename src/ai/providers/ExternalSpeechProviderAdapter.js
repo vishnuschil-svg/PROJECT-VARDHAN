@@ -1,0 +1,1 @@
+export const ExternalSpeechProviderAdapter={name:"EXTERNAL_SPEECH_PROVIDER_ADAPTER",isConfigured(){return false},async transcribe(){throw new Error("Speech provider is not configured. No transcription was created.")},async narrate(){throw new Error("Speech provider is not configured. No audio was created.")}};

@@ -1,89 +1,38 @@
-import { useState } from "react";
-import { NavLink } from "react-router-dom";
-import {
-  Bell,
-  ClipboardList,
-  CreditCard,
-  FileBarChart,
-  FileText,
-  Folder,
-  Gift,
-  Landmark,
-  LayoutDashboard,
-  Layers3,
-  Scale,
-  ReceiptText,
-  Settings,
-  Target,
-  TrendingUp,
-  Users,
-  WalletCards,
-} from "lucide-react";
+import { NavLink, useLocation } from "react-router-dom";
+import { ClipboardList, FileBarChart, HandCoins, Headphones, Home, ReceiptText, Scale, Settings, Target, Users, WalletCards } from "lucide-react";
 import { CHIT_PRODUCT_NAME } from "../../config/erpModules";
 import "./ChitNavigation.css";
 
-const CHIT_MENU = [
-  { label: "Dashboard", icon: LayoutDashboard, path: "/chits" },
-  { label: "Chit Groups", icon: ClipboardList, path: "/chits/groups" },
-  { label: "Chit Batches", icon: Layers3, path: "/chits/batches" },
+export const CHIT_WORKFLOW_NAV = [
+  { label: "Home", icon: Home, path: "/chits", exact: true },
+  { label: "Chit Groups", icon: ClipboardList, path: "/chits/groups", related: [{ label: "Batches", path: "/chits/batches" }, { label: "Import documents", path: "/chits/documents" }] },
   { label: "Members", icon: Users, path: "/chits/members" },
-  { label: "Member Ledger", icon: Landmark, path: "/chits/member-ledger" },
   { label: "Collections", icon: WalletCards, path: "/chits/collections" },
-  { label: "Pending Collections", icon: ReceiptText, path: "/chits/collections/pending" },
-  { label: "Auctions", icon: Target, path: "/chits/auctions" },
-  { label: "Finance & Accounts", icon: Scale, path: "/chits/finance" },
-  { label: "Lucky Draw", icon: Gift, path: "/chits/lucky-draw" },
-  { label: "Payouts", icon: CreditCard, path: "/chits/payouts" },
-  { label: "Dividends", icon: TrendingUp, path: "/chits/dividends" },
-  { label: "Payment Receipts", icon: FileText, path: "/chits/receipts" },
+  { label: "Auctions and Lift", icon: Target, path: "/chits/auctions", related: [{ label: "Lucky draw", path: "/chits/lucky-draw" }] },
+  { label: "Pending and Follow-up", icon: HandCoins, path: "/chits/collections/pending", related: [{ label: "Reminders", path: "/chits/notifications" }] },
+  { label: "Receipts and Ledger", icon: ReceiptText, path: "/chits/receipts", related: [{ label: "Member ledger", path: "/chits/member-ledger" }] },
+  { label: "Finance and Profit", icon: Scale, path: "/chits/finance", related: [{ label: "Payouts", path: "/chits/payouts" }, { label: "Dividends", path: "/chits/dividends" }] },
   { label: "Reports", icon: FileBarChart, path: "/chits/reports" },
-  { label: "Documents", icon: Folder, path: "/chits/documents" },
-  { label: "Reminders", icon: Bell, path: "/chits/notifications" },
-  { label: "Settings", icon: Settings, path: "/chits/settings" },
+  { label: "Support", icon: Headphones, path: "/chits/support" },
+  { label: "Settings", icon: Settings, path: "/chits/settings", related: [{ label: "VARDHAN Academy", path: "/chits/academy" }] },
 ];
 
 function ChitNavigation() {
-  const [isOpen, setIsOpen] = useState(true);
-
-  return (
-    <nav className="chit-navigation" data-open={isOpen}>
-      <div className="chit-nav-header">
-        <h3>Chit Management ERP</h3>
-        <button
-          className="chit-nav-toggle"
-          type="button"
-          aria-label={isOpen ? "Collapse chit navigation" : "Expand chit navigation"}
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          {isOpen ? "<" : ">"}
-        </button>
-      </div>
-
-      <div className="chit-menu">
-        {CHIT_MENU.map((item) => {
-          const Icon = item.icon;
-
-          return (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) => `chit-menu-item ${isActive ? "active" : ""}`}
-              title={item.label}
-            >
-              <span className="chit-menu-icon">
-                <Icon size={17} />
-              </span>
-              <span className="chit-menu-label">{item.label}</span>
-            </NavLink>
-          );
-        })}
-      </div>
-
-      <div className="chit-nav-footer">
-        <p>{CHIT_PRODUCT_NAME}</p>
-      </div>
+  const location = useLocation();
+  return <>
+    <nav className="chit-navigation" aria-label="MITRA NIDHI workflow">
+      <div className="chit-nav-header"><div><span>VARDHAN OS</span><h3>{CHIT_PRODUCT_NAME}</h3></div></div>
+      <div className="chit-menu">{CHIT_WORKFLOW_NAV.map((item) => {
+        const Icon = item.icon; const active = isWorkflowActive(item, location.pathname);
+        return <div className="chit-menu-group" key={item.label}>
+          <NavLink to={item.path} end={item.exact} className={`chit-menu-item ${active ? "active" : ""}`}><span className="chit-menu-icon"><Icon size={18}/></span><span className="chit-menu-label">{item.label}</span></NavLink>
+          {active && item.related?.length > 0 && <div className="chit-related-links">{item.related.map((child) => <NavLink key={child.path} to={child.path}>{child.label}</NavLink>)}</div>}
+        </div>;
+      })}</div>
+      <div className="chit-nav-footer"><p>Workspace-aware · Tenant isolated</p></div>
     </nav>
-  );
+    <nav className="chit-bottom-navigation" aria-label="Mobile chit navigation">{CHIT_WORKFLOW_NAV.slice(0,5).map((item) => { const Icon=item.icon; return <NavLink key={item.path} to={item.path} end={item.exact}><Icon size={19}/><span>{item.label.split(" ")[0]}</span></NavLink>; })}</nav>
+  </>;
 }
-
+function isWorkflowActive(item, pathname) { return item.exact ? pathname === item.path : pathname === item.path || item.related?.some((child) => pathname.startsWith(child.path)); }
 export default ChitNavigation;

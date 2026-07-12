@@ -1,5 +1,4 @@
 import AdminLayout from "../../components/platform-admin/AdminLayout";
-import Badge from "../../components/common/Badge";
 import Button from "../../components/common/Button";
 import "./NotificationsPage.css";
 

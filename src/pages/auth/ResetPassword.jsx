@@ -1,77 +1,30 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { updatePassword } from "../../services/authService";
+import AccessShell from "../../components/auth/AccessShell";
+import { AccessProviderService } from "../../services/auth/AccessProviderService";
 
 function ResetPassword() {
   const [form, setForm] = useState({ password: "", confirmPassword: "" });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-
-  function updateField(e) {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  }
-
-  async function handleUpdatePassword(e) {
-    e.preventDefault();
-    setMessage("");
-
-    if (form.password.length < 8) {
-      setMessage("Password must be at least 8 characters.");
-      return;
-    }
-
-    if (form.password !== form.confirmPassword) {
-      setMessage("Passwords do not match.");
-      return;
-    }
-
+  async function handleUpdatePassword(event) {
+    event.preventDefault(); setMessage("");
+    if (form.password.length < 8) return setMessage("Use at least 8 characters for your new password.");
+    if (form.password !== form.confirmPassword) return setMessage("The passwords do not match.");
     setLoading(true);
-
-    try {
-      await updatePassword(form.password);
-      setMessage("Password updated successfully. You can now login.");
-      setForm({ password: "", confirmPassword: "" });
-    } catch (error) {
-      setMessage(error.message || "Unable to update password. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    try { await AccessProviderService.updatePassword(form.password); setMessage("Password updated. You can now sign in."); setForm({ password: "", confirmPassword: "" }); }
+    catch (error) { setMessage(error.message || "Password could not be updated. Try again."); }
+    finally { setLoading(false); }
   }
-
   return (
-    <div className="auth-page">
-      <form className="auth-card" onSubmit={handleUpdatePassword}>
-        <h1>VARDHAN ERP</h1>
-        <h2>Reset Password</h2>
-
-        {message && <div className="alert">{message}</div>}
-
-        <input
-          name="password"
-          value={form.password}
-          onChange={updateField}
-          type="password"
-          placeholder="New Password"
-          required
-        />
-        <input
-          name="confirmPassword"
-          value={form.confirmPassword}
-          onChange={updateField}
-          type="password"
-          placeholder="Confirm Password"
-          required
-        />
-        <button disabled={loading}>
-          {loading ? "Updating..." : "Update Password"}
-        </button>
-
-        <div className="auth-links">
-          <Link to="/login">Back to Login</Link>
-        </div>
+    <AccessShell eyebrow="Protected update" title="Create a new password" description="Your password is handled only by the configured authentication provider." footer={<Link to="/login">Back to sign in</Link>}>
+      <form className="access-form" onSubmit={handleUpdatePassword}>
+        {message && <div className="access-alert" role="status">{message}</div>}
+        <label>New password<input value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} type="password" autoComplete="new-password" required /></label>
+        <label>Confirm password<input value={form.confirmPassword} onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })} type="password" autoComplete="new-password" required /></label>
+        <button className="access-primary" disabled={loading}>{loading ? "Updating…" : "Update password"}</button>
       </form>
-    </div>
+    </AccessShell>
   );
 }
-
 export default ResetPassword;

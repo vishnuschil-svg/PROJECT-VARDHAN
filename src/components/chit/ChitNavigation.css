@@ -36,6 +36,9 @@
   white-space: nowrap;
   letter-spacing: 0;
 }
+.chit-nav-header span{display:block;margin-bottom:4px;color:#bba9ff;font-size:10px;font-weight:900;letter-spacing:.08em}
+.chit-menu-group{display:grid;gap:4px}.chit-related-links{display:grid;gap:3px;margin:0 6px 3px 43px}.chit-related-links a{padding:7px 8px;border-radius:8px;color:#b9c3d8;text-decoration:none;font-size:11px;font-weight:700}.chit-related-links a.active,.chit-related-links a:hover{color:#fff;background:rgba(255,255,255,.09)}
+.chit-bottom-navigation{display:none}
 
 .chit-nav-toggle {
   display: inline-flex;
@@ -147,18 +150,8 @@
 
 @media (max-width: 768px) {
   .chit-navigation {
-    position: fixed;
-    left: -240px;
-    top: 70px;
-    width: 240px;
-    height: calc(100vh - 70px);
-    border-right: 1px solid rgba(212, 175, 55, 0.24);
-    box-shadow: 18px 0 48px rgba(7, 17, 31, 0.32);
-    transition: left 0.3s ease;
-    z-index: 1000;
+    display:none;
   }
-
-  .chit-navigation[data-open="true"] {
-    left: 0;
-  }
+  .chit-bottom-navigation{position:fixed;z-index:1100;right:10px;bottom:9px;left:10px;display:grid;grid-template-columns:repeat(5,1fr);padding:7px;border:1px solid rgba(124,58,237,.18);border-radius:18px;background:rgba(255,255,255,.96);box-shadow:0 18px 45px rgba(15,23,42,.2);backdrop-filter:blur(18px)}
+  .chit-bottom-navigation a{display:grid;place-items:center;gap:3px;min-height:44px;border-radius:12px;color:#64748b;text-decoration:none;font-size:10px;font-weight:800}.chit-bottom-navigation a.active{color:#6d3ed4;background:#f2edff}
 }

@@ -1,8 +1,9 @@
-import { CheckCircle, Eye } from "lucide-react";
-import { useMemo } from "react";
+import { Eye } from "lucide-react";
+import { useMemo, useState } from "react";
 import ChitLayout from "../../components/chit/ChitLayout";
 import Table from "../../components/common/Table";
 import Badge from "../../components/common/Badge";
+import Modal from "../../components/common/Modal";
 import { buildMemberLedger } from "../../config/chitMemberLedger";
 import {
   formatCurrency,
@@ -14,6 +15,7 @@ import "./Dividends.css";
 
 function Dividends() {
   const { activeTenantContext } = useAuth();
+  const [selected, setSelected] = useState(null);
   const collections = useTenantCollections(activeTenantContext);
   const tenantGroups = useMemo(
     () => listTenantGroups(activeTenantContext),
@@ -53,10 +55,7 @@ function Dividends() {
     { key: "status", label: "Status", width: "100px", render: (val) => <Badge label={val} variant={val === "paid" ? "success" : val === "calculated" ? "primary" : "warning"} size="small" /> },
   ];
 
-  const actions = [
-    { icon: <Eye size={15} />, label: "View", onClick: () => {}, variant: "default" },
-    { icon: <CheckCircle size={15} />, label: "Approve", onClick: () => {}, variant: "success" },
-  ];
+  const actions = [{ icon: <Eye size={15} />, label: "View calculation", onClick: setSelected, variant: "default" }];
 
   return (
     <ChitLayout
@@ -66,6 +65,9 @@ function Dividends() {
       <div style={{ background: "var(--bg-primary)", borderRadius: 12, overflow: "hidden" }}>
         <Table columns={columns} data={dividends} actions={actions} />
       </div>
+      <Modal isOpen={Boolean(selected)} onClose={() => setSelected(null)} title="Dividend calculation evidence">
+        {selected && <div><p><strong>Member:</strong> {selected.member_id}</p><p><strong>Month:</strong> {selected.dividend_month}</p><p><strong>Dividend:</strong> {formatCurrency(selected.dividend_amount)}</p><p><strong>Source:</strong> Central member ledger adjustment</p><p>This derived value is read-only. Approval belongs to the underlying auction/rule workflow and is not simulated here.</p></div>}
+      </Modal>
     </ChitLayout>
   );
 }

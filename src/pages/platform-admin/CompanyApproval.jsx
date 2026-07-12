@@ -1,7 +1,6 @@
 import { useState } from "react";
 import AdminLayout from "../../components/platform-admin/AdminLayout";
 import Table from "../../components/common/Table";
-import Button from "../../components/common/Button";
 import Badge from "../../components/common/Badge";
 
 function CompanyApproval() {

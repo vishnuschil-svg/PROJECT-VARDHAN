@@ -50,6 +50,10 @@ const Reports = lazy(() => import("../pages/chits/Reports"));
 const ChitDocuments = lazy(() => import("../pages/chits/Documents"));
 const ChitNotifications = lazy(() => import("../pages/chits/Notifications"));
 const ChitSettings = lazy(() => import("../pages/chits/Settings"));
+const ChitSupport = lazy(() => import("../pages/chits/Support"));
+const AIWorkspace = lazy(() => import("../pages/chits/AIWorkspace"));
+const Academy = lazy(() => import("../pages/chits/Academy"));
+const PublicSite = lazy(() => import("../pages/public/PublicSite"));
 
 function RouteFallback() {
   return <div style={{ padding: 40 }}>Loading...</div>;
@@ -61,7 +65,13 @@ function AppRouter() {
       <ErrorBoundary>
         <Suspense fallback={<RouteFallback />}>
           <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<PublicSite />} />
+          {['vardhan-os','features','how-it-works','pricing','demo','trial','videos','tutorials','documentation','blogs','customer-stories','security','contact'].map((path) => <Route key={path} path={`/${path}`} element={<PublicSite />} />)}
+          <Route path="/products/mitra-nidhi-chiti-pro" element={<PublicSite />} />
+          <Route path="/products/school-erp" element={<PublicSite />} />
+          <Route path="/products/college-erp" element={<PublicSite />} />
+          <Route path="/products/private-hostels-erp" element={<PublicSite />} />
+          <Route path="/products/insurance-crm" element={<PublicSite />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -392,6 +402,18 @@ function AppRouter() {
               <ChitNotifications />
             </ProtectedRoute>
           }
+        />
+        <Route
+          path="/chits/academy"
+          element={<ProtectedRoute moduleId={CHIT_MANAGEMENT_ERP}><Academy /></ProtectedRoute>}
+        />
+        <Route
+          path="/chits/ai"
+          element={<ProtectedRoute moduleId={CHIT_MANAGEMENT_ERP}><AIWorkspace /></ProtectedRoute>}
+        />
+        <Route
+          path="/chits/support"
+          element={<ProtectedRoute moduleId={CHIT_MANAGEMENT_ERP}><ChitSupport /></ProtectedRoute>}
         />
         <Route
           path="/chits/settings"

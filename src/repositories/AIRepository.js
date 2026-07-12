@@ -31,6 +31,6 @@ function createAIPayload(intent, activeTenantContext) {
     intent,
     activeTenantContext,
     source: BusinessHealthRepository.getSnapshot(activeTenantContext),
-    provider: "mock",
+    provider: "local_deterministic",
   };
 }

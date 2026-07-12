@@ -1,0 +1,4 @@
+import { BusinessIdentityRepository } from "../repositories/BusinessIdentityRepository.js";
+export const DEFAULT_IDENTITY={businessName:"",logoDataUrl:"",primaryColor:"#6d3fc0",secondaryColor:"#253b80",branch:"",officialMobile:"",whatsappBusinessNumber:"",smsSenderId:"",officialEmail:"",domain:"",address:"",signature:"",footer:"",defaultLanguage:"en-IN",preferences:{whatsapp:false,sms:false,email:false,push:true}};
+export function getBusinessIdentity(context){return{...DEFAULT_IDENTITY,...BusinessIdentityRepository.get(context)}}
+export function saveBusinessIdentity(identity,context){if(!identity.businessName?.trim())throw new Error("Business name is required.");if(identity.logoDataUrl&&identity.logoDataUrl.length>400000)throw new Error("Logo is too large. Use an optimized image below 300 KB.");return BusinessIdentityRepository.save({...identity,businessName:identity.businessName.trim(),status:"configured"},context)}

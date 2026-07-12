@@ -1,0 +1,1 @@
+import { listScopedRows,upsertScopedRow } from "./scopedStorageRepository.js";const KEY="vardhan.academy.progress.v1";export const AcademyRepository={list:context=>listScopedRows(KEY,context),save:(row,context)=>upsertScopedRow(KEY,row,context,"learning-progress")};

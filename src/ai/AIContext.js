@@ -23,7 +23,7 @@ export function createAIContext({
     },
     metadata: {
       createdAt: new Date().toISOString(),
-      providerMode: "mock",
+      providerMode: "local_deterministic",
       supportsOCR: false,
       supportsVoice: false,
       ...metadata,

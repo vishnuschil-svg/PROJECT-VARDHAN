@@ -33,7 +33,6 @@ export function buildMemberLedger({ member, group, collections = [] }) {
   }
 
   const monthlyAmount = Number(group.monthly_amount || 0);
-  const chitValue = Number(group.chit_value || 0);
   const securityDeposit = Math.round(monthlyAmount * 0.35);
   const openingBalance = 0;
   const monthsElapsed = Math.max(

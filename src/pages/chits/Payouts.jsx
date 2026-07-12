@@ -1,8 +1,8 @@
-import { CheckCircle, CreditCard, Eye, Plus } from "lucide-react";
-import { useMemo } from "react";
+import { Eye } from "lucide-react";
+import { useMemo, useState } from "react";
 import ChitLayout from "../../components/chit/ChitLayout";
 import Table from "../../components/common/Table";
-import Button from "../../components/common/Button";
+import Modal from "../../components/common/Modal";
 import Badge from "../../components/common/Badge";
 import { buildMemberLedger } from "../../config/chitMemberLedger";
 import {
@@ -15,6 +15,7 @@ import "./Payouts.css";
 
 function Payouts() {
   const { activeTenantContext } = useAuth();
+  const [selected, setSelected] = useState(null);
   const collections = useTenantCollections(activeTenantContext);
   const tenantGroups = useMemo(
     () => listTenantGroups(activeTenantContext),
@@ -60,21 +61,19 @@ function Payouts() {
     { key: "status", label: "Status", width: "100px", render: (val) => <Badge label={val} variant={val === "paid" ? "success" : val === "pending" ? "warning" : "error"} size="small" /> },
   ];
 
-  const actions = [
-    { icon: <Eye size={15} />, label: "View", onClick: () => {}, variant: "default" },
-    { icon: <CheckCircle size={15} />, label: "Approve", onClick: () => {}, variant: "success" },
-    { icon: <CreditCard size={15} />, label: "Mark Paid", onClick: () => {}, variant: "primary" },
-  ];
+  const actions = [{ icon: <Eye size={15} />, label: "View payout evidence", onClick: setSelected, variant: "default" }];
 
   return (
     <ChitLayout
       title="Payouts"
       subtitle="Track chit amount payouts to winners"
-      actions={<Button variant="primary" icon={<Plus size={16} />}>New Payout</Button>}
     >
       <div style={{ background: "var(--bg-primary)", borderRadius: 12, overflow: "hidden" }}>
         <Table columns={columns} data={payouts} actions={actions} />
       </div>
+      <Modal isOpen={Boolean(selected)} onClose={() => setSelected(null)} title="Payout evidence">
+        {selected && <div><p><strong>Member:</strong> {selected.member_id}</p><p><strong>Month:</strong> {selected.payout_month}</p><p><strong>Payout:</strong> {formatCurrency(selected.total_payout_amount)}</p><p><strong>Status:</strong> Historical ledger record — paid</p><p>This view is derived from the member ledger. It cannot be approved or paid again, preventing duplicate finance posting.</p></div>}
+      </Modal>
     </ChitLayout>
   );
 }

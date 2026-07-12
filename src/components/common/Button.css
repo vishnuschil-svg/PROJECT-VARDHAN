@@ -128,6 +128,7 @@
 .btn-loading {
   color: rgba(255, 255, 255, 0.92);
 }
+.btn-spinner{width:15px;height:15px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:btn-spin .7s linear infinite}@keyframes btn-spin{to{transform:rotate(360deg)}}
 
 @media (max-width: 520px) {
   .btn {

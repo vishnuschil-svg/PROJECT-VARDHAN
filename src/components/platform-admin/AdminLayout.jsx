@@ -1,10 +1,7 @@
-import { useState } from "react";
 import AdminNavigation from "./AdminNavigation";
 import "./AdminLayout.css";
 
 function AdminLayout({ children, title, subtitle, actions = null }) {
-  const [navOpen, setNavOpen] = useState(false);
-
   return (
     <div className="admin-layout">
       <AdminNavigation />

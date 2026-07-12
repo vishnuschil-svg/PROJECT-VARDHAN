@@ -18,9 +18,10 @@ function Button({
       onClick={onClick}
       disabled={disabled || loading}
       aria-busy={loading}
+      aria-disabled={disabled || loading}
     >
       {icon && <span className="btn-icon">{icon}</span>}
-      {loading ? "Loading..." : children}
+      {loading ? <><span className="btn-spinner" aria-hidden="true" /><span>Working…</span></> : children}
     </button>
   );
 }

@@ -1,5 +1,6 @@
 import { MessageCircle, Pencil, ReceiptText } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ChitLayout from "../../components/chit/ChitLayout";
 import Table from "../../components/common/Table";
 import Badge from "../../components/common/Badge";
@@ -8,9 +9,12 @@ import { useAuth } from "../../hooks/useAuth";
 import { useTenantCollections } from "../../services/chitCollectionsStore";
 import { listTenantMembers } from "../../services/chitDataService";
 import "./PendingCollections.css";
+import { createMessageJob } from "../../services/communicationService";
 
 function PendingCollections() {
   const { activeTenantContext } = useAuth();
+  const navigate = useNavigate();
+  const [notice, setNotice] = useState("");
   const collections = useTenantCollections(activeTenantContext);
   const tenantMembers = useMemo(
     () => listTenantMembers(activeTenantContext),
@@ -57,9 +61,20 @@ function PendingCollections() {
     },
   ];
 
+  const sendReminder = (row) => {
+    const member = tenantMembers.find((item) => item.id === row.member_id);
+    const result = createMessageJob({
+      dedupeKey: `pending-${row.id}-${row.pending_amount}`,
+      type: "PAYMENT_PENDING",
+      channel: "MANUAL_SHARE",
+      memberId: row.member_id,
+      body: `Payment reminder for ${member?.member_name || "member"}: ${formatCurrency(row.pending_amount)} is pending for ${row.collection_month}.`,
+    }, activeTenantContext);
+    setNotice(result.success ? "Reminder prepared. Official provider delivery is not configured; use the manual share action from Communication Center." : result.message);
+  };
   const actions = [
-    { icon: <MessageCircle size={15} />, label: "Reminder", onClick: () => {}, variant: "warning" },
-    { icon: <Pencil size={15} />, label: "Update", onClick: () => {}, variant: "default" },
+    { icon: <MessageCircle size={15} />, label: "Prepare reminder", onClick: sendReminder, variant: "warning" },
+    { icon: <Pencil size={15} />, label: "Record payment", onClick: () => navigate("/chits/collections"), variant: "default" },
   ];
 
   return (
@@ -68,6 +83,7 @@ function PendingCollections() {
       subtitle="Members with partial or pending payments"
     >
       <div className="pending-collections-page">
+        {notice && <div className="pending-empty-state" role="status"><strong>{notice}</strong></div>}
         <div className="pending-summary">
           <div>
             <span>Pending Members</span>

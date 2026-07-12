@@ -1,0 +1,1 @@
+export const ExternalTranslationProviderAdapter={name:"EXTERNAL_TRANSLATION_PROVIDER_ADAPTER",isConfigured(){return false},async translate(){throw new Error("Translation provider is not configured. Original language content was preserved.")}};

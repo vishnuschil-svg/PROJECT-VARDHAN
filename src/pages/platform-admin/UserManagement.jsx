@@ -3,8 +3,6 @@ import AdminLayout from "../../components/platform-admin/AdminLayout";
 import Table from "../../components/common/Table";
 import Button from "../../components/common/Button";
 import Badge from "../../components/common/Badge";
-import Modal from "../../components/common/Modal";
-import FormField from "../../components/common/FormField";
 
 function UserManagement() {
   const [users] = useState([

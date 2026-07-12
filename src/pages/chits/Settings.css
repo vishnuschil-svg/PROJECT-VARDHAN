@@ -52,3 +52,4 @@
 .toggle-feature input {
   cursor: pointer;
 }
+.identity-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.identity-grid label,.settings-form>label{display:grid;gap:6px;color:#475569;font-size:12px;font-weight:800}.identity-grid input,.identity-grid select,.settings-form textarea,.settings-form select,.settings-form input{padding:10px;border:1px solid #dbe1eb;border-radius:10px}.settings-form textarea{min-height:110px}.identity-logo-preview{max-width:150px;max-height:80px;object-fit:contain;border:1px solid #e2e8f0;border-radius:10px}.settings-actions{grid-column:1/-1;display:flex;gap:10px}.message-preview{padding:12px;border-radius:12px;background:#f5f3ff}.settings-section svg{width:18px;vertical-align:middle}@media(max-width:650px){.identity-grid{grid-template-columns:1fr}}

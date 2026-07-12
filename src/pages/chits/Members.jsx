@@ -19,6 +19,8 @@ import {
 import { CHIT_PRODUCT_NAME } from "../../config/erpModules";
 import { useAuth } from "../../hooks/useAuth";
 import { listTenantGroups, listTenantMembers, saveTenantMember } from "../../services/chitDataService";
+import { useTenantCollections } from "../../services/chitCollectionsStore";
+import { buildMemberLedger } from "../../config/chitMemberLedger";
 import "./Members.css";
 
 const EMPTY_MEMBER = {
@@ -42,6 +44,7 @@ const EMPTY_MEMBER = {
 
 function Members() {
   const { activeTenantContext } = useAuth();
+  const collections = useTenantCollections(activeTenantContext);
   const [members, setMembers] = useState([]);
   const [groups, setGroups] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -199,7 +202,7 @@ function Members() {
   ];
 
   const profileTabs = profileMember
-    ? getMemberProfileTabs(profileMember, tenantGroups, activeTenantContext)
+    ? getMemberProfileTabs(profileMember, tenantGroups, collections, activeTenantContext)
     : [];
 
   return (
@@ -443,8 +446,9 @@ function Members() {
   );
 }
 
-function getMemberProfileTabs(member, groups, activeTenantContext) {
+function getMemberProfileTabs(member, groups, collections, activeTenantContext) {
   const assignedGroup = groups.find((group) => group.id === member.chit_group_id);
+  const ledger = buildMemberLedger({ member, group: assignedGroup, collections });
   const groupName = getMemberGroupName(member, groups);
   const activityItems = [
     {
@@ -550,37 +554,25 @@ function getMemberProfileTabs(member, groups, activeTenantContext) {
     {
       label: "Payment History",
       content: (
-        <EmptyProfilePanel
-          title="Payment history will appear here"
-          message="Collection posting, dues, paid months, and balance history are intentionally not implemented in this phase."
-        />
+        <ProfileSection>{ledger.transactions.map((item) => <ProfileItem key={item.id} label={`${item.month} · ${item.receipt_no}`} value={`Paid Rs ${Number(item.collection).toLocaleString("en-IN")} · Balance Rs ${Number(item.balance).toLocaleString("en-IN")}`} wide />)}</ProfileSection>
       ),
     },
     {
       label: "Lift History",
       content: (
-        <EmptyProfilePanel
-          title="Lift history foundation"
-          message="Auction lift details and payout tracking will be connected when auction and payout modules are built."
-        />
+        <ProfileSection>{ledger.transactions.filter(item => item.lift > 0).map(item => <ProfileItem key={item.id} label={item.month} value={`Rs ${Number(item.lift).toLocaleString("en-IN")}`} wide />)}</ProfileSection>
       ),
     },
     {
       label: "Dividend History",
       content: (
-        <EmptyProfilePanel
-          title="Dividend history foundation"
-          message="Dividend calculations are reserved for the future collections and auction workflow."
-        />
+        <ProfileSection>{ledger.transactions.filter(item => item.dividend > 0).map(item => <ProfileItem key={item.id} label={item.month} value={`Rs ${Number(item.dividend).toLocaleString("en-IN")}`} wide />)}</ProfileSection>
       ),
     },
     {
       label: "Receipts",
       content: (
-        <EmptyProfilePanel
-          title="Receipt register foundation"
-          message="Receipts will be generated after collection logic and receipt numbering are implemented."
-        />
+        <ProfileSection>{ledger.transactions.filter(item => item.receipt_no !== "-").map(item => <ProfileItem key={item.id} label={item.receipt_no} value={`${item.month} · Rs ${Number(item.collection).toLocaleString("en-IN")}`} wide />)}</ProfileSection>
       ),
     },
     {

@@ -44,15 +44,6 @@ function ChitGroups() {
 
   const tenantGroups = useMemo(() => groups, [groups]);
 
-  const openCreate = () => {
-    setFormData({
-      ...EMPTY_GROUP,
-      chit_code: getNextGroupCode(tenantGroups),
-    });
-    setError("");
-    setModalMode("create");
-  };
-
   const openEdit = (row) => {
     setFormData(row);
     setError("");

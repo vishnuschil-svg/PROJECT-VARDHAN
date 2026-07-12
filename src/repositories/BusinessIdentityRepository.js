@@ -1,0 +1,1 @@
+import { listScopedRows,upsertScopedRow } from "./scopedStorageRepository.js";const KEY="vardhan.business.identity.v1";export const BusinessIdentityRepository={get(context){return listScopedRows(KEY,context)[0]||null},save(identity,context){return upsertScopedRow(KEY,identity,context,"business-identity")}};

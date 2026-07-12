@@ -133,8 +133,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 32px;
-  min-height: 32px;
+  min-width: 40px;
+  min-height: 40px;
 }
 
 .action-btn.action-default {
@@ -250,8 +250,9 @@
   }
 
   .action-buttons {
-    flex-direction: column;
-    gap: 4px;
+    flex-direction: row;
+    gap: 6px;
+    min-width: max-content;
   }
 
   .table-pagination {
