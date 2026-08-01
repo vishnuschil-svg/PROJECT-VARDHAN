@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import ChitLayout from "../../components/chit/ChitLayout";
 import Table from "../../components/common/Table";
 import Badge from "../../components/common/Badge";
+import HelpButton from "../../components/common/HelpButton";
 import { formatCurrency } from "../../config/chitPhaseOneData";
 import { useAuth } from "../../hooks/useAuth";
 import { useTenantCollections } from "../../services/chitCollectionsStore";
@@ -81,6 +82,7 @@ function PendingCollections() {
     <ChitLayout
       title="Pending Collections"
       subtitle="Members with partial or pending payments"
+      actions={<HelpButton feature="PENDING_COLLECTIONS" variant="secondary"/>}
     >
       <div className="pending-collections-page">
         {notice && <div className="pending-empty-state" role="status"><strong>{notice}</strong></div>}

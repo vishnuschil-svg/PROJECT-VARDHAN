@@ -7,6 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "test": "node --test \"src/tests/**/*.test.mjs\"",
+    "verify:migrations": "node scripts/verify-migrations.mjs",
+    "verify:production": "node scripts/verify-production-config.mjs",
+    "verify:staging-env": "node scripts/validate-staging-env.mjs",
     "lint": "oxlint",
     "preview": "vite preview"
   },

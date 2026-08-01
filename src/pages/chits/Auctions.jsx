@@ -15,6 +15,7 @@ import Button from "../../components/common/Button";
 import Badge from "../../components/common/Badge";
 import Modal from "../../components/common/Modal";
 import FormField from "../../components/common/FormField";
+import HelpButton from "../../components/common/HelpButton";
 import {
   formatCurrency,
 } from "../../config/chitPhaseOneData";
@@ -311,9 +312,7 @@ function Auctions() {
       title="Auction & Lift Engine"
       subtitle={`${CHIT_PRODUCT_NAME} Phase 4 auction, lift and dividend management`}
       actions={
-        <Button variant="primary" icon={<Play size={16} />} onClick={openStartAuction}>
-          Start Auction
-        </Button>
+        <><Button variant="primary" icon={<Play size={16} />} onClick={openStartAuction}>Start Auction</Button><HelpButton feature="AUCTIONS" variant="secondary"/></>
       }
     >
       <div className="auction-page">

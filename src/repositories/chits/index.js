@@ -5,6 +5,8 @@ export { GroupsRepository } from "./GroupsRepository.js";
 export { MembersRepository } from "./MembersRepository.js";
 export { ReceiptsRepository } from "./ReceiptsRepository.js";
 export { ReportsRepository } from "./ReportsRepository.js";
+export { LedgerRepository } from "../LedgerRepository.js";
+export { PayoutRepository } from "../PayoutRepository.js";
 export {
   ChitRepositoryContract,
   createPage,

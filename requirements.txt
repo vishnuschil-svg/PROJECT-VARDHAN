@@ -1,0 +1,8 @@
+asyncpg>=0.30,<1
+cryptography>=44,<46
+fastapi>=0.115,<1
+pyjwt>=2.10,<3
+pydantic>=2.10,<3
+python-multipart>=0.0.20,<1
+redis>=5,<7
+uvicorn[standard]>=0.34,<1

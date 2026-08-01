@@ -1,5 +1,6 @@
 import { createContext, useCallback, useEffect, useState } from "react";
 import { PermissionService, SessionService, WorkspaceService } from "../services/auth";
+import { SupabaseAuthService } from "../services/auth/SupabaseAuthService";
 
 export const AuthContext = createContext(null);
 
@@ -79,16 +80,32 @@ export function AuthProvider({ children }) {
   }, [clearAuthState]);
 
   const loadUser = useCallback(async () => {
+    console.log("[AuthContext] loadUser called");
     const session = await SessionService.refreshSession();
+    console.log("[AuthContext] Session from refreshSession:", session ? "Session exists" : "No session");
+    console.log("[AuthContext] Session user:", session?.user ? "User exists" : "No user");
+    console.log("[AuthContext] Session profile:", session?.profile ? "Profile exists" : "No profile");
     applySession(session);
 
   }, [applySession]);
 
   useEffect(() => {
-
     loadUser();
 
-  }, [loadUser]);
+    const unsubscribe = SupabaseAuthService.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        clearAuthState();
+      } else if (session?.user) {
+        applySession(session);
+      }
+    });
+
+    return () => {
+      if (typeof unsubscribe === "function") {
+        unsubscribe();
+      }
+    };
+  }, [loadUser, clearAuthState, applySession]);
 
   return (
 

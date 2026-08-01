@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import ChitLayout from "../../components/chit/ChitLayout";
 import Button from "../../components/common/Button";
 import Modal from "../../components/common/Modal";
+import HelpButton from "../../components/common/HelpButton";
 import ReceiptActions from "../../components/receipts/ReceiptActions";
 import ReceiptHistory from "../../components/receipts/ReceiptHistory";
 import ReceiptPreview from "../../components/receipts/ReceiptPreview";
@@ -99,17 +100,15 @@ function Receipts() {
       title="Receipts"
       subtitle="Production receipt preview, print, download and WhatsApp sharing"
       actions={
-        <Button variant="primary" icon={<FileText size={16} />} onClick={generateNextReceipt} loading={isGenerating}>
-          Generate Receipt
-        </Button>
+        <><Button variant="primary" icon={<FileText size={16} />} onClick={generateNextReceipt} loading={isGenerating}>Generate Receipt</Button><HelpButton feature="RECEIPTS" variant="secondary"/></>
       }
     >
       <div className="receipts-page">
-        {success && <div className="receipt-toast success">{success}</div>}
+        {success && <div className="receipt-toast success" role="status" aria-live="polite">{success}</div>}
         {error && (
-          <div className="receipt-toast error">
+          <div className="receipt-toast error" role="alert">
             <span>{error}</span>
-            <button type="button" onClick={() => setError("")}>
+            <button type="button" aria-label="Dismiss receipt error" onClick={() => setError("")}>
               <X size={14} />
             </button>
           </div>

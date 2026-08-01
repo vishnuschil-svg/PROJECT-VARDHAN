@@ -1,27 +1,82 @@
-# Logs
-logs
+# Environment and local credentials
+.env
+.env.*
+!.env.example
+!backend/.env.example
+*.local
+backend/.env
+backend/.env.test.local
+*.test.local
+*.token
+*.tokens
+
+# Node dependencies and generated output
+node_modules/
+dist/
+dist-ssr/
+build/
+coverage/
+.vite/
+
+# Python bytecode and tool caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Browser automation profiles and session databases
+artifacts/
+**/Cookies
+**/Cookies-journal
+**/Login Data
+**/Login Data-journal
+**/Login Data For Account
+**/Login Data For Account-journal
+**/Web Data
+**/Web Data-journal
+**/Local State
+**/Session Storage/
+**/Crashpad/
+*.dmp
+
+# Logs and local runtime data
+logs/
 *.log
+*.log.*
+*.pid
+*.sock
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-.env
-*.local
+# Supabase CLI project metadata
+supabase/.temp/
 
-# Editor directories and files
+# Temporary files, backups, and local archives
+backup-*/
+*-backup/
+*.backup.*
+*.bak
+*.tmp
+*.temp
+~$*
+VARDHAN_AI_UPLOAD_AUDIT_BATCH*.zip
+
+# Deployment/editor/OS state
+.vercel/
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
+Thumbs.db
+desktop.ini
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-
-.vercel

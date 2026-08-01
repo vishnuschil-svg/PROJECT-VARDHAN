@@ -1,4 +1,4 @@
-import { applyReportFilters, normalizeReportFilters } from "./ReportFilters";
+import { applyReportFilters, normalizeReportFilters } from "./ReportFilters.js";
 
 export const REPORT_MODULES = {
   CHIT: "MITRA_NIDHI_CHITI_PRO",
@@ -26,6 +26,7 @@ export const DEFAULT_REPORTS = [
   createDefinition("expense-report", "Expense Report", "Expense and debited finance entries.", "Finance"),
   createDefinition("commission-report", "Commission Report", "Auction commission register.", "Finance"),
   createDefinition("profit-report", "Profit Report", "Income, expense, commission and pending-aware profit.", "Finance"),
+  createDefinition("trial-balance", "Trial Balance", "Account-wise debit and credit balance verification.", "Finance"),
   createDefinition("inactive-members", "Inactive Members", "Members needing reactivation or data review.", "Members"),
   createDefinition("top-paying-members", "Top Paying Members", "Highest value members by paid collections.", "Members"),
   createDefinition("staff-collection-report", "Staff Collection Report", "Collection performance grouped by staff.", "Collections"),
@@ -101,6 +102,7 @@ function buildRows(reportId, source = {}) {
     "lucky-draw-report": () => buildAuctionRows(source).filter((row) => row.type === "lucky draw" || row.title.toLowerCase().includes("draw")),
     "profit-loss": () => buildProfitRows(source),
     "profit-report": () => buildProfitRows(source),
+    "trial-balance": () => buildTrialBalanceRows(source.financeEntries),
     "cash-book": () => buildFinanceBookRows(source.financeEntries, "cash"),
     "bank-book": () => buildFinanceBookRows(source.financeEntries, "bank"),
     "income-report": () => buildIncomeRows(source),
@@ -271,6 +273,28 @@ function buildFinanceBookRows(financeEntries = [], mode) {
   }));
 }
 
+function buildTrialBalanceRows(financeEntries = []) {
+  const accounts = new Map();
+  financeEntries.forEach((entry) => {
+    const account = entry.account || entry.category || entry.type || "Uncategorized";
+    const current = accounts.get(account) || { debit: 0, credit: 0 };
+    const explicitDebit = Number(entry.debit || entry.cash_out || entry.bank_out || 0);
+    const explicitCredit = Number(entry.credit || entry.cash_in || entry.bank_in || 0);
+    const fallbackAmount = Number(entry.amount || 0);
+    current.debit += explicitDebit || (isExpenseEntry(entry) ? fallbackAmount : 0);
+    current.credit += explicitCredit || (isIncomeEntry(entry) ? fallbackAmount : 0);
+    accounts.set(account, current);
+  });
+  return [...accounts.entries()].map(([account, totals]) => ({
+    id: `trial-${account}`,
+    title: account,
+    status: "posted",
+    debit: totals.debit,
+    credit: totals.credit,
+    balance: totals.debit - totals.credit,
+  }));
+}
+
 function buildIncomeRows(source) {
   return [
     ...buildCollectionRows(source.collections).map((collection) => ({
@@ -408,6 +432,7 @@ function getCardMetrics(reportId, stats) {
 }
 
 function getColumnsForReport(reportId) {
+  if (reportId === "trial-balance") return ["title", "status", "debit", "credit", "balance"];
   if (reportId === "business-summary" || reportId.includes("profit")) return ["title", "status", "amount"];
   if (reportId.includes("collection")) return ["date", "title", "staffId", "paymentMode", "status", "amount", "pendingAmount"];
   if (reportId.includes("member") || reportId.includes("passbook")) return ["date", "title", "memberNumber", "status", "amount", "pendingAmount", "balance"];

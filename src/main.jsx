@@ -12,7 +12,16 @@ import "./styles/access.css";
 import "./styles/product-polish.css";
 import DevBanner from "./components/common/DevBanner";
 import { runInternalTrialBusinessDataCleanup } from "./services/internalTrialCleanupService";
+import { resolveRepositoryBackend } from "./config/repositoryBackend.js";
+import { isSupabaseConfigured } from "./lib/supabase/SupabaseClient.js";
+import { initializeApplicationMonitoring } from "./lib/monitoring/initializeMonitoring.js";
 
+const repositoryBackend = resolveRepositoryBackend();
+initializeApplicationMonitoring({
+  repositoryBackend,
+  appMode: import.meta.env.VITE_APP_MODE || import.meta.env.MODE,
+  supabaseConfigured: isSupabaseConfigured,
+});
 runInternalTrialBusinessDataCleanup();
 
 ReactDOM.createRoot(document.getElementById("root")).render(

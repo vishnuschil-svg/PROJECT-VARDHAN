@@ -18,9 +18,10 @@ export function WorkspaceProvider({ children }) {
       workspaceService.loadWorkspaces({
         authWorkspaces: workspaceOptions,
         company,
+        activeAuthWorkspace: authWorkspace,
       })
     );
-  }, [company, workspaceOptions]);
+  }, [authWorkspace, company, workspaceOptions]);
 
   useEffect(() => {
     loadWorkspaceState();

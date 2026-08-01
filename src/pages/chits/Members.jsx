@@ -7,6 +7,7 @@ import Badge from "../../components/common/Badge";
 import Modal from "../../components/common/Modal";
 import FormField from "../../components/common/FormField";
 import Tabs from "../../components/common/Tabs";
+import HelpButton from "../../components/common/HelpButton";
 import {
   MEMBER_STATUS,
   MEMBER_STATUS_VARIANTS,
@@ -128,14 +129,6 @@ function Members() {
     if (!formData.member_name.trim()) return "Member Name is required.";
     if (!formData.member_number.trim()) return "Member ID / Member Number is required.";
     if (!formData.mobile_number.trim()) return "Mobile Number is required.";
-    if (!formData.whatsapp_number.trim()) return "WhatsApp Number is required.";
-    if (!formData.address.trim()) return "Address is required.";
-    if (!formData.aadhaar_masked.trim()) return "Aadhaar Number is required.";
-    if (!formData.nominee_name.trim()) return "Nominee Name is required.";
-    if (!formData.nominee_mobile.trim()) return "Nominee Mobile is required.";
-    if (!formData.bank_name.trim()) return "Bank Name is required.";
-    if (!formData.account_number_masked.trim()) return "Account Number is required.";
-    if (!formData.ifsc.trim()) return "IFSC is required.";
     if (!formData.chit_group_id) return "Assigned Chit Group is required.";
     if (!formData.join_date) return "Join Date is required.";
     return "";
@@ -210,9 +203,7 @@ function Members() {
       title="Member Management"
       subtitle={`${CHIT_PRODUCT_NAME} - ${activeTenantContext?.workspace_label || "Tenant"} members`}
       actions={
-        <Button variant="primary" icon={<UserPlus size={16} />} onClick={openCreate}>
-          Add Member
-        </Button>
+        <><Button variant="primary" icon={<UserPlus size={16} />} onClick={openCreate}>Add Member</Button><HelpButton feature="MEMBERS" variant="secondary"/></>
       }
     >
       <div className="members-page">
@@ -321,7 +312,6 @@ function Members() {
             label="WhatsApp Number"
             value={formData.whatsapp_number}
             onChange={(value) => handleChange("whatsapp_number", value)}
-            required
           />
           <FormField
             label="Email"
@@ -334,13 +324,11 @@ function Members() {
             type="textarea"
             value={formData.address}
             onChange={(value) => handleChange("address", value)}
-            required
           />
           <FormField
             label="Aadhaar Number"
             value={formData.aadhaar_masked}
             onChange={(value) => handleChange("aadhaar_masked", value)}
-            required
           />
           <FormField
             label="PAN"
@@ -351,31 +339,26 @@ function Members() {
             label="Nominee Name"
             value={formData.nominee_name}
             onChange={(value) => handleChange("nominee_name", value)}
-            required
           />
           <FormField
             label="Nominee Mobile"
             value={formData.nominee_mobile}
             onChange={(value) => handleChange("nominee_mobile", value)}
-            required
           />
           <FormField
             label="Bank Name"
             value={formData.bank_name}
             onChange={(value) => handleChange("bank_name", value)}
-            required
           />
           <FormField
             label="Account Number"
             value={formData.account_number_masked}
             onChange={(value) => handleChange("account_number_masked", value)}
-            required
           />
           <FormField
             label="IFSC"
             value={formData.ifsc}
             onChange={(value) => handleChange("ifsc", value)}
-            required
           />
           <FormField
             label="Assigned Chit Group"

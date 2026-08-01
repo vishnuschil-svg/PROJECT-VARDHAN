@@ -1,4 +1,6 @@
 import { Component } from "react";
+import { getLogger } from "../../lib/monitoring/Logger.js";
+import { getMetricsCollector } from "../../lib/monitoring/MetricsCollector.js";
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -11,6 +13,12 @@ class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, info) {
+    getMetricsCollector().incrementCounter("application_errors_total", 1, { boundary: "root" });
+    getLogger().error("Unhandled application error", {
+      error_name: error?.name,
+      error_message: error?.message,
+      component_stack: info?.componentStack,
+    });
     if (this.props.onError) {
       this.props.onError(error, info);
     }

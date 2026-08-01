@@ -3,3 +3,6 @@ export { GroupsRepository } from "./GroupsRepository.js";
 export { CollectionsRepository } from "./CollectionsRepository.js";
 export { ReceiptsRepository } from "./ReceiptsRepository.js";
 export { FinanceRepository } from "./FinanceRepository.js";
+export { AuctionRepository } from "./AuctionRepository.js";
+export { PayoutRepository } from "./PayoutRepository.js";
+export { LedgerRepository } from "./LedgerRepository.js";

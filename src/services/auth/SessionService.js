@@ -1,20 +1,21 @@
 import { AuthService } from "./AuthService";
+import { SupabaseAuthService } from "./SupabaseAuthService.js";
 import { PermissionService } from "./PermissionService";
 import { WorkspaceService } from "./WorkspaceService";
 
 export const SessionService = {
   async login(credentials) {
-    const session = await AuthService.login(credentials);
+    const session = await getAuthService().login(credentials);
     return this.hydrateSession(session);
   },
 
   async logout() {
-    const session = await AuthService.logout();
+    const session = await getAuthService().logout();
     return this.hydrateSession(session);
   },
 
   async refreshSession() {
-    const session = await AuthService.refreshSession();
+    const session = await getAuthService().refreshSession();
     return this.hydrateSession(session);
   },
 
@@ -64,3 +65,23 @@ export const SessionService = {
     };
   },
 };
+
+function getAuthService() {
+  const mode = String(import.meta.env.VITE_APP_MODE || import.meta.env.MODE || "").toLowerCase();
+  const repositoryBackend = String(import.meta.env.VITE_REPOSITORY_BACKEND || "").toLowerCase();
+  const isSupabaseBackend = repositoryBackend === "supabase";
+
+  // Check if Supabase is actually configured with credentials
+  const hasSupabaseCredentials = Boolean(
+    import.meta.env.VITE_SUPABASE_URL &&
+    import.meta.env.VITE_SUPABASE_ANON_KEY
+  );
+
+  // Use Supabase auth if explicitly configured or in production mode with Supabase backend
+  const useSupabase = hasSupabaseCredentials ||
+                      (mode === "production" || mode === "prod") && isSupabaseBackend;
+
+  console.log("[SessionService] getAuthService - mode:", mode, "repositoryBackend:", repositoryBackend, "hasSupabaseCredentials:", hasSupabaseCredentials, "useSupabase:", useSupabase);
+
+  return useSupabase ? SupabaseAuthService : AuthService;
+}

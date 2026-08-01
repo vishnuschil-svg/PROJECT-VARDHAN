@@ -72,6 +72,10 @@ export class SupabaseRepository {
     });
   }
 
+  async list(options = {}) {
+    return this.getAll(options);
+  }
+
   async search(queryText = "", options = {}) {
     return this.execute(async () => {
       const filters = {

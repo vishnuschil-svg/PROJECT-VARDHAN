@@ -2,8 +2,9 @@ import { AISmartCapture } from "../../ai/AISmartCapture.js";
 import { AIChitPlanDesigner } from "../../ai/AIChitPlanDesigner.js";
 import { AIChitDraftRepository } from "../../repositories/AIChitDraftRepository.js";
 
-export async function captureChitPattern({ file, manualText }) {
-  return AISmartCapture.capture({ file, manualText });
+export async function captureChitPattern({ file, manualText, activeTenantContext }) {
+  console.log("[aiSmartCaptureService] captureChitPattern called, file:", file?.name, "activeTenantContext:", activeTenantContext?.workspaceId);
+  return AISmartCapture.capture({ file, manualText, activeTenantContext });
 }
 
 export function confirmCapturedChitDraft({ capture, corrections = {}, activeTenantContext }) {

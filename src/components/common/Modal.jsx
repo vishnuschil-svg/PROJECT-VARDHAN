@@ -5,15 +5,17 @@ import "./Modal.css";
 function Modal({ isOpen, title, children, onClose, footer, size = "medium" }) {
   const dialogRef = useRef(null);
   const previousFocusRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   useEffect(() => {
     if (!isOpen) return undefined;
     previousFocusRef.current = document.activeElement;
     const timer = window.setTimeout(() => dialogRef.current?.focus(), 0);
-    const handleKey = (event) => { if (event.key === "Escape") onClose?.(); };
+    const handleKey = (event) => { if (event.key === "Escape") onCloseRef.current?.(); };
     document.addEventListener("keydown", handleKey);
     document.body.style.overflow = "hidden";
     return () => { window.clearTimeout(timer); document.removeEventListener("keydown", handleKey); document.body.style.overflow = ""; previousFocusRef.current?.focus?.(); };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
   if (!isOpen) return null;
   const titleId = title ? `modal-title-${String(title).toLowerCase().replace(/[^a-z0-9]+/g, "-")}` : undefined;
   return <div className="modal-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose?.(); }}>

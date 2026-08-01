@@ -64,8 +64,8 @@ export function getBusinessHealthDashboardModel(activeTenantContext) {
       },
       {
         label: "Monthly Collection",
-        value: formatCurrency(metrics.monthlyCollection),
-        helper: "Current cycle",
+        value: formatCurrency(metrics.collectedAmount),
+        helper: "Collected this cycle",
         iconKey: ICON_KEYS.MONTHLY_COLLECTION,
         tone: "neutral",
       },

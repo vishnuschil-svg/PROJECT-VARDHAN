@@ -1,5 +1,3 @@
-import { MEMBER_STATUS } from "./chitMemberData";
-
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export function getLedgerVisibleRecords({ members = [], groups = [], activeTenantContext, platformOwner = false }) {
@@ -44,20 +42,15 @@ export function buildMemberLedger({ member, group, collections = [] }) {
       collection.member_id === member.id &&
       (collection.chit_group_id === group.id || collection.group_id === group.id)
   );
-  const paidMonths = memberCollections.length
-    ? memberCollections.filter((collection) => Number(collection.paid_amount || 0) > 0).length
-    : member.status === MEMBER_STATUS.ACTIVE ? Math.max(1, monthsElapsed - 1) : 0;
+  const paidMonths = memberCollections.filter(
+    (collection) => Number(collection.paid_amount || 0) > 0
+  ).length;
   const pendingInstallments = Math.max(monthsElapsed - paidMonths, 0);
-  const transactions = memberCollections.length
-    ? buildCollectionTransactions({ collections: memberCollections, group, securityDeposit })
-    : buildTransactions({
-      member,
-      group,
-      monthlyAmount,
-      monthsElapsed,
-      paidMonths,
-      securityDeposit,
-    });
+  const transactions = buildCollectionTransactions({
+    collections: memberCollections,
+    group,
+    securityDeposit,
+  });
   const totals = transactions.reduce(
     (sum, transaction) => ({
       collection: sum.collection + transaction.collection,
@@ -222,41 +215,6 @@ export function formatLedgerCurrency(value) {
   return `Rs ${Number(value || 0).toLocaleString("en-IN")}`;
 }
 
-function buildTransactions({ member, group, monthlyAmount, monthsElapsed, paidMonths, securityDeposit }) {
-  let balance = securityDeposit;
-  const transactions = [];
-
-  for (let index = 0; index < monthsElapsed; index += 1) {
-    const date = addMonths(group.start_date, index, 12 + (index % 12));
-    const isPaid = index < paidMonths;
-    const collection = isPaid ? monthlyAmount : 0;
-    const fine = !isPaid ? Math.round(monthlyAmount * 0.025) : index % 4 === 0 ? 100 : 0;
-    const discount = isPaid && index % 5 === 0 ? 250 : 0;
-    const dividend = isPaid && index > 0 ? Math.round(monthlyAmount * (0.035 + (index % 3) * 0.01)) : 0;
-    const lift = index === 2 && member.id.endsWith("001") ? Math.round(Number(group.chit_value || 0) * 0.82) : 0;
-    const adjustment = dividend - fine + discount;
-
-    balance = Math.max(balance + monthlyAmount + fine - collection - discount - dividend - lift, 0);
-
-    transactions.push({
-      id: `${member.id}-txn-${index + 1}`,
-      receipt_no: isPaid ? `MNCP-${group.chit_code}-${String(index + 1).padStart(3, "0")}` : "-",
-      date,
-      month: `${MONTH_NAMES[new Date(date).getMonth()]} ${new Date(date).getFullYear()}`,
-      chit_group_id: group.id,
-      collection,
-      fine,
-      discount,
-      dividend,
-      lift,
-      adjustment,
-      balance,
-    });
-  }
-
-  return transactions;
-}
-
 function buildCollectionTransactions({ collections, group, securityDeposit }) {
   let balance = securityDeposit;
 
@@ -334,13 +292,6 @@ function createEmptyLedger() {
     transactions: [],
     timeline: [],
   };
-}
-
-function addMonths(startDate, offset, day = 12) {
-  const date = new Date(startDate || new Date());
-  date.setMonth(date.getMonth() + offset);
-  date.setDate(Math.min(day, 28));
-  return date.toISOString().slice(0, 10);
 }
 
 function getMonthDifference(startDate, endDate) {

@@ -6,6 +6,7 @@ import Button from "../../components/common/Button";
 import Badge from "../../components/common/Badge";
 import Modal from "../../components/common/Modal";
 import FormField from "../../components/common/FormField";
+import HelpButton from "../../components/common/HelpButton";
 import { getMemberGroupName } from "../../config/chitMemberData";
 import { formatCurrency } from "../../config/chitPhaseOneData";
 import {
@@ -322,9 +323,7 @@ function Collections() {
       title="Collections"
       subtitle={`${CHIT_PRODUCT_NAME} production installment collection workflow`}
       actions={
-        <Button variant="primary" icon={<Plus size={16} />} onClick={openRecordModal}>
-          Record Collection
-        </Button>
+        <><Button variant="primary" icon={<Plus size={16} />} onClick={openRecordModal}>Record Collection</Button><HelpButton feature="COLLECTIONS" variant="secondary"/></>
       }
     >
       <div className="collections-page">

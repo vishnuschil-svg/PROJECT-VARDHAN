@@ -7,7 +7,18 @@ import { AccountingValidator } from "../validators/AccountingValidator.js";
 export const AccountingEngine = {
   normalizeSource(source = {}) {
     const financeEntries = source.financeEntries || [];
-    const collectionIncome = (source.collections || []).map((collection) => new Income(collection));
+    const postedCollectionKeys = new Set(financeEntries.flatMap((entry) => [
+      String(entry.id || "").replace(/^finance-/, ""),
+      String(entry.receipt_no || entry.receipt_number || entry.receiptNumber || ""),
+    ]).filter(Boolean));
+    const collectionIncome = (source.collections || [])
+      .filter((collection) => ![
+        collection.id,
+        collection.receipt_no,
+        collection.receipt_number,
+        collection.receiptNumber,
+      ].some((key) => key && postedCollectionKeys.has(String(key))))
+      .map((collection) => new Income(collection));
 
     return {
       cashTransactions: financeEntries.map((entry) => new CashTransaction(entry)),

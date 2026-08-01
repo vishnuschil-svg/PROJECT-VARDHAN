@@ -4,17 +4,15 @@ import {
   WORKSPACE_STATUS,
   WorkspaceRepository,
 } from "../repositories/WorkspaceRepository";
+import { resolveInitialWorkspace } from "./workspaceSelection.js";
 
 export { LICENSE_TYPES, WORKSPACE_MODULES, WORKSPACE_STATUS };
 
 export const workspaceService = {
-  loadWorkspaces({ authWorkspaces = [], company = null } = {}) {
+  loadWorkspaces({ authWorkspaces = [], company = null, activeAuthWorkspace = null } = {}) {
     const workspaces = WorkspaceRepository.listWorkspaces({ authWorkspaces, company });
     const persistedId = WorkspaceRepository.getPersistedWorkspaceId();
-    const activeWorkspace =
-      workspaces.find((workspace) => workspace.id === persistedId) ||
-      workspaces[0] ||
-      null;
+    const activeWorkspace = resolveInitialWorkspace({ workspaces, persistedId, activeAuthWorkspace });
 
     WorkspaceRepository.setCurrentWorkspace(activeWorkspace);
 

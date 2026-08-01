@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Bell, Menu, Moon, Search, Sun } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useTheme } from "../../hooks/useTheme";
 import { isPlatformOwner } from "../../config/erpModules";
+import { getNotificationCenter } from "../../services/notificationService";
 
 function Topbar({ onMenuToggle }) {
+  const navigate = useNavigate();
   const {
     user,
     profile,
@@ -20,6 +23,7 @@ function Topbar({ onMenuToggle }) {
 
   const userInitial = user?.email?.charAt(0).toUpperCase() || "U";
   const canSwitchWorkspace = isPlatformOwner(profile, role);
+  const unreadCount = useMemo(() => getNotificationCenter(activeTenantContext).unreadCount, [activeTenantContext]);
 
   return (
     <header className="topbar">
@@ -64,17 +68,17 @@ function Topbar({ onMenuToggle }) {
         )}
 
         <div className="search-bar-wrapper">
-          <div className="search-bar">
+          <button className="search-bar" type="button" onClick={() => document.getElementById("dashboard-v2-search")?.focus()} aria-label="Focus dashboard search">
             <Search size={16} />
-            <input type="text" placeholder="Search..." disabled />
-          </div>
+            <span>Search dashboard</span><kbd>Ctrl K</kbd>
+          </button>
         </div>
       </div>
 
       <div className="topbar-right">
-        <button className="topbar-button" type="button" title="Notifications" aria-label="Notifications">
+        <button className="topbar-button" type="button" title="Notifications" aria-label={`${unreadCount} unread notifications`} onClick={() => navigate("/admin/notifications")}>
           <Bell size={18} />
-          <span className="notification-badge">3</span>
+          {unreadCount > 0 && <span className="notification-badge">{unreadCount > 99 ? "99+" : unreadCount}</span>}
         </button>
 
         <button

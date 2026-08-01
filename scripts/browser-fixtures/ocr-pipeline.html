@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OCR pipeline browser verification</title>
+  <style>
+    body { font: 15px system-ui; margin: 28px; color: #172033; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #d8deea; padding: 8px; text-align: left; }
+    .PASS { color: #087443; font-weight: 700; }
+    .FAIL { color: #b42318; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>AI document extraction browser verification</h1>
+  <table>
+    <thead><tr><th>Fixture</th><th>OCR</th><th>Normalization</th><th>Draft</th><th>Validation</th><th>Workspace fields</th></tr></thead>
+    <tbody id="results"></tbody>
+  </table>
+  <script type="module">
+    import { generateBusinessUnderstanding } from "/src/services/universalBusinessRuleService.js";
+    import { OCRProviderError } from "/src/ai/providers/ExternalOCRProviderAdapter.js";
+    import React from "react";
+    import { createRoot } from "react-dom/client";
+    import { BusinessWorkspace } from "/src/pages/chits/AIChitFlow.jsx";
+
+    const rows = [];
+    const fields = ["chitName", "chitValue", "duration", "memberCount", "installmentPattern"];
+    const response = (score = .94) => ({
+      status: "SUCCESS", documentId: `browser-${score}`, provider: "browser-mock-vision",
+      rawText: "Chit Name: Browser Gold", documentType: "CHIT_REGISTER", languageDetected: "ENGLISH",
+      extraction: {
+        chitName: "Browser Gold", chitCode: null, organizerName: null, chitValue: 100000,
+        durationMonths: 20, memberCount: 20, monthlyInstallment: 5000,
+        installmentPattern: "FIXED_MONTHLY", members: [],
+        installmentSchedule: Array.from({length: 20}, (_, i) => ({monthNumber: i + 1, standardPayment: 5000, confidence: score})),
+        auctionHistory: [], collections: [], dividends: [],
+      },
+      confidence: {overallScore: score, fieldScores: Object.fromEntries(fields.map(k => [k, score])), mathValidated: true, requiresHumanReview: score < .88},
+      missingFields: [], warnings: [],
+    });
+    const adapter = score => ({extract: async () => response(score)});
+    const manual = "Chit Name: Manual Gold; Chit Value: 60000; Duration: 12; Members: 12; Installment: 5000; Fixed Monthly";
+    const mixed = "చిట్ పేరు: మిత్ర నిధి; మొత్తం: ౬౦౦౦౦; కాలం: ౧౨; సభ్యుల సంఖ్య: ౧౨; వాయిదా: ౫౦౦౦; స్థిర వాయిదా";
+
+    await run("JPG printed chit", await imageFile("jpg", "image/jpeg"), {ocrAdapter: adapter(.94)});
+    await run("PNG screenshot", await imageFile("png", "image/png"), {ocrAdapter: adapter(.94)});
+    await run("PDF chit sheet", new File(["%PDF-1.7\nBrowser Gold 100000 20 20"], "chit.pdf", {type: "application/pdf"}), {ocrAdapter: adapter(.94)});
+    await run("JSON document", new File([JSON.stringify({
+      chitName: "JSON Gold", chitValue: 60000, duration: 12, memberCount: 12,
+      monthlyPayment: 5000, installmentPattern: "FIXED_MONTHLY",
+    })], "chit.json", {type: "application/json"}), {}, false, "NOT EXECUTED");
+    await run("Natural English fallback", await imageFile("jpg", "image/jpeg"), {manualText: manual, ocrAdapter: failedAdapter()}, false, "FAIL");
+    await run("Telugu/English fallback", await imageFile("png", "image/png"), {manualText: mixed, ocrAdapter: failedAdapter()}, false, "FAIL");
+    await runFailure("Provider failure", await imageFile("jpg", "image/jpeg"));
+    await run("Low confidence", await imageFile("jpg", "image/jpeg"), {ocrAdapter: adapter(.74)}, true);
+
+    window.__OCR_BROWSER_RESULTS__ = rows;
+    document.body.dataset.complete = "true";
+
+    async function run(name, file, options, expectLow = false, ocrStatus = "PASS") {
+      try {
+        const result = await generateBusinessUnderstanding(file, {workspaceId: "browser-workspace", ...options});
+        const populated = fields.every(key => result.draft.business[key]?.value !== null);
+        const lowVisible = !expectLow || result.confidence === .74;
+        const workspacePopulated = populated && await verifyBusinessWorkspace(result, expectLow);
+        add(name, ocrStatus, populated && lowVisible ? "PASS" : "FAIL", populated ? "PASS" : "FAIL", result.validation.status, workspacePopulated && lowVisible ? "PASS" : "FAIL");
+      } catch (error) {
+        add(name, "FAIL", "FAIL", "FAIL", error.code || "FAIL", "FAIL");
+      }
+    }
+    async function runFailure(name, file) {
+      try {
+        await generateBusinessUnderstanding(file, {workspaceId: "browser-workspace", ocrAdapter: failedAdapter()});
+        add(name, "FAIL", "NOT EXECUTED", "NOT EXECUTED", "NOT EXECUTED", "FAIL");
+      } catch (error) {
+        add(name, "FAIL", "NOT EXECUTED", "NOT EXECUTED", "NOT EXECUTED", error.code === "OCR_TIMEOUT" ? "NOT EXECUTED" : "FAIL");
+      }
+    }
+    function failedAdapter() {
+      return {extract: async () => { throw new OCRProviderError("OCR_TIMEOUT", "Simulated provider timeout.", {retryable: true}); }};
+    }
+    async function imageFile(extension, type) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 900; canvas.height = 600;
+      const context = canvas.getContext("2d");
+      context.fillStyle = "white"; context.fillRect(0, 0, canvas.width, canvas.height);
+      context.fillStyle = "black"; context.font = "30px sans-serif";
+      ["Chit Name: Browser Gold", "Chit Value: 100000", "Duration: 20 months", "Members: 20", "Monthly Installment: 5000", "Pattern: Fixed Monthly"]
+        .forEach((line, index) => context.fillText(line, 50, 80 + index * 70));
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, type, .92));
+      return new File([blob], `printed-chit.${extension}`, {type});
+    }
+    async function verifyBusinessWorkspace(result, expectLow) {
+      const host = document.createElement("div");
+      host.style.display = "none";
+      document.body.append(host);
+      const root = createRoot(host);
+      root.render(React.createElement(BusinessWorkspace, {
+        draft: result.draft,
+        setDraft: () => {},
+        setValidation: () => {},
+        normalizedJSON: result.normalizedJSON,
+        analysisLegacy: result.legacy,
+        state: {
+          reviewState: expectLow ? "low_confidence" : "ready_for_review",
+          extractionConfidence: result.confidence,
+        },
+        update: () => {},
+        go: () => {},
+        context: {tenant_id: "browser-tenant", data_scope: "browser-scope"},
+        step: "review",
+      }));
+      await new Promise(resolve => setTimeout(resolve, 50));
+      const coreButton = [...host.querySelectorAll("button")].find(button => button.textContent.includes("Core Fields"));
+      coreButton?.click();
+      await new Promise(resolve => setTimeout(resolve, 50));
+      const controls = [...host.querySelectorAll(".bw-detail-fields input, .bw-detail-fields select")];
+      const values = controls.slice(0, 5).map(control => control.value);
+      const expected = fields.map(key => String(result.draft.business[key].value));
+      const lowBanner = !expectLow || host.textContent.includes("Some extracted fields need review");
+      root.unmount();
+      host.remove();
+      return expected.every(value => values.includes(value)) && lowBanner;
+    }
+    function add(name, ocr, normalization, draft, validation, workspace) {
+      const result = {name, ocr, normalization, draft, validation, workspace};
+      rows.push(result);
+      const tr = document.createElement("tr");
+      tr.innerHTML = [name, ocr, normalization, draft, validation, workspace]
+        .map((value, index) => `<${index ? "td" : "th"} class="${value}">${value}</${index ? "td" : "th"}>`).join("");
+      document.querySelector("#results").append(tr);
+    }
+  </script>
+</body>
+</html>

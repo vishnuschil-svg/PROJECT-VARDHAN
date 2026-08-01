@@ -1,0 +1,141 @@
+.academy-page {
+  padding: 1rem;
+}
+
+.academy-search-bar {
+  margin-bottom: 1.5rem;
+}
+
+.academy-courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.academy-course-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.academy-course-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.academy-course-header span {
+  color: #3b82f6;
+}
+
+.academy-course-card h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.academy-course-card > p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.academy-course-card small {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.academy-media-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.academy-media-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #334155;
+  transition: all 0.2s;
+}
+
+.academy-media-actions button:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.academy-media-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.academy-complete-button {
+  background: #22c55e !important;
+  color: white !important;
+  border-color: #22c55e !important;
+}
+
+.academy-complete-button:hover:not(:disabled) {
+  background: #16a34a !important;
+  border-color: #16a34a !important;
+}
+
+.academy-provider-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  max-width: 400px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.academy-provider-modal button {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.academy-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+  color: #64748b;
+}
+
+.academy-empty-state h3 {
+  margin: 1rem 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: #475569;
+}
+
+.academy-empty-state p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #64748b;
+}

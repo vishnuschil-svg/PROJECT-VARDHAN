@@ -4,7 +4,8 @@ import ErrorBoundary from "../components/common/ErrorBoundary";
 import ProtectedRoute from "./ProtectedRoute";
 import { CHIT_MANAGEMENT_ERP } from "../config/erpModules";
 
-const Login = lazy(() => import("../pages/auth/Login"));
+const AuthLayout = lazy(() => import("../layouts/AuthLayout"));
+const PremiumLogin = lazy(() => import("../pages/auth/PremiumLogin"));
 const Register = lazy(() => import("../pages/auth/Register"));
 const ForgotPassword = lazy(() => import("../pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("../pages/auth/ResetPassword"));
@@ -32,6 +33,7 @@ const Notifications = lazy(() => import("../pages/platform-admin/NotificationsPa
 const AuditLogs = lazy(() => import("../pages/platform-admin/AuditLogs"));
 const BackupRestore = lazy(() => import("../pages/platform-admin/BackupRestore"));
 const SystemSettings = lazy(() => import("../pages/platform-admin/SystemSettings"));
+const ProductionHealth = lazy(() => import("../pages/platform-admin/ProductionHealth"));
 
 const ChitDashboard = lazy(() => import("../pages/chits/ChitDashboard"));
 const ChitGroups = lazy(() => import("../pages/chits/ChitGroups"));
@@ -53,6 +55,7 @@ const ChitSettings = lazy(() => import("../pages/chits/Settings"));
 const ChitSupport = lazy(() => import("../pages/chits/Support"));
 const AIWorkspace = lazy(() => import("../pages/chits/AIWorkspace"));
 const Academy = lazy(() => import("../pages/chits/Academy"));
+const AIChitFlow = lazy(() => import("../pages/chits/AIChitFlow"));
 const PublicSite = lazy(() => import("../pages/public/PublicSite"));
 
 function RouteFallback() {
@@ -72,7 +75,9 @@ function AppRouter() {
           <Route path="/products/college-erp" element={<PublicSite />} />
           <Route path="/products/private-hostels-erp" element={<PublicSite />} />
           <Route path="/products/insurance-crm" element={<PublicSite />} />
-          <Route path="/login" element={<Login />} />
+          <Route element={<AuthLayout />}>
+            <Route path="/login" element={<PremiumLogin />} />
+          </Route>
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
@@ -266,6 +271,14 @@ function AppRouter() {
           }
         />
         <Route
+          path="/admin/health"
+          element={
+            <ProtectedRoute platformOnly>
+              <ProductionHealth />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin/settings"
           element={
             <ProtectedRoute platformOnly>
@@ -402,6 +415,10 @@ function AppRouter() {
               <ChitNotifications />
             </ProtectedRoute>
           }
+        />
+        <Route
+          path="/chits/ai-chit/*"
+          element={<ProtectedRoute moduleId={CHIT_MANAGEMENT_ERP}><AIChitFlow /></ProtectedRoute>}
         />
         <Route
           path="/chits/academy"

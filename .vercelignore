@@ -1,0 +1,16 @@
+/artifacts/
+/.git/
+/.github/
+/.npm/
+/.agents/
+/.codex/
+/dist/
+/docs/
+/frontend/
+/supabase/
+/src/tests/
+**/__pycache__/
+*.zip
+*.log
+SPRINT_*.md
+INTERNAL_TRIAL_DEFECT_REGISTER_*.md

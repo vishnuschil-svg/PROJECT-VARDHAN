@@ -1,0 +1,9 @@
+.health-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
+.health-card { display: flex; justify-content: space-between; gap: 12px; padding: 18px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-primary); text-transform: capitalize; }
+.health-card .ready { color: #15803d; }
+.health-card .missing, .health-error { color: #b91c1c; }
+.health-summary { margin-bottom: 20px; padding: 14px 18px; border-radius: 10px; background: var(--bg-secondary); text-transform: capitalize; font-weight: 700; }
+.health-summary.healthy { color: #15803d; }
+.health-summary.degraded { color: #b45309; }
+.health-error { padding: 16px; border: 1px solid currentColor; border-radius: 10px; }
+.health-timestamp { margin-top: 20px; color: var(--text-secondary); font-size: 13px; }

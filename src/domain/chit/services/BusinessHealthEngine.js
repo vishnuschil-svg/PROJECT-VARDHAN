@@ -53,7 +53,7 @@ export const BusinessHealthEngine = {
       ? collections.reduce((sum, collection) => sum + Number(collection.pending_amount || collection.pendingAmount || 0), 0)
       : groups.reduce((sum, group) => sum + Number(group.pending_collections || group.pendingCollections || 0), 0);
     const financeIncome = financeEntries
-      .filter((entry) => isIncomeEntry(entry))
+      .filter((entry) => isIncomeEntry(entry) && String(entry.category || "").toLowerCase() !== "collection")
       .reduce((sum, entry) => sum + Number(entry.amount || entry.cash_in || entry.bank_in || 0), 0);
     const financeExpense = financeEntries
       .filter((entry) => isExpenseEntry(entry))
@@ -67,6 +67,7 @@ export const BusinessHealthEngine = {
       activeMembers: activeMembers.length,
       todayCollection,
       monthlyCollection,
+      collectedAmount,
       pendingAmount,
       collectionRate: ChitCalculationEngine.toPercent(collectedAmount, monthlyCollection),
       pendingRate: ChitCalculationEngine.toPercent(pendingAmount, monthlyCollection),

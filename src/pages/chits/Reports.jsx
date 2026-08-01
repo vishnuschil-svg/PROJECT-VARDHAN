@@ -9,6 +9,7 @@ import { useMemo, useState } from "react";
 import ChitLayout from "../../components/chit/ChitLayout";
 import Badge from "../../components/common/Badge";
 import Button from "../../components/common/Button";
+import HelpButton from "../../components/common/HelpButton";
 import ReportExportMenu from "../../components/reports/ReportExportMenu";
 import ReportFilters from "../../components/reports/ReportFilters";
 import ReportSummary from "../../components/reports/ReportSummary";
@@ -71,6 +72,7 @@ function Reports() {
     <ChitLayout
       title="Reports Engine"
       subtitle={`${CHIT_PRODUCT_NAME} operational, ledger, finance and outstanding reports`}
+      actions={<HelpButton feature="REPORTS" variant="secondary"/>}
     >
       <div className="reports-page">
         <section className="reports-hero">

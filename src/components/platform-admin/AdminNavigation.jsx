@@ -20,6 +20,7 @@ const ADMIN_MENU = [
   { label: "Notifications", icon: "NT", path: "/admin/notifications" },
   { label: "Audit Logs", icon: "AL", path: "/admin/audit-logs" },
   { label: "Backup & Restore", icon: "BK", path: "/admin/backup" },
+  { label: "Production Health", icon: "HL", path: "/admin/health" },
   { label: "System Settings", icon: "ST", path: "/admin/settings" },
 ];
 

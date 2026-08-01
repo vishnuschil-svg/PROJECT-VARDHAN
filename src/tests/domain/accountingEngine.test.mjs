@@ -21,3 +21,25 @@ test("finance engines build cash and bank books without UI calculations", () => 
   assert.equal(normalized.income.length, 3);
   assert.equal(normalized.expenses.length, 1);
 });
+
+test("a posted collection is normalized as income exactly once", () => {
+  const normalized = AccountingEngine.normalizeSource({
+    financeEntries: [{
+      id: "finance-collection-1",
+      type: "income",
+      amount: 10000,
+      cash_in: 10000,
+      receipt_no: "RCP-1",
+      date: "2026-07-13",
+    }],
+    collections: [{
+      id: "collection-1",
+      paid_amount: 10000,
+      receipt_number: "RCP-1",
+      payment_date: "2026-07-13",
+    }],
+  });
+
+  assert.equal(normalized.income.length, 1);
+  assert.equal(normalized.income[0].amount, 10000);
+});

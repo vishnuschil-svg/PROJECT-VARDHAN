@@ -55,6 +55,7 @@ function SmartChitCapture({ activeTenantContext, intent = "image" }) {
   };
 
   const runCapture = async () => {
+    console.log("[SmartChitCapture] runCapture called, file:", file?.name, "manualText length:", manualText.length, "activeTenantContext:", activeTenantContext?.workspaceId);
     if (!file && !manualText.trim()) {
       setMessage("Upload a file or paste chit pattern text for manual extraction mode.");
       return;
@@ -62,11 +63,14 @@ function SmartChitCapture({ activeTenantContext, intent = "image" }) {
     setIsBusy(true);
     setMessage("");
     try {
-      const result = await captureChitPattern({ file, manualText });
+      console.log("[SmartChitCapture] Calling captureChitPattern with file:", file?.name, "workspaceId:", activeTenantContext?.workspaceId);
+      const result = await captureChitPattern({ file, manualText, activeTenantContext });
+      console.log("[SmartChitCapture] captureChitPattern returned:", result);
       setCapture(result);
       setCorrections(Object.fromEntries(Object.entries(result.fields).map(([key, field]) => [key, field.value])));
       setMessage(result.message || "Captured fields are ready for review.");
     } catch (error) {
+      console.error("[SmartChitCapture] captureChitPattern error:", error);
       setMessage(error.message || "Unable to capture chit pattern.");
     } finally {
       setIsBusy(false);

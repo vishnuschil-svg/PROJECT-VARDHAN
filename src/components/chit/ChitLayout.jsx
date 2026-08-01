@@ -4,7 +4,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useLocation, Link } from "react-router-dom";
 import "./ChitLayout.css";
 
-function ChitLayout({ title, subtitle, actions, children }) {
+function ChitLayout({ title, subtitle, actions, children, showFloatingAI = true }) {
   const { activeTenantContext } = useAuth();
   const location = useLocation();
   return (
@@ -23,7 +23,7 @@ function ChitLayout({ title, subtitle, actions, children }) {
         )}
         <div className="chit-page-content">{children}</div>
       </div>
-      <VardhanAIFloatingAssistant activeTenantContext={activeTenantContext} />
+      {showFloatingAI && <VardhanAIFloatingAssistant activeTenantContext={activeTenantContext} />}
     </div>
   );
 }

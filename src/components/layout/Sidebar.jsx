@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { getAccessibleModules, isPlatformOwner, PLATFORM_NAME } from "../../config/erpModules";
 import { getProductsWithSubscriptionState } from "../../config/productLicensing";
@@ -76,9 +77,10 @@ function Sidebar({ isOpen, onClose }) {
   };
 
   return (
-    <aside className={`sidebar ${isOpen ? "open" : ""}`}>
+    <aside className={`sidebar ${isOpen ? "open" : ""}`} aria-label="Primary product navigation">
       <div className="sidebar-header">
         <h2>{PLATFORM_NAME}</h2>
+        <button className="sidebar-mobile-close" type="button" onClick={onClose} aria-label="Close navigation"><X size={18} /></button>
       </div>
 
       <div className="sidebar-content">
