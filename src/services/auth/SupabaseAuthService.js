@@ -270,6 +270,8 @@ export const SupabaseAuthService = {
       },
       company: {
         id: tenantContext.tenant_id,
+        workspace_id: tenantContext.workspace_id,
+        workspaceId: tenantContext.workspace_id,
         customer_id: tenantContext.tenant_id,
         tenant_id: tenantContext.tenant_id,
         company_name: user.user_metadata?.company_name || "Default Company",

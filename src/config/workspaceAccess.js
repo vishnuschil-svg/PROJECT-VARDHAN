@@ -61,22 +61,40 @@ export function getPlatformOwnerWorkspaces() {
 }
 
 export function getCustomerWorkspace(company) {
+  const declaredScope = company?.data_scope || company?.dataScope || null;
   const isDemo =
     company?.tenant_type === CUSTOMER_TYPES.DEMO_CUSTOMER ||
-    company?.data_scope === CUSTOMER_DATA_SCOPES.DEMO_SANDBOX;
+    declaredScope === CUSTOMER_DATA_SCOPES.DEMO_SANDBOX;
+  const isOwnBusiness =
+    company?.tenant_type === CUSTOMER_TYPES.OWN_BUSINESS ||
+    declaredScope === CUSTOMER_DATA_SCOPES.OWN_BUSINESS;
   const customerType = isDemo
     ? CUSTOMER_TYPES.DEMO_CUSTOMER
-    : CUSTOMER_TYPES.REAL_BUSINESS_CUSTOMER;
+    : isOwnBusiness
+      ? CUSTOMER_TYPES.OWN_BUSINESS
+      : CUSTOMER_TYPES.REAL_BUSINESS_CUSTOMER;
   const tenantId = company?.tenant_id || company?.id || null;
-  const dataScope = isDemo
-    ? CUSTOMER_DATA_SCOPES.DEMO_SANDBOX
-    : CUSTOMER_DATA_SCOPES.REAL_TENANT;
+  const dataScope =
+    declaredScope ||
+    (isDemo
+      ? CUSTOMER_DATA_SCOPES.DEMO_SANDBOX
+      : CUSTOMER_DATA_SCOPES.REAL_TENANT);
+  const workspaceId = company?.workspace_id || company?.workspaceId || null;
 
   return {
-    id: isDemo ? WORKSPACE_TYPES.DEMO_CUSTOMERS : WORKSPACE_TYPES.PAID_CUSTOMERS,
+    id:
+      workspaceId ||
+      (isDemo
+        ? WORKSPACE_TYPES.DEMO_CUSTOMERS
+        : WORKSPACE_TYPES.PAID_CUSTOMERS),
+    workspace_id: workspaceId,
+    workspaceId,
     label: CUSTOMER_ACCESS_LABELS[customerType],
     customerId: company?.customer_id || company?.id || null,
-    customerName: company?.company_name || company?.full_name || "Customer Workspace",
+    customerName:
+      company?.company_name ||
+      company?.full_name ||
+      "Customer Workspace",
     tenantId,
     tenant_id: tenantId,
     customerType,

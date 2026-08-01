@@ -4,6 +4,7 @@ import asyncio
 import base64
 import json
 import os
+import re
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -80,6 +81,15 @@ class UrllibJsonTransport:
             with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
                 raw = response.read(5_000_001)
         except urllib.error.HTTPError as exc:
+            # Read the error response body to get provider details (sanitized)
+            error_body = ""
+            try:
+                error_body = exc.read(5_000).decode("utf-8", errors="replace").strip()
+                # Sanitize: extract only safe diagnostic fields
+                error_data = _sanitize_provider_error(error_body)
+            except Exception:
+                error_data = {}
+
             code = (
                 "OCR_RATE_LIMIT"
                 if exc.code == 429
@@ -87,9 +97,16 @@ class UrllibJsonTransport:
                 if exc.code in {502, 503}
                 else "OCR_FAILED"
             )
+
+            # Build a safe diagnostic message
+            safe_msg = f"Vision provider returned HTTP {exc.code}."
+            if error_data.get("error_message"):
+                # Include only the sanitized error message, never the full body
+                safe_msg = f"Vision provider returned HTTP {exc.code}: {error_data['error_message']}"
+
             raise VisionProviderError(
                 code,
-                f"Vision provider returned HTTP {exc.code}.",
+                safe_msg,
                 retryable=exc.code in {429, 502, 503},
             ) from exc
         except (urllib.error.URLError, TimeoutError) as exc:
@@ -116,6 +133,42 @@ class UrllibJsonTransport:
                 "OCR_SCHEMA_INVALID", "Vision provider response must be a JSON object."
             )
         return result
+
+
+def _sanitize_provider_error(raw_body: str) -> dict[str, Any]:
+    """Extract safe diagnostic fields from a provider error response.
+
+    Never returns: API keys, full URLs, auth tokens, image data, or document contents.
+    """
+    result: dict[str, Any] = {}
+    try:
+        err = json.loads(raw_body)
+        # Gemini error format: {"error": {"code": 400, "message": "...", "status": "..."}}
+        if isinstance(err, dict) and "error" in err:
+            error_obj = err["error"]
+            if isinstance(error_obj, dict):
+                msg = error_obj.get("message", "")
+                # Sanitize: only keep the first sentence or first 200 chars, strip any secrets
+                if msg:
+                    # Keep only the first sentence for safety
+                    first_sentence = msg.split(". ")[0].split(".\n")[0][:200]
+                    # Remove any API-key-like patterns
+                    sanitized = re.sub(
+                        r'API_KEY[^"\']*|api_key[^"\']*|key[=:]\s*\S{10,}',
+                        "[REDACTED]",
+                        first_sentence,
+                        flags=re.IGNORECASE,
+                    )
+                    result["error_message"] = sanitized
+                result["error_status"] = error_obj.get("status", "")
+                # Only include code if it's an integer HTTP status
+                code_val = error_obj.get("code")
+                if isinstance(code_val, int):
+                    result["error_code"] = code_val
+    except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
+        # If we can't parse the error, don't include it
+        pass
+    return result
 
 
 @dataclass(frozen=True)
@@ -156,7 +209,57 @@ class GeminiVisionProvider:
                 "OCR_NOT_CONFIGURED", "Vision extraction is not configured."
             )
         model_name = urllib.parse.quote(self.model, safe="-._")
-        payload = {
+
+        # Strategy 1: Try with structured output (responseSchema)
+        # Strategy 2: Fallback to plain JSON request without schema
+        # Strategy 3: Fallback to plain text request
+
+        strategies = [
+            ("structured", self._build_structured_payload),
+            ("json_plain", self._build_json_plain_payload),
+            ("text", self._build_text_payload),
+        ]
+
+        last_error: VisionProviderError | None = None
+        for strategy_name, build_fn in strategies:
+            try:
+                payload = build_fn(content, mime_type, document_type, language_hint)
+                response = await self._request_with_retry(
+                    f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent",
+                    payload,
+                    retry_timeouts=strategy_name != "structured",
+                )
+                return self._parse_response(response, strategy_name)
+            except asyncio.TimeoutError as exc:
+                raise VisionProviderError(
+                    "OCR_TIMEOUT", "Vision provider request timed out.", retryable=True
+                ) from exc
+            except VisionProviderError as exc:
+                # Structured generation can be substantially slower than plain JSON.
+                # Do not spend the entire request budget retrying it; a timeout or an
+                # unsupported-schema response should fall through to the compatible
+                # plain-JSON strategy.
+                if strategy_name == "structured" and (
+                    exc.code == "OCR_TIMEOUT" or "HTTP 400" in exc.message
+                ):
+                    last_error = exc
+                    continue
+                # For other errors, raise immediately
+                raise
+
+        # If all strategies failed
+        raise last_error or VisionProviderError(
+            "OCR_FAILED", "All vision provider extraction strategies failed."
+        )
+
+    def _build_structured_payload(
+        self,
+        content: bytes,
+        mime_type: str,
+        document_type: str,
+        language_hint: str,
+    ) -> dict[str, Any]:
+        return {
             "contents": [{
                 "role": "user",
                 "parts": [
@@ -174,38 +277,132 @@ class GeminiVisionProvider:
                 "responseSchema": PROVIDER_RESPONSE_SCHEMA,
             },
         }
-        try:
-            response = await self._request_with_retry(
-                f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent",
-                payload,
-            )
-        except asyncio.TimeoutError as exc:
-            raise VisionProviderError(
-                "OCR_TIMEOUT", "Vision provider request timed out.", retryable=True
-            ) from exc
 
+    def _build_json_plain_payload(
+        self,
+        content: bytes,
+        mime_type: str,
+        document_type: str,
+        language_hint: str,
+    ) -> dict[str, Any]:
+        prompt = (
+            build_extraction_prompt(document_type, language_hint)
+            + "\n\nReturn ONLY valid JSON matching this exact structure:\n"
+            + json.dumps(JSON_OUTPUT_EXAMPLE, indent=2)
+        )
+        return {
+            "contents": [{
+                "role": "user",
+                "parts": [
+                    {"text": prompt},
+                    {
+                        "inline_data": {
+                            "mime_type": mime_type,
+                            "data": base64.b64encode(content).decode("ascii"),
+                        }
+                    },
+                ],
+            }],
+            "generationConfig": {
+                "responseMimeType": "application/json",
+            },
+        }
+
+    def _build_text_payload(
+        self,
+        content: bytes,
+        mime_type: str,
+        document_type: str,
+        language_hint: str,
+    ) -> dict[str, Any]:
+        return {
+            "contents": [{
+                "role": "user",
+                "parts": [
+                    {"text": build_extraction_prompt(document_type, language_hint)},
+                    {
+                        "inline_data": {
+                            "mime_type": mime_type,
+                            "data": base64.b64encode(content).decode("ascii"),
+                        }
+                    },
+                ],
+            }],
+        }
+
+    def _parse_response(
+        self, response: dict[str, Any], strategy: str
+    ) -> ProviderExtractionResult:
         try:
             text = response["candidates"][0]["content"]["parts"][0]["text"]
-            validated = ProviderExtractionResult.model_validate(json.loads(text))
-            return normalize_provider_result(validated)
-        except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValidationError) as exc:
+        except (KeyError, IndexError, TypeError) as exc:
             raise VisionProviderError(
                 "OCR_SCHEMA_INVALID",
-                "Vision provider output did not match the extraction schema.",
+                "Vision provider response is missing expected content structure.",
             ) from exc
-        except ValueError as exc:
-            if str(exc) == "DOCUMENT_UNREADABLE":
+
+        if strategy == "text":
+            # Wrap plain text into the expected structure
+            return ProviderExtractionResult(
+                rawText=text.strip(),
+                documentType="UNKNOWN",
+                languageDetected="UNKNOWN",
+                extraction={
+                    "chitName": None,
+                    "chitCode": None,
+                    "organizerName": None,
+                    "chitValue": None,
+                    "durationMonths": None,
+                    "memberCount": None,
+                    "monthlyInstallment": None,
+                    "installmentPattern": "UNKNOWN",
+                    "members": [],
+                    "installmentSchedule": [],
+                    "auctionHistory": [],
+                    "collections": [],
+                    "dividends": [],
+                },
+                confidence={
+                    "overallScore": 0.0,
+                    "fieldScores": {},
+                    "mathValidated": False,
+                    "requiresHumanReview": True,
+                },
+                missingFields=[],
+                warnings=["Plain text fallback was used; JSON parsing was not available."],
+            )
+
+        # For structured and json_plain strategies, parse JSON
+        try:
+            # Strip markdown code fences if present
+            cleaned = text.strip()
+            if cleaned.startswith("```"):
+                # Extract JSON from markdown code block
+                match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", cleaned)
+                if match:
+                    cleaned = match.group(1).strip()
+            parsed = json.loads(cleaned)
+            parsed = canonicalize_provider_payload(parsed)
+            validated = ProviderExtractionResult.model_validate(parsed)
+            return normalize_provider_result(validated)
+        except (json.JSONDecodeError, ValidationError, ValueError) as exc:
+            if strategy == "structured":
+                # Should not happen with structured output, but handle gracefully
                 raise VisionProviderError(
-                    "DOCUMENT_UNREADABLE",
-                    "The document did not contain readable chit details.",
+                    "OCR_SCHEMA_INVALID",
+                    "Vision provider output did not match the extraction schema.",
                 ) from exc
             raise VisionProviderError(
                 "OCR_SCHEMA_INVALID",
-                "Vision provider output did not match the extraction schema.",
+                "Vision provider output is not valid JSON or does not match the schema.",
             ) from exc
 
     async def _request_with_retry(
-        self, url: str, payload: dict[str, Any]
+        self,
+        url: str,
+        payload: dict[str, Any],
+        *,
+        retry_timeouts: bool = True,
     ) -> dict[str, Any]:
         attempts = max(1, self.max_retries + 1)
         for attempt in range(attempts):
@@ -228,6 +425,8 @@ class GeminiVisionProvider:
                     "OCR_TIMEOUT", "Vision provider request timed out.", retryable=True
                 )
                 error.__cause__ = exc
+                if not retry_timeouts:
+                    raise error
             except VisionProviderError as exc:
                 error = exc
             if not error.retryable or attempt == attempts - 1:
@@ -261,10 +460,54 @@ def build_extraction_prompt(document_type: str, language_hint: str) -> str:
     )
 
 
+def canonicalize_provider_payload(payload: Any) -> Any:
+    """Normalize a small set of common model aliases before strict validation."""
+    if not isinstance(payload, dict):
+        return payload
+    extraction = payload.get("extraction")
+    if not isinstance(extraction, dict):
+        return payload
+    members = extraction.get("members")
+    if not isinstance(members, list):
+        return payload
+
+    normalized_members: list[Any] = []
+    allowed_member_keys = ("memberNumber", "name", "contact", "address")
+    for member in members:
+        if not isinstance(member, dict):
+            normalized_members.append(member)
+            continue
+        normalized = {
+            key: member[key] for key in allowed_member_keys if key in member
+        }
+        if "name" not in normalized and "memberName" in member:
+            normalized["name"] = member["memberName"]
+        ticket_number = member.get("ticketNumber")
+        if "memberNumber" not in normalized and (
+            isinstance(ticket_number, int)
+            or (isinstance(ticket_number, str) and ticket_number.isdigit())
+        ):
+            normalized["memberNumber"] = int(ticket_number)
+        normalized_members.append(normalized)
+
+    return {
+        **payload,
+        "extraction": {**extraction, "members": normalized_members},
+    }
+
+
+# ---------------------------------------------------------------------------
+# Response schema for structured output (Strat 1)
+# ---------------------------------------------------------------------------
+# NOTE: Gemini's `responseSchema` does NOT support `additionalProperties: false`
+# on nested objects. Only the top-level schema may use it. All nested objects
+# use `additionalProperties: true` (implicit) to avoid HTTP 400 errors.
+# ---------------------------------------------------------------------------
+
 NULLABLE_STRING = {"type": ["string", "null"]}
 NULLABLE_NUMBER = {"type": ["number", "null"]}
 NULLABLE_INTEGER = {"type": ["integer", "null"]}
-GENERIC_RECORD_ARRAY = {"type": "array", "items": {"type": "object"}}
+
 SCHEDULE_PROPERTIES = {
     "monthNumber": {"type": "integer"},
     "monthLabel": NULLABLE_STRING,
@@ -282,13 +525,15 @@ SCHEDULE_PROPERTIES = {
     "confidence": {"type": "number"},
 }
 
+MEMBER_PROPERTIES = {
+    "memberNumber": NULLABLE_INTEGER,
+    "name": NULLABLE_STRING,
+    "contact": NULLABLE_STRING,
+    "address": NULLABLE_STRING,
+}
+
 PROVIDER_RESPONSE_SCHEMA: dict[str, Any] = {
     "type": "object",
-    "additionalProperties": False,
-    "required": [
-        "rawText", "documentType", "languageDetected", "extraction",
-        "confidence", "missingFields", "warnings",
-    ],
     "properties": {
         "rawText": {"type": "string"},
         "documentType": {
@@ -304,13 +549,6 @@ PROVIDER_RESPONSE_SCHEMA: dict[str, Any] = {
         },
         "extraction": {
             "type": "object",
-            "additionalProperties": False,
-            "required": [
-                "chitName", "chitCode", "organizerName", "chitValue",
-                "durationMonths", "memberCount", "monthlyInstallment",
-                "installmentPattern", "members", "installmentSchedule",
-                "auctionHistory", "collections", "dividends",
-            ],
             "properties": {
                 "chitName": NULLABLE_STRING,
                 "chitCode": NULLABLE_STRING,
@@ -339,26 +577,24 @@ PROVIDER_RESPONSE_SCHEMA: dict[str, Any] = {
                 "notes": NULLABLE_STRING,
                 "fieldResults": {"type": "object"},
                 "unrecognizedText": {"type": "array", "items": {"type": "string"}},
-                "members": {"type": "array", "items": {"type": "object"}},
+                "members": {
+                    "type": "array",
+                    "items": {"type": "object", "properties": MEMBER_PROPERTIES},
+                },
                 "installmentSchedule": {
                     "type": "array",
                     "items": {
                         "type": "object",
-                        "required": ["monthNumber"],
                         "properties": SCHEDULE_PROPERTIES,
                     },
                 },
-                "auctionHistory": GENERIC_RECORD_ARRAY,
-                "collections": GENERIC_RECORD_ARRAY,
-                "dividends": GENERIC_RECORD_ARRAY,
+                "auctionHistory": {"type": "array", "items": {"type": "object"}},
+                "collections": {"type": "array", "items": {"type": "object"}},
+                "dividends": {"type": "array", "items": {"type": "object"}},
             },
         },
         "confidence": {
             "type": "object",
-            "additionalProperties": False,
-            "required": [
-                "overallScore", "fieldScores", "mathValidated", "requiresHumanReview"
-            ],
             "properties": {
                 "overallScore": {"type": "number"},
                 "fieldScores": {"type": "object"},
@@ -369,4 +605,56 @@ PROVIDER_RESPONSE_SCHEMA: dict[str, Any] = {
         "missingFields": {"type": "array", "items": {"type": "string"}},
         "warnings": {"type": "array", "items": {"type": "string"}},
     },
+}
+
+
+# ---------------------------------------------------------------------------
+# JSON example for plain-json fallback (Strat 2)
+# ---------------------------------------------------------------------------
+
+JSON_OUTPUT_EXAMPLE: dict[str, Any] = {
+    "rawText": "Full text extracted from the document",
+    "documentType": "CHIT_REGISTER",
+    "languageDetected": "ENGLISH",
+    "extraction": {
+        "chitName": "Example Chit",
+        "chitCode": "CH-001",
+        "organizerName": "Organizer Name",
+        "chitValue": 100000.0,
+        "durationMonths": 25,
+        "memberCount": 20,
+        "monthlyInstallment": 5000.0,
+        "installmentPattern": "FIXED_MONTHLY",
+        "installmentMode": "Monthly",
+        "startDate": "2024-01-01",
+        "foremanCommissionPercent": 5.0,
+        "minimumDiscountPercent": None,
+        "maximumDiscountPercent": None,
+        "prizeAmount": None,
+        "auctionPattern": None,
+        "contactNumber": None,
+        "fractionalTicketInformation": None,
+        "specialRules": None,
+        "notes": None,
+        "fieldResults": {},
+        "unrecognizedText": [],
+        "members": [{
+            "memberNumber": None,
+            "name": "Member Name",
+            "contact": None,
+            "address": None,
+        }],
+        "installmentSchedule": [],
+        "auctionHistory": [],
+        "collections": [],
+        "dividends": [],
+    },
+    "confidence": {
+        "overallScore": 0.0,
+        "fieldScores": {},
+        "mathValidated": False,
+        "requiresHumanReview": True,
+    },
+    "missingFields": [],
+    "warnings": [],
 }

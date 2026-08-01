@@ -24,6 +24,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any, Literal
+from pathlib import Path
 
 import asyncpg
 import jwt
@@ -33,18 +34,58 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from supabase_jwt import (
-    get_current_user,
-    get_optional_user,
+    get_current_user as _get_current_user,
+    get_optional_user as _get_optional_user,
     require_tenant_context,
     require_platform_owner,
     require_role,
     AuthenticatedUser,
     TenantContext,
 )
+async def get_current_user(request: Request) -> AuthenticatedUser:
+    """Wrapper that injects settings into supabase_jwt's get_current_user."""
+    return await _get_current_user(request, settings.jwt_secret, settings.jwt_audience)
+
+
+async def get_optional_user(request: Request) -> AuthenticatedUser | None:
+    """Wrapper that injects settings into supabase_jwt's get_optional_user."""
+    return await _get_optional_user(request, settings.jwt_secret, settings.jwt_audience)
+
+
 from rate_limit import create_rate_limit_adapter
 from enterprise_api import build_enterprise_router
 from structured_logging import configure_production_logging
 from ocr_api import build_ocr_router
+from vision_providers import create_vision_provider
+
+
+def _load_env_file(path: Path) -> None:
+    """Load simple KEY=VALUE pairs without overriding process environment."""
+    if not path.is_file():
+        return
+    for raw_line in path.read_text(encoding="utf-8-sig").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[7:].lstrip()
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+        if not key:
+            continue
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {"\"", "'"}:
+            value = value[1:-1]
+        os.environ.setdefault(key, value)
+
+
+# Process variables have highest priority. Backend secrets/configuration then come
+# from backend/.env, with the root .env used only as a per-key fallback.
+_BACKEND_DIR = Path(__file__).resolve().parent
+_load_env_file(_BACKEND_DIR / ".env")
+_load_env_file(_BACKEND_DIR.parent / ".env")
 
 
 Money = Decimal
@@ -61,6 +102,7 @@ ISO_4217 = frozenset(
 @dataclass(frozen=True)
 class Settings:
     database_url: str
+    supabase_url: str
     jwt_secret: str
     jwt_audience: str
     draw_encryption_key: str
@@ -75,6 +117,10 @@ class Settings:
         )
         return cls(
             database_url=os.getenv("DATABASE_URL", ""),
+            supabase_url=(
+                os.getenv("SUPABASE_URL", "")
+                or os.getenv("VITE_SUPABASE_URL", "")
+            ).rstrip("/"),
             jwt_secret=os.getenv("SUPABASE_JWT_SECRET", ""),
             jwt_audience=os.getenv("SUPABASE_JWT_AUDIENCE", "authenticated"),
             draw_encryption_key=os.getenv("DRAW_ENCRYPTION_KEY", ""),
@@ -661,19 +707,61 @@ async def authenticated_principal(request: Request) -> Principal:
     scheme, _, token = authorization.partition(" ")
     if scheme.lower() != "bearer" or not token:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "A bearer token is required")
-    if not settings.jwt_secret:
-        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "JWT verification is not configured")
+
     try:
-        claims = jwt.decode(
-            token,
-            settings.jwt_secret,
-            algorithms=["HS256"],
-            audience=settings.jwt_audience,
-            options={"require": ["exp", "sub", "aud"]},
-        )
+        header = jwt.get_unverified_header(token)
+        algorithm = str(header.get("alg", "")).upper()
+        decode_options = {"require": ["exp", "sub", "aud"]}
+
+        if algorithm == "HS256":
+            if not settings.jwt_secret:
+                raise HTTPException(
+                    status.HTTP_503_SERVICE_UNAVAILABLE,
+                    "Legacy HS256 JWT verification is not configured",
+                )
+            claims = jwt.decode(
+                token,
+                settings.jwt_secret,
+                algorithms=["HS256"],
+                audience=settings.jwt_audience,
+                options=decode_options,
+            )
+        elif algorithm in {"ES256", "RS256"}:
+            if not settings.supabase_url:
+                raise HTTPException(
+                    status.HTTP_503_SERVICE_UNAVAILABLE,
+                    "Supabase URL is required for JWKS verification",
+                )
+            issuer = f"{settings.supabase_url}/auth/v1"
+            jwks_client = jwt.PyJWKClient(
+                f"{issuer}/.well-known/jwks.json",
+                cache_keys=True,
+                lifespan=600,
+            )
+            signing_key = await __import__("asyncio").to_thread(
+                jwks_client.get_signing_key_from_jwt, token
+            )
+            claims = jwt.decode(
+                token,
+                signing_key.key,
+                algorithms=[algorithm],
+                audience=settings.jwt_audience,
+                issuer=issuer,
+                options=decode_options,
+            )
+        else:
+            raise HTTPException(
+                status.HTTP_401_UNAUTHORIZED,
+                f"Unsupported JWT signing algorithm: {algorithm or 'unknown'}",
+            )
+
         user_id = uuid.UUID(claims["sub"])
+    except HTTPException:
+        raise
     except (jwt.PyJWTError, ValueError, KeyError) as exc:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "The bearer token is invalid") from exc
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED, "The bearer token is invalid"
+        ) from exc
     return Principal(user_id=user_id, claims=claims)
 
 
@@ -735,7 +823,7 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type", "X-Workspace-Id", "X-Request-Id"],
 )
 app.include_router(build_enterprise_router(workspace_context, database_pool))
-app.include_router(build_ocr_router(workspace_context))
+app.include_router(build_ocr_router(workspace_context), prefix="/api")
 
 
 @app.middleware("http")
@@ -783,7 +871,14 @@ async def health(request: Request) -> dict[str, Any]:
             database_ready = await pool.fetchval("select true")
         except asyncpg.PostgresError:
             database_ready = False
-    return {"status": "ok" if database_ready else "degraded", "database": database_ready}
+    provider_ready = create_vision_provider().isConfigured()
+    jwt_ready = bool(settings.jwt_secret or settings.supabase_url)
+    return {
+        "status": "ok" if database_ready and jwt_ready and provider_ready else "degraded",
+        "database": database_ready,
+        "jwt": jwt_ready,
+        "ocrProvider": provider_ready,
+    }
 
 
 @app.post("/v1/payables/calculate", response_model=PayableResult, response_model_by_alias=True)
@@ -899,16 +994,33 @@ async def prepare_draw(
 
 @app.get("/v3/auth/verify", response_model=dict, response_model_by_alias=True)
 async def verify_auth(
-    request: Request,
-    user: AuthenticatedUser = Depends(get_current_user),
+    principal: Principal = Depends(authenticated_principal),
 ) -> dict:
-    """Verify Supabase JWT token and return user information"""
+    """Verify the same Supabase bearer token path used by protected APIs."""
+    claims = principal.claims
+    user_metadata = claims.get("user_metadata") or {}
+    app_metadata = claims.get("app_metadata") or {}
+    tenant_id = user_metadata.get("tenant_id") or app_metadata.get("tenant_id")
+    tenant_context = None
+    if tenant_id:
+        tenant_context = {
+            "tenant_id": tenant_id,
+            "data_scope": (
+                user_metadata.get("data_scope")
+                or app_metadata.get("data_scope")
+                or "real_tenant"
+            ),
+            "workspace_id": (
+                user_metadata.get("workspace_id")
+                or app_metadata.get("workspace_id")
+            ),
+        }
     return {
         "authenticated": True,
-        "user_id": str(user.user_id),
-        "email": user.email,
-        "role": user.role,
-        "tenant_context": user.tenant_context.model_dump() if user.tenant_context else None,
+        "user_id": str(principal.user_id),
+        "email": claims.get("email"),
+        "role": claims.get("role"),
+        "tenant_context": tenant_context,
     }
 
 

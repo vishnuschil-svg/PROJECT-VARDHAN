@@ -6,9 +6,24 @@ import {
 
 export const WorkspaceService = {
   getWorkspaceOptions({ profile, role, company } = {}) {
-    return isPlatformOwner(profile, role)
-      ? getPlatformOwnerWorkspaces()
-      : [getCustomerWorkspace(company || profile)];
+    const customerWorkspace = getCustomerWorkspace(company || profile);
+
+    if (!isPlatformOwner(profile, role)) {
+      return [customerWorkspace];
+    }
+
+    if (customerWorkspace?.workspace_id) {
+      return [
+        customerWorkspace,
+        ...getPlatformOwnerWorkspaces().filter(
+          (option) =>
+            option.id !== customerWorkspace.id &&
+            option.tenant_id !== customerWorkspace.tenant_id
+        ),
+      ];
+    }
+
+    return getPlatformOwnerWorkspaces();
   },
 
   resolveActiveWorkspace({ currentWorkspace, workspaceOptions = [] } = {}) {
@@ -36,8 +51,13 @@ export const WorkspaceService = {
       return null;
     }
 
+    const workspaceId =
+      activeWorkspace.workspace_id ||
+      activeWorkspace.workspaceId ||
+      activeWorkspace.id;
+
     return {
-      workspace_id: activeWorkspace.id,
+      workspace_id: workspaceId,
       workspace_label: activeWorkspace.label,
       customer_id: activeWorkspace.customerId,
       tenant_id: activeWorkspace.tenant_id || activeWorkspace.tenantId,

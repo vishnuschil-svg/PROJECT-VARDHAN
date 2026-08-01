@@ -79,6 +79,20 @@ class RetryTransport:
         return self.response
 
 
+class StructuredTimeoutThenSuccessTransport:
+    def __init__(self, response: dict):
+        self.response = response
+        self.calls = 0
+        self.payloads = []
+
+    async def request(self, method, url, *, headers, payload, timeout_seconds):
+        self.calls += 1
+        self.payloads.append(payload)
+        if self.calls == 1:
+            await asyncio.sleep(timeout_seconds * 2)
+        return self.response
+
+
 class OCRSchemaTests(unittest.TestCase):
     def test_strict_structured_output_and_math_normalization(self):
         result = ProviderExtractionResult.model_validate(provider_payload())
@@ -217,6 +231,58 @@ class GeminiProviderTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual("Mitra Nidhi Gold", result.extraction.chitName)
         self.assertEqual(3, transport.calls)
+
+    async def test_structured_timeout_falls_back_to_plain_json_without_retrying(self):
+        response = {
+            "candidates": [{
+                "content": {"parts": [{"text": json.dumps(provider_payload())}]}
+            }]
+        }
+        transport = StructuredTimeoutThenSuccessTransport(response)
+        provider = GeminiVisionProvider(
+            api_key="test-only-key",
+            timeout_seconds=0.01,
+            max_retries=2,
+            transport=transport,
+        )
+
+        result = await provider.extractDocument(
+            content=b"x",
+            mime_type="image/png",
+            document_type="CHIT_REGISTER",
+            language_hint="ENGLISH",
+        )
+
+        self.assertEqual("Mitra Nidhi Gold", result.extraction.chitName)
+        self.assertEqual(2, transport.calls)
+        self.assertIn("responseSchema", transport.payloads[0]["generationConfig"])
+        self.assertNotIn("responseSchema", transport.payloads[1]["generationConfig"])
+
+    async def test_common_member_aliases_are_canonicalized_before_validation(self):
+        payload = provider_payload()
+        payload["extraction"]["members"] = [{
+            "memberName": "Ravi Kumar",
+            "ticketNumber": "VC-2026-0731",
+        }]
+        transport = FakeTransport({
+            "candidates": [{
+                "content": {"parts": [{"text": json.dumps(payload)}]}
+            }]
+        })
+        provider = GeminiVisionProvider(
+            api_key="test-only-key",
+            transport=transport,
+        )
+
+        result = await provider.extractDocument(
+            content=b"x",
+            mime_type="image/png",
+            document_type="CHIT_REGISTER",
+            language_hint="ENGLISH",
+        )
+
+        self.assertEqual("Ravi Kumar", result.extraction.members[0].name)
+        self.assertIsNone(result.extraction.members[0].memberNumber)
 
 
 if __name__ == "__main__":

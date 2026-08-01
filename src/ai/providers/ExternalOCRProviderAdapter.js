@@ -100,9 +100,12 @@ export function createExternalOCRProviderAdapter({
           const detail = result?.detail && typeof result.detail === "object"
             ? result.detail
             : result;
+          const backendMessage = typeof result?.detail === "string"
+            ? result.detail
+            : detail?.message;
           throw new OCRProviderError(
             detail?.code || "OCR_FAILED",
-            detail?.message || `Document extraction failed with status ${response.status}.`,
+            backendMessage || `Document extraction failed with status ${response.status}.`,
             {
               status: response.status,
               retryable: Boolean(detail?.retryable || response.status >= 500),
