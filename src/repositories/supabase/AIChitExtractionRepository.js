@@ -46,6 +46,43 @@ export const AIChitExtractionRepository = Object.freeze({
     return data;
   },
 
+  async getDraft(extractionId, activeTenantContext) {
+    if (!UUID_PATTERN.test(extractionId || "")) return null;
+    const client = requireClient();
+    const scope = requireTenantScope(activeTenantContext);
+    const workspaceId = activeTenantContext?.workspace_id;
+    if (!workspaceId) throw new Error("A business workspace is required to load the extraction draft.");
+    const userId = await requireUserId(client, "load");
+    const { data, error } = await client
+      .from("ai_chit_extractions")
+      .select("*")
+      .eq("id", extractionId)
+      .eq("tenant_id", scope.tenant_id)
+      .eq("data_scope", scope.data_scope)
+      .eq("workspace_id", workspaceId)
+      .eq("created_by", userId)
+      .eq("status", "PENDING_REVIEW")
+      .maybeSingle();
+    if (error) throw persistenceError("Draft load failed", error);
+    return data || null;
+  },
+
+  async deleteDraft(extractionId, activeTenantContext) {
+    if (!UUID_PATTERN.test(extractionId || "")) throw new Error("A valid draft ID is required for deletion.");
+    const client = requireClient();
+    const workspaceId = activeTenantContext?.workspace_id;
+    if (!workspaceId) throw new Error("A business workspace is required to delete the extraction draft.");
+    requireTenantScope(activeTenantContext);
+    await requireUserId(client, "delete");
+    const { data, error } = await client.rpc("delete_pending_ai_chit_draft", {
+      p_extraction_id: extractionId,
+      p_workspace_id: workspaceId,
+    });
+    if (error) throw persistenceError("Draft deletion failed", error);
+    if (data !== true) throw new Error("The pending draft was not found in this workspace.");
+    return { id: extractionId, deleted: true };
+  },
+
   async commitDraft(extractionId, draft) {
     if (!UUID_PATTERN.test(extractionId || "")) {
       throw new Error("Save the verified draft before creating the chit group.");
@@ -65,6 +102,14 @@ function requireClient() {
   const client = getSupabaseClient();
   if (!client) throw new Error("Supabase is not configured for production persistence.");
   return client;
+}
+
+async function requireUserId(client, action) {
+  const { data, error } = await client.auth.getUser();
+  if (error || !data?.user?.id) {
+    throw new Error(`Your session expired. Sign in again before attempting to ${action} the draft.`);
+  }
+  return data.user.id;
 }
 
 function persistenceError(prefix, error) {

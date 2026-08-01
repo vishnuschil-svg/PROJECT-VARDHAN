@@ -2,7 +2,7 @@ import {
   PLATFORM_OWNER,
   PLATFORM_OWNER_MODULE_ACCESS,
   TENANT_TYPES,
-} from "./erpModules";
+} from "./erpModules.js";
 
 /**
  * Development authentication bypass configuration
@@ -10,7 +10,7 @@ import {
  * For local development only
  */
 
-export const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === "true";
+export const DEV_AUTH_BYPASS = (import.meta.env || {}).VITE_DEV_AUTH_BYPASS === "true";
 
 /**
  * Mock data for development bypass

@@ -30,6 +30,8 @@ create table if not exists public.ai_chit_extractions (
     references public.workspaces(id, tenant_id, data_scope) on delete restrict
 );
 
+select pg_temp.vardhan_add_missing_columns('public.ai_chit_extractions'::regclass, '{"id":"uuid default gen_random_uuid()","tenant_id":"text","data_scope":"text","workspace_id":"uuid","created_by":"uuid","created_at":"timestamptz default now()","updated_at":"timestamptz default now()","status":"text default ''UPLOADED''","file_name":"text","file_mime_type":"text","file_size":"bigint","file_hash":"text","provider":"text","provider_metadata":"jsonb default ''{}''::jsonb","parsed_draft":"jsonb default ''{}''::jsonb","confidence_score":"numeric(5,4) default 0","committed_group_id":"uuid","error_code":"text"}'::jsonb);
+
 create index if not exists idx_ai_chit_extractions_workspace
   on public.ai_chit_extractions(workspace_id, tenant_id, data_scope, updated_at desc);
 

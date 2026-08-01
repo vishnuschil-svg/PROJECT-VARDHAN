@@ -15,6 +15,7 @@ export default defineConfig({
     watch: {
       ignored: [
         "**/artifacts/**",
+        "**/artifacts/trial-browser-profile-*/**",
         "**/playwright/**",
         "**/validation-browser-profile-*/**",
         "**/test-results/**",

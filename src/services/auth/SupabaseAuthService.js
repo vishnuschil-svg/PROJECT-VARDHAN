@@ -22,13 +22,13 @@ export const SupabaseAuthService = {
           console.log("[SupabaseAuthService] Attempting OAuth login with provider:", provider);
           const result = await supabaseAuth.signInWithOAuth({ provider });
           console.log("[SupabaseAuthService] OAuth login result:", result);
-          return this.formatSupabaseSession(result);
+          return await this.resolveSupabaseSession(result);
         } else {
           // Email/password login
           console.log("[SupabaseAuthService] Attempting email/password login");
           const result = await supabaseAuth.signIn({ email, password });
           console.log("[SupabaseAuthService] Email/password login result:", result);
-          return this.formatSupabaseSession(result);
+          return await this.resolveSupabaseSession(result);
         }
       } catch (error) {
         console.error("[SupabaseAuthService] Supabase login failed:", error);
@@ -36,7 +36,7 @@ export const SupabaseAuthService = {
       }
     }
 
-    console.log("[SupabaseAuthService] Supabase not configured, falling back to demo auth");
+    console.log("[SupabaseAuthService] Supabase not configured; checking development authentication mode");
     // Use demo auth if Supabase not configured
     if (isProductionMode()) throw new Error("Authentication provider is unavailable. Supabase must be configured in production.");
     return await DemoAuthService.login({ email, password });
@@ -72,11 +72,9 @@ export const SupabaseAuthService = {
     // Try Supabase session refresh first
     if (supabaseAuth.configured) {
       try {
-        console.log("[SupabaseAuthService] Attempting to get Supabase session");
-        const session = await supabaseAuth.getSession();
-        console.log("[SupabaseAuthService] Raw Supabase session:", session ? "Session exists" : "No session");
-        if (session) {
-          const formatted = this.formatSupabaseSession({ user: session.user, session });
+        const refreshed = await supabaseAuth.refreshSession();
+        if (refreshed?.session) {
+          const formatted = await this.resolveSupabaseSession(refreshed);
           console.log("[SupabaseAuthService] Formatted session:", formatted ? "Formatted session exists" : "No formatted session");
           console.log("[SupabaseAuthService] Formatted user:", formatted?.user ? "User exists" : "No user");
           return formatted;
@@ -86,7 +84,7 @@ export const SupabaseAuthService = {
       }
     }
 
-    console.log("[SupabaseAuthService] Falling back to demo auth");
+    console.log("[SupabaseAuthService] Checking development authentication mode");
     // Fall back to demo auth
     if (isProductionMode()) return emptySession();
     return await DemoAuthService.refreshSession();
@@ -106,7 +104,7 @@ export const SupabaseAuthService = {
         const session = await supabaseAuth.getSession();
         console.log("[SupabaseAuthService] Raw Supabase session:", session ? "Session exists" : "No session");
         if (session) {
-          const formatted = this.formatSupabaseSession({ user: session.user, session });
+          const formatted = await this.resolveSupabaseSession({ user: session.user, session });
           console.log("[SupabaseAuthService] Formatted session:", formatted ? "Formatted session exists" : "No formatted session");
           return formatted;
         }
@@ -115,7 +113,7 @@ export const SupabaseAuthService = {
       }
     }
 
-    console.log("[SupabaseAuthService] Falling back to demo auth");
+    console.log("[SupabaseAuthService] Checking development authentication mode");
     // Fall back to demo auth
     if (isProductionMode()) return emptySession();
     const demoSession = DemoAuthService.getPersistedDemoSession();
@@ -139,7 +137,7 @@ export const SupabaseAuthService = {
     }
 
     const result = await supabaseAuth.signUp({ email, password, metadata });
-    return this.formatSupabaseSession(result);
+    return await this.resolveSupabaseSession(result);
   },
 
   /**
@@ -293,6 +291,43 @@ export const SupabaseAuthService = {
     console.log("[SupabaseAuthService] Formatted profile:", formatted.profile ? "Profile exists" : "No profile");
     console.log("[SupabaseAuthService] Formatted profile status:", formatted.profile?.status);
     return formatted;
+  },
+
+  async resolveSupabaseSession({ user, session }) {
+    const formatted = this.formatSupabaseSession({ user, session });
+    if (!user?.id) return formatted;
+    const supabaseAuth = getSupabaseAuth();
+    const preferredWorkspaceId = formatted.company?.workspace_id;
+    let query = supabaseAuth.client
+      .from("workspace_memberships")
+      .select("workspace_id,tenant_id,data_scope,role,status")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .order("created_at", { ascending: true })
+      .limit(1);
+    if (preferredWorkspaceId) query = query.eq("workspace_id", preferredWorkspaceId);
+    const { data, error } = await query.maybeSingle();
+    if (error) throw new Error("Unable to resolve your active business workspace.");
+    if (!data?.workspace_id) return formatted;
+    return {
+      ...formatted,
+      company: {
+        ...formatted.company,
+        id: data.tenant_id,
+        workspace_id: data.workspace_id,
+        workspaceId: data.workspace_id,
+        customer_id: data.tenant_id,
+        tenant_id: data.tenant_id,
+        tenant_type: data.data_scope === "demo_sandbox" ? "demo_customer" : formatted.company.tenant_type,
+        data_scope: data.data_scope,
+      },
+      role: {
+        ...formatted.role,
+        key: String(data.role || "viewer").toUpperCase(),
+        code: String(data.role || "viewer").toUpperCase(),
+        name: String(data.role || "viewer").replace(/^./, (letter) => letter.toUpperCase()),
+      },
+    };
   },
 
   /**

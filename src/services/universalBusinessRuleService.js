@@ -79,6 +79,7 @@ export async function generateBusinessUnderstanding(file, options = {}) {
     extractionStatus: evidence.status,
     confidence: evidence.providerMetadata?.confidenceScore ?? normalizedJSON.Confidence?.overall ?? 0,
     warnings: evidence.providerMetadata?.warnings || [],
+    ocrResponse: evidence.providerResponse,
   };
 }
 
@@ -129,6 +130,16 @@ export async function saveBusinessUnderstandingDraft(draft, tenantContext) {
     };
   }
   return AIChitExtractionRepository.saveDraft(draft, tenantContext);
+}
+
+export async function loadBusinessUnderstandingDraft(extractionId, tenantContext) {
+  if (!usesProductionPersistence()) return null;
+  return AIChitExtractionRepository.getDraft(extractionId, tenantContext);
+}
+
+export async function deleteBusinessUnderstandingDraft(extractionId, tenantContext) {
+  if (!usesProductionPersistence()) return { id: extractionId, deleted: true };
+  return AIChitExtractionRepository.deleteDraft(extractionId, tenantContext);
 }
 
 /** Pure, read-only readiness evaluation. No repository or persistence calls. */

@@ -1,97 +1,195 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { FileImage, FileSpreadsheet, FileText, Save, ScanText, UploadCloud, WandSparkles } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import {
-  captureChitPattern,
-  confirmCapturedChitDraft,
-  createChitGroupFromCapturedData,
-} from "../../services/ai/aiSmartCaptureService";
+  AlertTriangle, CheckCircle2, FileText, Image as ImageIcon, LoaderCircle,
+  RefreshCw, Save, ScanText, Trash2, UploadCloud, WandSparkles, X,
+} from "lucide-react";
+import {
+  REVIEW_FIELD_DEFINITIONS,
+  SMART_CHIT_ACCEPT,
+  applyReviewValue,
+  createSmartChitRecord,
+  deleteSmartChitDraft,
+  extractSmartChitDocument,
+  loadSmartChitDraft,
+  saveSmartChitDraft,
+  smartChitErrorMessage,
+  validateSmartChitFile,
+} from "../../services/ai/smartChitReviewService.js";
 
-const SOURCE_OPTIONS = {
-  image: {
-    label: "Import Chit Photo",
-    helper: "Upload JPG, PNG, or WEBP chit pattern photo.",
-    accept: ".png,.jpg,.jpeg,.webp",
-    icon: FileImage,
-  },
-  pdf: {
-    label: "Import PDF",
-    helper: "Upload a PDF chit pattern or agreement.",
-    accept: ".pdf",
-    icon: FileText,
-  },
-  excel: {
-    label: "Import Excel",
-    helper: "Upload an Excel/CSV planning sheet. Local mode reads manual text until a parser is connected.",
-    accept: ".xlsx,.xls,.csv",
-    icon: FileSpreadsheet,
-  },
-};
-
-function SmartChitCapture({ activeTenantContext, intent = "image" }) {
-  const [sourceType, setSourceType] = useState(intent);
+function SmartChitCapture({
+  activeTenantContext,
+  extractDocument = extractSmartChitDocument,
+  saveDraft = saveSmartChitDraft,
+  createRecord = createSmartChitRecord,
+  loadDraft = loadSmartChitDraft,
+  deleteDraft = deleteSmartChitDraft,
+  onSessionExpired = defaultSessionExpired,
+}) {
   const [file, setFile] = useState(null);
-  const [manualText, setManualText] = useState("");
-  const [capture, setCapture] = useState(null);
-  const [corrections, setCorrections] = useState({});
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [result, setResult] = useState(null);
+  const [review, setReview] = useState(null);
   const [message, setMessage] = useState("");
-  const [isBusy, setIsBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [phase, setPhase] = useState("idle");
+  const [savedDraft, setSavedDraft] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef(null);
-  const source = SOURCE_OPTIONS[sourceType] || SOURCE_OPTIONS.image;
-  const SourceIcon = source.icon;
-  const providerMode = capture?.mode || "LOCAL_MANUAL_FALLBACK";
-  const isManualFallback = providerMode === "LOCAL_MANUAL_FALLBACK";
-  const fieldRows = useMemo(() => Object.entries(corrections), [corrections]);
+  const abortRef = useRef(null);
+  const workspaceId = activeTenantContext?.workspace_id || activeTenantContext?.workspaceId;
+  const busy = ["loading", "uploading", "extracting", "saving", "creating"].includes(phase);
 
   useEffect(() => {
-    setSourceType(intent || "image");
-  }, [intent]);
+    if (!file?.type?.startsWith("image/") || !(file instanceof Blob)) {
+      setPreviewUrl("");
+      return undefined;
+    }
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [file]);
+
+  useEffect(() => () => abortRef.current?.abort(), []);
+
+  useEffect(() => {
+    const draftId = readDraftIdFromLocation();
+    if (!draftId || !workspaceId) return undefined;
+    let active = true;
+    setPhase("loading");
+    loadDraft(draftId, activeTenantContext)
+      .then((loaded) => {
+        if (!active || !loaded) return;
+        setFile(loaded.file);
+        setResult({ draft: loaded.draft, validation: loaded.validation });
+        setReview(loaded.review);
+        setSavedDraft(loaded.saved);
+        setMessage("Saved draft reloaded from the selected workspace.");
+        setPhase("review");
+      })
+      .catch((loadError) => { if (active) handleError(loadError); });
+    return () => { active = false; };
+  }, [activeTenantContext, loadDraft, workspaceId]);
 
   const chooseFile = (nextFile) => {
-    setFile(nextFile || null);
-    setCapture(null);
-    setCorrections({});
-    setMessage(nextFile ? `${nextFile.name} ready for extraction.` : "");
+    if (busy) return;
+    const validation = validateSmartChitFile(nextFile);
+    if (!validation.valid) {
+      setFile(null);
+      setResult(null);
+      setReview(null);
+      setError(validation.message);
+      setMessage("");
+      setPhase("failed");
+      return;
+    }
+    setFile(nextFile);
+    setResult(null);
+    setReview(null);
+    setSavedDraft(null);
+    setError("");
+    setMessage(`${nextFile.name} is ready for authenticated extraction.`);
+    setPhase("ready");
   };
 
   const runCapture = async () => {
-    console.log("[SmartChitCapture] runCapture called, file:", file?.name, "manualText length:", manualText.length, "activeTenantContext:", activeTenantContext?.workspaceId);
-    if (!file && !manualText.trim()) {
-      setMessage("Upload a file or paste chit pattern text for manual extraction mode.");
+    if (!file) {
+      setError("Choose a PNG, JPEG, WebP, or PDF document first.");
       return;
     }
-    setIsBusy(true);
+    if (!workspaceId) {
+      setError("Select a valid business workspace before using Smart Chit Capture.");
+      return;
+    }
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setError("");
+    setMessage("");
+    setPhase("uploading");
+    try {
+      await Promise.resolve();
+      setPhase("extracting");
+      const extracted = await extractDocument({ file, activeTenantContext, signal: controller.signal });
+      setResult(extracted);
+      setReview(extracted.review);
+      setPhase("review");
+      setMessage("Gemini extraction is ready. Review every field before saving.");
+    } catch (captureError) {
+      if (controller.signal.aborted) {
+        setPhase("ready");
+        setMessage("Extraction cancelled. You can replace the file or retry.");
+        return;
+      }
+      handleError(captureError);
+    } finally {
+      if (abortRef.current === controller) abortRef.current = null;
+    }
+  };
+
+  const handleError = (captureError) => {
+    setPhase("failed");
+    setError(smartChitErrorMessage(captureError));
+    if (captureError?.code === "SESSION_EXPIRED" || captureError?.status === 401) {
+      onSessionExpired?.();
+    }
+  };
+
+  const cancel = () => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setPhase(file ? "ready" : "idle");
+  };
+
+  const clear = () => {
+    if (busy) cancel();
+    setFile(null);
+    setResult(null);
+    setReview(null);
+    setSavedDraft(null);
+    setMessage("");
+    setError("");
+    setPhase("idle");
+    writeDraftIdToLocation(null);
+    if (inputRef.current) inputRef.current.value = "";
+  };
+
+  const persist = async (mode) => {
+    if (!result?.draft || !review) return;
+    setPhase(mode === "draft" ? "saving" : "creating");
+    setError("");
     setMessage("");
     try {
-      console.log("[SmartChitCapture] Calling captureChitPattern with file:", file?.name, "workspaceId:", activeTenantContext?.workspaceId);
-      const result = await captureChitPattern({ file, manualText, activeTenantContext });
-      console.log("[SmartChitCapture] captureChitPattern returned:", result);
-      setCapture(result);
-      setCorrections(Object.fromEntries(Object.entries(result.fields).map(([key, field]) => [key, field.value])));
-      setMessage(result.message || "Captured fields are ready for review.");
-    } catch (error) {
-      console.error("[SmartChitCapture] captureChitPattern error:", error);
-      setMessage(error.message || "Unable to capture chit pattern.");
-    } finally {
-      setIsBusy(false);
+      const input = { draft: result.draft, review, file, activeTenantContext };
+      const outcome = mode === "draft" ? await saveDraft(input) : await createRecord(input);
+      setResult((current) => ({ ...current, draft: outcome.draft, validation: outcome.validation }));
+      setPhase("complete");
+      if (mode === "draft") {
+        setSavedDraft(outcome.saved);
+        writeDraftIdToLocation(outcome.saved?.id || null);
+      }
+      setMessage(mode === "draft"
+        ? "Draft saved through the tenant-scoped extraction repository."
+        : `Chit record created${outcome.created?.group?.chit_name ? `: ${outcome.created.group.chit_name}` : ""}.`);
+    } catch (saveError) {
+      handleError(saveError);
     }
   };
 
-  const confirmDraft = () => {
+  const deletePersistedDraft = async () => {
+    if (!savedDraft?.id) return;
+    setPhase("saving");
+    setError("");
     try {
-      const draft = confirmCapturedChitDraft({ capture, corrections, activeTenantContext });
-      setMessage(`Captured chit draft saved: ${draft.chitName}`);
-    } catch (error) {
-      setMessage(error.message || "Unable to save captured chit draft.");
-    }
-  };
-
-  const createGroup = () => {
-    try {
-      const group = createChitGroupFromCapturedData({ capture, corrections, activeTenantContext });
-      setMessage(`Chit group created: ${group.chit_name}`);
-    } catch (error) {
-      setMessage(error.message || "Unable to create chit group from captured data.");
+      await deleteDraft(savedDraft.id, activeTenantContext);
+      setSavedDraft(null);
+      setResult(null);
+      setReview(null);
+      setFile(null);
+      setPhase("idle");
+      setMessage("Temporary Smart Chit draft deleted from the workspace.");
+      writeDraftIdToLocation(null);
+    } catch (deleteError) {
+      handleError(deleteError);
     }
   };
 
@@ -106,129 +204,156 @@ function SmartChitCapture({ activeTenantContext, intent = "image" }) {
       <div className="vardhan-ai-panel-header">
         <div>
           <span>Smart Chit Capture</span>
-          <h3>Image, PDF and Excel capture</h3>
+          <h3>Authenticated Gemini document capture</h3>
         </div>
-        <button type="button" onClick={runCapture} disabled={isBusy}>
-          <ScanText size={16} />
-          {isBusy ? "Reading..." : "Extract"}
+        <button type="button" onClick={runCapture} disabled={!file || file.persisted || busy || !workspaceId}>
+          {busy ? <LoaderCircle className="smart-capture-spinner" size={16} /> : <ScanText size={16} />}
+          {phase === "uploading" ? "Uploading…" : phase === "extracting" ? "Extracting…" : "Run OCR"}
         </button>
       </div>
 
       <div className="vardhan-ai-provider-banner">
         <WandSparkles size={16} />
-        Manual extraction mode (AI provider not connected yet).
+        Gemini OCR via the authenticated VARDHAN backend · PNG, JPEG, WebP and PDF · 15 MB max
       </div>
 
-      <div className="smart-capture-source-tabs" role="tablist" aria-label="Capture source">
-        {Object.entries(SOURCE_OPTIONS).map(([key, option]) => {
-          const Icon = option.icon;
-          return (
-            <button
-              type="button"
-              role="tab"
-              aria-selected={sourceType === key}
-              className={sourceType === key ? "active" : ""}
-              onClick={() => {
-                setSourceType(key);
-                chooseFile(null);
-              }}
-              key={key}
-            >
-              <Icon size={16} />
-              {option.label}
-            </button>
-          );
-        })}
-      </div>
+      {!workspaceId && (
+        <div className="smart-capture-alert danger" role="alert">
+          <AlertTriangle size={18} /> Select a valid business workspace before uploading a document.
+        </div>
+      )}
 
       <button
         type="button"
         className={`vardhan-ai-upload ${isDragging ? "dragging" : ""}`}
-        onClick={() => inputRef.current?.click()}
-        onDragOver={(event) => {
-          event.preventDefault();
-          setIsDragging(true);
-        }}
+        onClick={() => !busy && inputRef.current?.click()}
+        onDragOver={(event) => { event.preventDefault(); if (!busy) setIsDragging(true); }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={onDrop}
+        disabled={busy || !workspaceId}
       >
-        <SourceIcon size={26} />
-        <strong>{file?.name || source.label}</strong>
-        <span>{file ? "Drop another file or click to replace." : source.helper}</span>
+        {file?.type === "application/pdf" ? <FileText size={28} /> : <ImageIcon size={28} />}
+        <strong>{file?.name || "Drop a chit image or PDF here"}</strong>
+        <span>{file ? `${formatBytes(file.size)} · Click or drop to replace` : "or select a file from this device"}</span>
         <UploadCloud size={18} />
       </button>
       <input
         ref={inputRef}
         className="smart-capture-hidden-input"
         type="file"
-        accept={source.accept}
-        onChange={(event) => chooseFile(event.target.files?.[0] || null)}
+        accept={SMART_CHIT_ACCEPT}
+        onChange={(event) => { chooseFile(event.target.files?.[0] || null); event.target.value = ""; }}
       />
 
-      <textarea
-        value={manualText}
-        onChange={(event) => setManualText(event.target.value)}
-        placeholder="Optional: paste visible chit pattern text here for local/manual extraction"
-      />
-
-      {capture && (
-        <div className="vardhan-capture-fields">
-          {fieldRows.map(([key, value]) => {
-            const confidence = Number(capture.fields?.[key]?.confidence || 0);
-            const confidenceLabel = `${Math.round(confidence * 100)}% confidence`;
-            return (
-              <label className={capture.lowConfidenceFields.includes(key) ? "low-confidence" : ""} key={key}>
-                <span>
-                  {formatFieldName(key)}
-                  <em>{confidenceLabel}</em>
-                </span>
-                <input
-                  value={Array.isArray(value) ? value.join(", ") : value}
-                  onChange={(event) => setCorrections((current) => ({ ...current, [key]: event.target.value }))}
-                />
-              </label>
-            );
-          })}
+      {file && (
+        <div className="smart-capture-file-actions">
+          {busy && <button type="button" onClick={cancel}><X size={16} /> Cancel upload</button>}
+          {!busy && <button type="button" onClick={() => inputRef.current?.click()}><RefreshCw size={16} /> Replace</button>}
+          {!busy && <button type="button" onClick={clear}><Trash2 size={16} /> Remove</button>}
         </div>
       )}
 
-      {capture?.validation && (
-        <div className={`smart-capture-validation ${capture.validation.isValid ? "valid" : "invalid"}`}>
-          <strong>{capture.validation.isValid ? "Totals validated" : "Review required"}</strong>
-          {[...(capture.validation.errors || []), ...(capture.validation.warnings || [])].map((item) => (
-            <p key={item}>{item}</p>
-          ))}
+      {busy && (
+        <div className="smart-capture-progress" role="status" aria-live="polite">
+          <span />
+          {phase === "loading" ? "Loading saved workspace draft…" : phase === "uploading" ? "Uploading securely to the selected workspace…" : phase === "extracting" ? "Gemini is extracting document evidence…" : "Saving reviewed data…"}
         </div>
       )}
 
-      {message && <p className="vardhan-ai-message">{message}</p>}
+      {review && (
+        <div className="smart-capture-review">
+          <div className="smart-capture-document-preview">
+            {previewUrl ? <img src={previewUrl} alt={`Uploaded document ${file.name}`} /> : (
+              <div><FileText size={44} /><strong>{file.name}</strong><span>PDF preview is available after opening the original file.</span></div>
+            )}
+          </div>
 
-      {capture && (
+          <div className="smart-capture-review-fields">
+            <div className="smart-capture-review-heading">
+              <div><strong>Editable extraction</strong><span>{Math.round(review.overallConfidence * 100)}% overall confidence</span></div>
+              <span className="smart-capture-provider">{review.provider}</span>
+            </div>
+            {REVIEW_FIELD_DEFINITIONS.map((definition) => {
+              const field = review.fields[definition.key];
+              return (
+                <label className={`smart-capture-field ${field.state}`} key={definition.key}>
+                  <span>
+                    {definition.label}
+                    <em>{field.state === "missing" ? "Missing" : field.state === "user-corrected" ? "Corrected" : `${Math.round(field.confidence * 100)}%`}</em>
+                  </span>
+                  <input
+                    type={definition.type}
+                    value={field.value}
+                    placeholder={field.state === "missing" ? "Not extracted" : ""}
+                    onChange={(event) => setReview((current) => applyReviewValue(current, definition.key, event.target.value))}
+                    disabled={busy}
+                  />
+                  {field.corrected && <small>Extracted: {String(field.extractedValue || "Missing")}</small>}
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {review && (
+        <details className="smart-capture-raw">
+          <summary>Raw OCR text and warnings</summary>
+          <pre>{review.rawText || "No raw text returned."}</pre>
+          {review.warnings.map((warning) => <p key={warning}><AlertTriangle size={14} /> {warning}</p>)}
+        </details>
+      )}
+
+      {result?.validation && (
+        <div className={`smart-capture-validation ${result.validation.status === "VALID" ? "valid" : "invalid"}`}>
+          <strong>{result.validation.status === "VALID" ? "Domain validation passed" : "Review required before creation"}</strong>
+          {[...(result.validation.errors || []), ...(result.validation.warnings || [])].slice(0, 6).map((item) => <p key={item}>{item}</p>)}
+        </div>
+      )}
+
+      {error && <div className="smart-capture-alert danger" role="alert"><AlertTriangle size={18} /> {error}</div>}
+      {message && <div className="smart-capture-alert success" role="status"><CheckCircle2 size={18} /> {message}</div>}
+
+      {review && (
         <div className="smart-capture-actions">
-          <button type="button" className="vardhan-ai-wide-action" onClick={confirmDraft}>
-            <Save size={16} />
-            Save Chit Draft
+          <button type="button" onClick={() => persist("draft")} disabled={busy}>
+            <Save size={16} /> Save Draft
           </button>
-          <button type="button" className="vardhan-ai-wide-action primary" onClick={createGroup}>
-            <WandSparkles size={16} />
-            Create Chit Group
+          <button type="button" className="primary" onClick={() => persist("record")} disabled={busy}>
+            <WandSparkles size={16} /> Create Chit / Record
           </button>
+          {savedDraft?.id ? (
+            <button type="button" onClick={deletePersistedDraft} disabled={busy}><Trash2 size={16} /> Delete Draft</button>
+          ) : (
+            <button type="button" onClick={clear} disabled={busy}><X size={16} /> Cancel</button>
+          )}
+          <button type="button" onClick={runCapture} disabled={busy || file?.persisted}><RefreshCw size={16} /> Retry OCR</button>
         </div>
-      )}
-
-      {isManualFallback && (
-        <p className="smart-capture-footnote">
-          Upload works now, but automatic OCR/AI extraction waits for a future provider connection.
-        </p>
       )}
     </section>
   );
 }
 
-function formatFieldName(key) {
-  return key
-    .replace(/([A-Z])/g, " $1")
-    .replace(/^./, (letter) => letter.toUpperCase());
+function defaultSessionExpired() {
+  if (typeof window !== "undefined") window.location.assign("/login?reason=session-expired");
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.ceil(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function readDraftIdFromLocation() {
+  if (typeof window === "undefined") return null;
+  return new URLSearchParams(window.location.search).get("draft");
+}
+
+function writeDraftIdToLocation(draftId) {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  if (draftId) url.searchParams.set("draft", draftId);
+  else url.searchParams.delete("draft");
+  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
 export default SmartChitCapture;

@@ -8,23 +8,12 @@ export const AISmartCapture = {
     let provider;
     let result;
 
-    // Always try external OCR provider first if file is provided
-    // This ensures the backend receives the POST request even if the provider is not fully configured
     if (file) {
-      try {
-        console.log("[AISmartCapture] Attempting external OCR provider with workspaceId:", activeTenantContext?.workspaceId);
-        provider = ExternalOCRProviderAdapter;
-        result = await provider.extract(file, {
-          documentType: "CHIT_REGISTER",
-          workspaceId: activeTenantContext?.workspaceId
-        });
-        console.log("[AISmartCapture] External OCR provider succeeded");
-      } catch (error) {
-        // Fall back to local provider on any OCR errors (including configuration errors)
-        console.warn("[AISmartCapture] External OCR provider failed, falling back to local:", error.message);
-        provider = createLocalAIProvider();
-        result = await provider.extractChitPattern({ file, manualText });
-      }
+      provider = ExternalOCRProviderAdapter;
+      result = await provider.extract(file, {
+        documentType: "CHIT_REGISTER",
+        workspaceId: activeTenantContext?.workspace_id || activeTenantContext?.workspaceId,
+      });
     } else {
       // Use local provider for manual text only
       console.log("[AISmartCapture] Using local provider for manual text");

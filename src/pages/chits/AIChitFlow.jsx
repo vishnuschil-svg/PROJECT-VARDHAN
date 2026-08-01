@@ -4,7 +4,7 @@ import {
   AlertTriangle, ArrowLeft, ArrowRight, Bot, Check, ChevronRight,
   FileText, Home, Image, LayoutGrid, MoreHorizontal,
   Plus, ShieldCheck, Sparkles, Trash2, Upload, Users, Info, DollarSign,
-  Calendar, Camera, List, Sliders, HelpCircle, Eye, Edit3, X, FileQuestion,
+  Calendar, Camera, List, Sliders, HelpCircle, Eye, Edit3, X, FileQuestion, ScanText,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import {
@@ -109,6 +109,7 @@ function Welcome({ go, context, profile }) {
         <button className="primary" onClick={() => go("upload")}>
           <Upload /><span><strong>Upload Document</strong><small>JPG, JPEG, PNG, WebP, PDF, or a camera photo</small></span><ChevronRight />
         </button>
+        <button onClick={() => window.location.assign("/chits/smart-capture")}><ScanText /><span><strong>Smart Chit Capture</strong><small>Authenticated Gemini OCR with editable review</small></span><ChevronRight /></button>
         <button onClick={() => window.location.assign("/chits/ai")}><Bot /><span><strong>AI Assistant</strong><small>Ask about your chit business</small></span></button>
         <button onClick={() => window.location.assign("/chits/groups")}><LayoutGrid /><span><strong>My Chit Groups</strong><small>{groups.length} tenant-scoped groups</small></span></button>
         <button onClick={() => window.location.assign("/chits/academy")}><FileText /><span><strong>Knowledge Base</strong><small>Guides and verified help</small></span></button>

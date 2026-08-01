@@ -1,5 +1,5 @@
-import { DEV_AUTH_BYPASS, DEV_MOCK_DATA } from "../../config/devAccess";
-import { PLATFORM_OWNER } from "../../config/erpModules";
+import { DEV_AUTH_BYPASS, DEV_MOCK_DATA } from "../../config/devAccess.ts";
+import { PLATFORM_OWNER } from "../../config/erpModules.js";
 
 const DEMO_AUTH_STORAGE_KEY = "vardhan.demo.auth.session.v1";
 const LEGACY_DEMO_SESSION_STORAGE_KEY = DEMO_AUTH_STORAGE_KEY;

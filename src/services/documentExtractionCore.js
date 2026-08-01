@@ -34,6 +34,7 @@ export async function extractDocumentEvidence(file, {
   documentType = "CHIT_REGISTER",
   languageHint = "UNKNOWN",
   ocrAdapter = ExternalOCRProviderAdapter,
+  signal,
 } = {}) {
   const validation = ChitDocumentUnderstandingEngine.validateFile(file);
   if (!validation.valid) {
@@ -86,6 +87,7 @@ export async function extractDocumentEvidence(file, {
         workspaceId,
         documentType,
         languageHint,
+        signal,
       });
       return buildEvidence({
         rawText: result.rawText,
@@ -95,6 +97,7 @@ export async function extractDocumentEvidence(file, {
         provider: result.provider,
         status: EXTRACTION_STATUS.SUCCESS,
         file,
+        providerResponse: result,
         providerMetadata: {
           provider: result.provider,
           rawTextLength: result.rawText.length,
@@ -180,6 +183,7 @@ function buildEvidence(value) {
       warnings: [],
     },
     status: value.status,
+    providerResponse: value.providerResponse || null,
   };
 }
 

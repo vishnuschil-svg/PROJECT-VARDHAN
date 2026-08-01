@@ -96,7 +96,7 @@ export function AuthProvider({ children }) {
       if (event === "SIGNED_OUT") {
         clearAuthState();
       } else if (session?.user) {
-        applySession(session);
+        loadUser();
       }
     });
 

@@ -56,6 +56,7 @@ const ChitSupport = lazy(() => import("../pages/chits/Support"));
 const AIWorkspace = lazy(() => import("../pages/chits/AIWorkspace"));
 const Academy = lazy(() => import("../pages/chits/Academy"));
 const AIChitFlow = lazy(() => import("../pages/chits/AIChitFlow"));
+const SmartChitCapturePage = lazy(() => import("../pages/chits/SmartChitCapturePage"));
 const PublicSite = lazy(() => import("../pages/public/PublicSite"));
 
 function RouteFallback() {
@@ -419,6 +420,10 @@ function AppRouter() {
         <Route
           path="/chits/ai-chit/*"
           element={<ProtectedRoute moduleId={CHIT_MANAGEMENT_ERP}><AIChitFlow /></ProtectedRoute>}
+        />
+        <Route
+          path="/chits/smart-capture"
+          element={<ProtectedRoute moduleId={CHIT_MANAGEMENT_ERP}><SmartChitCapturePage /></ProtectedRoute>}
         />
         <Route
           path="/chits/academy"

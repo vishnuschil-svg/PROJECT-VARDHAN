@@ -1,7 +1,6 @@
-import { getSupabaseClient } from "../../lib/supabase/SupabaseClient.js";
 import { SupabaseAuthService } from "../../services/auth/SupabaseAuthService.js";
 
-const DEFAULT_TIMEOUT_MS = 30000;
+const DEFAULT_TIMEOUT_MS = 180000;
 const DEFAULT_API_BASE = "/api";
 const SUPPORTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
 const ERROR_CODES = new Set([
@@ -13,6 +12,11 @@ const ERROR_CODES = new Set([
   "OCR_SCHEMA_INVALID",
   "DOCUMENT_UNREADABLE",
   "MANUAL_FALLBACK_USED",
+  "SESSION_EXPIRED",
+  "WORKSPACE_ACCESS_DENIED",
+  "FILE_TOO_LARGE",
+  "UNSUPPORTED_FILE",
+  "INVALID_UPLOAD",
 ]);
 
 export class OCRProviderError extends Error {
@@ -31,7 +35,8 @@ export function createExternalOCRProviderAdapter({
   fetchImpl = globalThis.fetch,
   timeoutMs = DEFAULT_TIMEOUT_MS,
   getSession = defaultSession,
-  getAccessToken = SupabaseAuthService.getAccessToken,
+  getAccessToken,
+  refreshSession = defaultRefreshSession,
 } = {}) {
   const environment = import.meta.env || {};
   const normalizedBase = String(
@@ -54,47 +59,41 @@ export function createExternalOCRProviderAdapter({
       workspaceId,
       documentType = "CHIT_REGISTER",
       languageHint = "UNKNOWN",
+      signal,
     } = {}) {
-      // Remove isConfigured() check to ensure POST request always reaches backend
-      // Backend will handle configuration errors
       validateFile(file);
-      const session = await sessionLoader();
-      console.log("[OCR Request] Session retrieved:", session ? "Session exists" : "No session");
-      console.log("[OCR Request] Access token exists:", !!session?.access_token);
+      let session = await sessionLoader();
       if (!session?.access_token) {
         throw new OCRProviderError(
-          "OCR_NOT_CONFIGURED",
-          "An authenticated session is required for document extraction."
+          "SESSION_EXPIRED",
+          "Your session has expired. Sign in again to extract this document.",
+          { status: 401 }
         );
       }
       if (!workspaceId) {
         throw new OCRProviderError(
-          "OCR_NOT_CONFIGURED",
+          "WORKSPACE_ACCESS_DENIED",
           "Select a business workspace before extracting a document."
         );
       }
 
       const controller = new AbortController();
+      const abortFromCaller = () => controller.abort();
+      signal?.addEventListener?.("abort", abortFromCaller, { once: true });
       const timeout = setTimeout(() => controller.abort(), timeoutMs);
       try {
-        console.log("[OCR Request] Calling backend endpoint:", normalizedEndpoint);
-        console.log("[OCR Request] File:", file.name, file.type, file.size);
-        console.log("[OCR Request] Workspace ID:", workspaceId);
         const body = new FormData();
         body.append("file", file, file.name);
         body.append("document_type", documentType);
         body.append("language_hint", languageHint);
-        const response = await fetchImpl(normalizedEndpoint, {
-          method: "POST",
-          body,
-          signal: controller.signal,
-          credentials: "same-origin",
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            "X-Workspace-Id": workspaceId,
-          },
-        });
-        console.log("[OCR Request] Response status:", response.status);
+        let response = await sendRequest(fetchImpl, normalizedEndpoint, body, session.access_token, workspaceId, controller.signal);
+        if (response.status === 401 && typeof refreshSession === "function") {
+          const refreshed = await refreshSession();
+          session = refreshed?.access_token ? refreshed : refreshed?.session;
+          if (session?.access_token) {
+            response = await sendRequest(fetchImpl, normalizedEndpoint, body, session.access_token, workspaceId, controller.signal);
+          }
+        }
         const result = await readJsonSafely(response);
         if (!response.ok) {
           const detail = result?.detail && typeof result.detail === "object"
@@ -104,8 +103,8 @@ export function createExternalOCRProviderAdapter({
             ? result.detail
             : detail?.message;
           throw new OCRProviderError(
-            detail?.code || "OCR_FAILED",
-            backendMessage || `Document extraction failed with status ${response.status}.`,
+            normalizeErrorCode(detail?.code, response.status),
+            safeResponseMessage(response.status, backendMessage),
             {
               status: response.status,
               retryable: Boolean(detail?.retryable || response.status >= 500),
@@ -129,6 +128,7 @@ export function createExternalOCRProviderAdapter({
         );
       } finally {
         clearTimeout(timeout);
+        signal?.removeEventListener?.("abort", abortFromCaller);
       }
     },
   });
@@ -233,26 +233,11 @@ async function readJsonSafely(response) {
 }
 
 async function defaultSession() {
-  console.log("[defaultSession] Using SupabaseAuthService for session retrieval");
-  try {
-    const session = await SupabaseAuthService.getSession();
-    console.log("[defaultSession] Session from auth service:", session ? "Session exists" : "No session");
-    // The auth service returns a formatted session, we need to extract the raw Supabase session
-    const rawSession = session?.session;
-    console.log("[defaultSession] Raw Supabase session:", rawSession ? "Raw session exists" : "No raw session");
-    console.log("[defaultSession] Access token:", rawSession?.access_token ? "Token exists" : "No token");
-    return rawSession;
-  } catch (error) {
-    console.error("[defaultSession] Error getting session from auth service:", error);
-    // Fallback to direct Supabase client
-    const client = getSupabaseClient();
-    console.log("[defaultSession] Fallback to direct Supabase client:", client ? "Client exists" : "No client");
-    if (!client) return null;
-    const session = (await client.auth.getSession()).data.session;
-    console.log("[defaultSession] Fallback session:", session ? "Session exists" : "No session");
-    console.log("[defaultSession] Fallback access token:", session?.access_token ? "Token exists" : "No token");
-    return session;
-  }
+  return (await SupabaseAuthService.getSession())?.session || null;
+}
+
+async function defaultRefreshSession() {
+  return (await SupabaseAuthService.refreshSession())?.session || null;
 }
 
 function validateFile(file) {
@@ -260,12 +245,54 @@ function validateFile(file) {
     throw new OCRProviderError("OCR_FAILED", "A valid OCR document is required.");
   }
   if (file.size > 15 * 1024 * 1024) {
-    throw new OCRProviderError("OCR_FAILED", "OCR document exceeds the 15 MB safety limit.");
+    throw new OCRProviderError("FILE_TOO_LARGE", "The selected document exceeds the 15 MB limit.", { status: 413 });
   }
   if (file.type && !SUPPORTED_TYPES.has(file.type)) {
     throw new OCRProviderError(
-      "OCR_FAILED",
-      "OCR supports JPEG, PNG, WebP, and PDF documents only."
+      "UNSUPPORTED_FILE",
+      "Choose a PNG, JPEG, WebP, or PDF document.",
+      { status: 415 }
     );
   }
+}
+
+function sendRequest(fetchImpl, endpoint, body, accessToken, workspaceId, signal) {
+  return fetchImpl(endpoint, {
+    method: "POST",
+    body,
+    signal,
+    credentials: "same-origin",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "X-Workspace-Id": workspaceId,
+    },
+  });
+}
+
+function normalizeErrorCode(code, status) {
+  const byStatus = {
+    401: "SESSION_EXPIRED",
+    403: "WORKSPACE_ACCESS_DENIED",
+    413: "FILE_TOO_LARGE",
+    415: "UNSUPPORTED_FILE",
+    422: "INVALID_UPLOAD",
+    429: "OCR_RATE_LIMIT",
+    502: "OCR_PROVIDER_UNAVAILABLE",
+    503: "OCR_PROVIDER_UNAVAILABLE",
+  };
+  return byStatus[status] || code || "OCR_FAILED";
+}
+
+function safeResponseMessage(status, backendMessage) {
+  const messages = {
+    401: "Your session has expired. Sign in again to continue.",
+    403: "You do not have access to use OCR in this workspace.",
+    413: "The selected document exceeds the upload size limit.",
+    415: "This document type is not supported.",
+    422: "The uploaded document could not be validated.",
+    429: "OCR is temporarily rate limited. Wait a moment and retry.",
+    502: "The OCR provider is temporarily unavailable.",
+    503: "The OCR provider is temporarily unavailable.",
+  };
+  return messages[status] || backendMessage || "Document extraction failed. Please retry.";
 }
