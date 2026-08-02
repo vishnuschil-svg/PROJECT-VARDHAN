@@ -10,16 +10,25 @@ import HelpButton from "../../components/common/HelpButton";
 import {
   CHIT_GROUP_STATUS,
   CHIT_STATUS_VARIANTS,
-  formatCurrency,
 } from "../../config/chitPhaseOneData";
 import { CHIT_PRODUCT_NAME } from "../../config/erpModules";
+import { canActivateAnotherChit } from "../../config/chitTrialPlans";
 import { useAuth } from "../../hooks/useAuth";
 import {
+  listTenantCollectionsPersistent,
   listTenantGroupsPersistent,
   saveTenantGroupPersistent,
   updateTenantGroupPersistent,
 } from "../../services/chitDataService";
+import { buildChitGroupsSummary } from "../../services/chitGroupsSummaryService";
 import { ActivityRepository } from "../../repositories/ActivityRepository";
+import {
+  displayChitCode,
+  displayChitName,
+  formatChitDate,
+  formatINR,
+  formatTenureProgress,
+} from "../../utils/chitDisplayFormat";
 import "./ChitGroups.css";
 
 const INSTALLMENT_PATTERNS = [
@@ -58,6 +67,7 @@ function ChitGroups() {
   const navigate = useNavigate();
   const { activeTenantContext } = useAuth();
   const [groups, setGroups] = useState([]);
+  const [collections, setCollections] = useState([]);
   const [modalMode, setModalMode] = useState(null);
   const [choiceOpen, setChoiceOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -85,13 +95,31 @@ function ChitGroups() {
 
   useEffect(() => {
     let active = true;
-    listTenantGroupsPersistent(activeTenantContext)
-      .then((records) => { if (active) setGroups(records); })
+    Promise.all([
+      listTenantGroupsPersistent(activeTenantContext),
+      listTenantCollectionsPersistent(activeTenantContext).catch(() => []),
+    ])
+      .then(([records, collectionRows]) => {
+        if (!active) return;
+        setGroups(records);
+        setCollections(collectionRows || []);
+      })
       .catch((loadError) => { if (active) setError(loadError.message); });
     return () => { active = false; };
   }, [activeTenantContext]);
 
   const tenantGroups = useMemo(() => groups, [groups]);
+  const summary = useMemo(
+    () => buildChitGroupsSummary({ groups: tenantGroups, collections }),
+    [tenantGroups, collections]
+  );
+  const trialGate = useMemo(
+    () => canActivateAnotherChit({
+      groups: tenantGroups,
+      planId: activeTenantContext?.trial_plan_id || activeTenantContext?.subscription?.planId,
+    }),
+    [tenantGroups, activeTenantContext]
+  );
 
   const openEdit = (row) => {
     setFormData({
@@ -214,9 +242,19 @@ function ChitGroups() {
   const validate = () => {
     if (!formData.chit_name.trim()) return "Chit Name is required.";
     if (!formData.chit_code.trim()) return "Group Code is required.";
+    const code = formData.chit_code.trim().toUpperCase();
+    const name = formData.chit_name.trim();
+    if (name.toUpperCase() === code) return "Chit Name must be a human-readable name, not the Chit Code.";
     if (Number(formData.chit_value) <= 0) return "Chit Value must be greater than 0.";
     if (Number(formData.total_members) <= 1) return "Member Count must be greater than 1.";
     if (Number(formData.total_months) <= 1) return "Duration/months must be greater than 1.";
+    if (
+      modalMode === "create" &&
+      String(formData.status).toLowerCase() === CHIT_GROUP_STATUS.ACTIVE &&
+      !trialGate.allowed
+    ) {
+      return `Active chit limit reached (${trialGate.used}/${trialGate.max}). Upgrade trial or archive a completed group.`;
+    }
     if (!formData.start_date) return "Start Date is required.";
     if (!formData.end_date) return "End Date is required.";
     if (!formData.collection_frequency) return "Collection Frequency is required.";
@@ -394,31 +432,54 @@ function ChitGroups() {
   }, [formData.installment_pattern, formData.monthly_amount, formData.total_months, formData.schedule]);
 
   const columns = [
-    { key: "chit_name", label: "Chit Name", width: "180px" },
-    { key: "chit_code", label: "Chit Code", width: "120px" },
+    {
+      key: "chit_code",
+      label: "Chit Code",
+      width: "120px",
+      render: (_value, row) => displayChitCode(row),
+    },
+    {
+      key: "chit_name",
+      label: "Chit Name",
+      width: "180px",
+      render: (_value, row) => displayChitName(row),
+    },
     {
       key: "chit_value",
       label: "Chit Value",
       width: "120px",
-      render: (value) => formatCurrency(value),
+      render: (value) => formatINR(value),
     },
     {
-      key: "monthly_amount",
-      label: "Monthly Amount",
-      width: "140px",
-      render: (value) => formatCurrency(value),
+      key: "total_members",
+      label: "Members",
+      width: "90px",
     },
-    { key: "total_members", label: "Total Members", width: "120px" },
-    { key: "total_months", label: "Total Months", width: "120px" },
-    { key: "start_date", label: "Start Date", width: "120px" },
-    { key: "end_date", label: "End Date", width: "120px" },
+    {
+      key: "tenure",
+      label: "Tenure Progress",
+      width: "130px",
+      render: (_value, row) => formatTenureProgress(row),
+    },
+    {
+      key: "start_date",
+      label: "Start Date",
+      width: "120px",
+      render: (value) => formatChitDate(value),
+    },
+    {
+      key: "end_date",
+      label: "End Date",
+      width: "120px",
+      render: (value) => formatChitDate(value),
+    },
     {
       key: "status",
       label: "Status",
-      width: "100px",
+      width: "110px",
       render: (value) => (
         <Badge
-          label={value}
+          label={value === "upcoming" ? "Review" : value === "closed" ? "Completed" : value}
           variant={CHIT_STATUS_VARIANTS[value] || "default"}
           size="small"
         />
@@ -426,24 +487,42 @@ function ChitGroups() {
     },
   ];
 
+  const isLocked = (row) => ["closed", "archived", "completed"].includes(String(row.status || "").toLowerCase());
+
   const actions = [
+    {
+      icon: "Eye",
+      label: "View Details",
+      onClick: (row) => navigate(`/chits/groups?view=${encodeURIComponent(row.id)}`),
+      variant: "default",
+    },
+    {
+      icon: "Users",
+      label: "Add Members",
+      onClick: (row) => navigate(`/chits/members?group=${encodeURIComponent(row.id)}`),
+      variant: "default",
+      disabled: (row) => isLocked(row),
+    },
+    {
+      icon: "Target",
+      label: "Record Bid",
+      onClick: (row) => navigate(`/chits/auctions?group=${encodeURIComponent(row.id)}`),
+      variant: "default",
+      disabled: (row) => isLocked(row) || String(row.chit_mode || "").toLowerCase() === "fixed",
+    },
     {
       icon: "Edit",
       label: "Edit Group",
       onClick: openEdit,
       variant: "default",
-    },
-    {
-      icon: "Close",
-      label: "Close Group",
-      onClick: (row) => updateStatus(row, CHIT_GROUP_STATUS.CLOSED),
-      variant: "warning",
+      disabled: (row) => isLocked(row),
     },
     {
       icon: "Archive",
       label: "Archive Group",
       onClick: (row) => updateStatus(row, CHIT_GROUP_STATUS.ARCHIVED),
       variant: "danger",
+      disabled: (row) => String(row.status || "").toLowerCase() === "archived",
     },
   ];
 
@@ -475,6 +554,21 @@ function ChitGroups() {
             size="small"
           />
         </div>
+
+        <div className="chit-group-metrics" aria-label="Chit group summary">
+          {summary.cards.map((card) => (
+            <article key={card.key} className="chit-group-metric">
+              <span>{card.label}</span>
+              <strong>{card.display}</strong>
+            </article>
+          ))}
+        </div>
+
+        {!trialGate.allowed && (
+          <div className="chit-group-limit" role="status">
+            Active chit limit reached ({trialGate.used}/{trialGate.max}). Completed and archived groups do not count. Upgrade or archive before activating another group.
+          </div>
+        )}
 
         <div className="chit-group-table-shell">
           <Table columns={columns} data={tenantGroups} actions={actions} />
@@ -719,10 +813,10 @@ function ChitGroups() {
                 {previewRows.map((row, i) => (
                   <tr key={i}>
                     <td>{row.month}</td>
-                    <td>{formatCurrency(row.non_lifted)}</td>
-                    <td>{formatCurrency(row.lifted)}</td>
-                    <td>{formatCurrency(row.prize)}</td>
-                    <td>{formatCurrency(row.dividend)}</td>
+                    <td>{formatINR(row.non_lifted)}</td>
+                    <td>{formatINR(row.lifted)}</td>
+                    <td>{formatINR(row.prize)}</td>
+                    <td>{formatINR(row.dividend)}</td>
                   </tr>
                 ))}
               </tbody>

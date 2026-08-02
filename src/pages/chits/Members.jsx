@@ -149,8 +149,41 @@ function Members() {
     if (!formData.member_name.trim()) return "Member Name is required.";
     if (!formData.member_number.trim()) return "Member ID / Member Number is required.";
     if (!formData.mobile_number.trim()) return "Mobile Number is required.";
+    const digits = String(formData.mobile_number).replace(/\D/g, "");
+    if (digits.length < 10) return "Mobile Number must include at least 10 digits.";
     if (!formData.chit_group_id) return "Assigned Chit Group is required.";
     if (!formData.join_date) return "Join Date is required.";
+
+    const group = tenantGroups.find((item) => item.id === formData.chit_group_id);
+    if (!group) return "Assigned Chit Group was not found for this tenant.";
+    if (["closed", "archived", "completed"].includes(String(group.status || "").toLowerCase())) {
+      return "Cannot add members to a closed, archived, or completed group.";
+    }
+
+    const capacity = Number(group.total_members || group.totalMembers || 0);
+    if (capacity > 0) {
+      const activeInGroup = tenantMembers.filter((member) => {
+        const sameGroup = String(member.chit_group_id || member.group_id) === String(formData.chit_group_id);
+        const sameRecord = modalMode === "edit" && member.id === formData.id;
+        const active = String(member.status || "").toLowerCase() !== "inactive";
+        return sameGroup && active && !sameRecord;
+      }).length;
+      const activating = String(formData.status || "").toLowerCase() !== "inactive";
+      if (activating && activeInGroup >= capacity) {
+        return `Group capacity reached (${capacity}). Deactivate a member before adding another.`;
+      }
+    }
+
+    const mobileKey = String(formData.mobile_number).replace(/\D/g, "").slice(-10);
+    const duplicate = tenantMembers.find((member) => {
+      if (modalMode === "edit" && member.id === formData.id) return false;
+      const sameGroup = String(member.chit_group_id || member.group_id) === String(formData.chit_group_id);
+      const sameMobile = String(member.mobile_number || "").replace(/\D/g, "").slice(-10) === mobileKey;
+      const sameNumber = String(member.member_number || "").trim().toLowerCase() === formData.member_number.trim().toLowerCase();
+      return sameGroup && (sameMobile || sameNumber);
+    });
+    if (duplicate) return "Duplicate member detected for this group (member number or mobile).";
+
     return "";
   };
 

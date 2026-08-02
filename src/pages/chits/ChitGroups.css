@@ -4,12 +4,61 @@
   gap: 18px;
 }
 
+.chit-group-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.chit-group-metric {
+  background: #ffffff;
+  border: 1px solid rgba(26, 26, 26, 0.09);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: grid;
+  gap: 6px;
+}
+
+.chit-group-metric span {
+  color: #5b5560;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.chit-group-metric strong {
+  font-family: "Sora", "Segoe UI", sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #1a1a1a;
+}
+
+.chit-group-limit {
+  border: 1px solid #efc2c2;
+  background: #fff5f5;
+  color: #8a1f1f;
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  font-size: 0.9rem;
+}
+
 .chit-group-table-shell {
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid var(--chit-border);
-  border-radius: 18px;
-  overflow: hidden;
-  box-shadow: var(--chit-shadow);
+  background: #ffffff;
+  border: 1px solid rgba(26, 26, 26, 0.09);
+  border-radius: 14px;
+  overflow: auto;
+}
+
+@media (max-width: 960px) {
+  .chit-group-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .chit-group-metrics {
+    grid-template-columns: 1fr;
+  }
 }
 
 .chit-group-form {

@@ -76,12 +76,18 @@ function Table({
                   {actions && (
                     <td className="table-actions">
                       <div className="action-buttons">
-                        {actions.map((action, aIdx) => (
+                        {actions.map((action, aIdx) => {
+                          const disabled = typeof action.disabled === "function"
+                            ? action.disabled(row)
+                            : Boolean(action.disabled);
+                          return (
                           <button
                             key={`${action.label}-${aIdx}`}
                             className={`action-btn action-${action.variant || "default"}`}
+                            disabled={disabled}
                             onClick={(event) => {
                               event.stopPropagation();
+                              if (disabled) return;
                               action.onClick?.(row);
                             }}
                             title={action.label}
@@ -89,7 +95,8 @@ function Table({
                           >
                             {action.icon || action.label}
                           </button>
-                        ))}
+                          );
+                        })}
                       </div>
                     </td>
                   )}

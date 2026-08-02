@@ -73,5 +73,14 @@ test("active slot engine releases slots after close or archive", () => {
 
   assert.equal(state.activeSlotsUsed, 1);
   assert.equal(state.reusableFromArchive, 1);
-  assert.equal(state.canReuseActiveSlot, true);
+  // Closed groups do not consume slots; with 1 active and max 1, another active chit is not allowed.
+  assert.equal(state.canReuseActiveSlot, false);
+  assert.equal(state.reusableSlots, 0);
+
+  const afterCloseOnly = ActiveSlotEngine.buildSlotState({
+    maxActiveSlots: 1,
+    groups: [{ id: "closed", status: "closed" }],
+  });
+  assert.equal(afterCloseOnly.activeSlotsUsed, 0);
+  assert.equal(afterCloseOnly.canReuseActiveSlot, true);
 });
