@@ -1,0 +1,5 @@
+Chit Name: Conflict Chit
+Chit Value: 999999
+Members: 10
+Duration: 20
+Monthly Installment: 1000

@@ -57,6 +57,7 @@ from enterprise_api import build_enterprise_router
 from structured_logging import configure_production_logging
 from ocr_api import build_ocr_router
 from vision_providers import create_vision_provider
+from ingestion.api import build_ingestion_router
 
 
 def _load_env_file(path: Path) -> None:
@@ -819,11 +820,12 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=list(settings.cors_origins),
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "X-Workspace-Id", "X-Request-Id"],
 )
 app.include_router(build_enterprise_router(workspace_context, database_pool))
 app.include_router(build_ocr_router(workspace_context), prefix="/api")
+app.include_router(build_ingestion_router(workspace_context), prefix="/api")
 
 
 @app.middleware("http")

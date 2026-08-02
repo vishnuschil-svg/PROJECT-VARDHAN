@@ -1,0 +1,255 @@
+.ingest-shell,
+.ingest-review {
+  --ink: #1c1410;
+  --muted: #6b5e52;
+  --paper: #f7f4ef;
+  --panel: #ffffff;
+  --line: #e6ddd2;
+  --brand: #7a1f3d;
+  --danger: #8a1f1f;
+  --ok: #1f5c3a;
+  color: var(--ink);
+  display: grid;
+  gap: 1.25rem;
+}
+
+.ingest-hero {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: end;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(122, 31, 61, 0.08), transparent 42%),
+    linear-gradient(180deg, #fffdf9, var(--paper));
+  border-bottom: 1px solid var(--line);
+  padding: 1.25rem 0 1rem;
+}
+
+.ingest-hero h1 {
+  margin: 0.25rem 0 0.5rem;
+  font-family: "Sora", "Segoe UI", sans-serif;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.ingest-hero p {
+  margin: 0;
+  max-width: 54ch;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.ingest-kicker {
+  margin: 0;
+  color: var(--brand);
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ingest-lang {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.ingest-lang select,
+.ingest-field input,
+.ingest-field textarea {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+}
+
+.ingest-drop {
+  display: grid;
+  gap: 0.65rem;
+  justify-items: start;
+  padding: 1.25rem;
+  border: 1px dashed #cbb9a8;
+  border-radius: 16px;
+  background: var(--panel);
+}
+
+.ingest-upload-btn,
+.ingest-actions button,
+.ingest-review-meta button,
+.ingest-progress header button,
+.ingest-jobs button,
+.ingest-pager button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 0.55rem 0.95rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+.ingest-upload-btn,
+.ingest-actions button.primary {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.ingest-error,
+.ingest-message,
+.ingest-flags {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.ingest-error {
+  border-color: #efc2c2;
+  background: #fff5f5;
+  color: var(--danger);
+}
+
+.ingest-message {
+  border-color: #c9e2d2;
+  background: #f3fbf6;
+  color: var(--ok);
+}
+
+.ingest-progress,
+.ingest-source,
+.ingest-draft {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1rem;
+}
+
+.ingest-progress header,
+.ingest-source header,
+.ingest-draft header,
+.ingest-review-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.ingest-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  color: var(--muted);
+  margin-bottom: 0.85rem;
+}
+
+.ingest-jobs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.ingest-jobs li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.7rem 0.8rem;
+  border-radius: 12px;
+  background: var(--paper);
+}
+
+.ingest-jobs strong,
+.ingest-jobs small {
+  display: block;
+}
+
+.ingest-jobs small,
+.ingest-muted,
+.ingest-field small {
+  color: var(--muted);
+}
+
+.ingest-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  min-height: 60vh;
+}
+
+.ingest-source pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: "IBM Plex Mono", "Consolas", monospace;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  max-height: 70vh;
+  overflow: auto;
+  background: var(--paper);
+  border-radius: 12px;
+  padding: 0.9rem;
+}
+
+.ingest-fields {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.ingest-field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.ingest-flags {
+  display: grid;
+  margin-bottom: 0.85rem;
+  background: #fff8ef;
+}
+
+.ingest-flags p {
+  margin: 0;
+}
+
+.ingest-audit ul {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.ingest-audit li {
+  margin-bottom: 0.45rem;
+}
+
+.ingest-review-meta .warn {
+  color: var(--danger);
+  font-weight: 650;
+}
+
+.spin {
+  animation: ingest-spin 0.9s linear infinite;
+}
+
+@keyframes ingest-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 960px) {
+  .ingest-hero,
+  .ingest-split {
+    grid-template-columns: 1fr;
+  }
+}

@@ -80,3 +80,7 @@ desktop.ini
 *.njsproj
 *.sln
 *.sw?
+
+# Local durable ingestion queue + uploaded binaries
+backend/data/
+
