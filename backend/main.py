@@ -831,7 +831,7 @@ async def request_identity(request: Request, call_next: Any) -> Response:
     request_id = request.headers.get("X-Request-Id") or str(uuid.uuid4())
     started_at = datetime.now(UTC)
     rate_decision = None
-    if request.method != "OPTIONS" and request.url.path != "/health":
+    if request.method != "OPTIONS" and request.url.path not in {"/health", "/api/health"}:
         client_key = request.client.host if request.client else "unknown"
         rate_decision = await rate_limit_adapter.check(client_key, RATE_LIMIT_REQUESTS, RATE_LIMIT_WINDOW_SECONDS, request.headers)
         if not rate_decision.allowed:

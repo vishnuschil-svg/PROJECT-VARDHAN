@@ -1,6 +1,13 @@
+import os
 import unittest
+from unittest import mock
 
-from rate_limit import GatewayRateLimitAdapter, LocalMemoryRateLimitAdapter
+from rate_limit import (
+    GatewayRateLimitAdapter,
+    LocalMemoryRateLimitAdapter,
+    normalize_redis_url,
+    resolve_redis_url,
+)
 
 
 class RateLimitAdapterTests(unittest.IsolatedAsyncioTestCase):
@@ -23,6 +30,16 @@ class RateLimitAdapterTests(unittest.IsolatedAsyncioTestCase):
         })
         self.assertFalse(trusted.allowed)
         self.assertEqual(trusted.retry_after, 12)
+
+    def test_normalize_redis_url_rejects_invalid_schemes(self):
+        with self.assertRaisesRegex(RuntimeError, "redis://, rediss://, or unix://"):
+            normalize_redis_url("https://example.upstash.io")
+        with self.assertRaisesRegex(RuntimeError, "REDIS_URL is required"):
+            normalize_redis_url("   ")
+
+    def test_resolve_redis_url_accepts_marketplace_prefixed_fallback(self):
+        with mock.patch.dict(os.environ, {"REDIS_URL": "", "REDIS_URL_REDIS_URL": "rediss://example.internal:6379"}, clear=False):
+            self.assertEqual(resolve_redis_url(), "rediss://example.internal:6379")
 
 
 if __name__ == "__main__":
