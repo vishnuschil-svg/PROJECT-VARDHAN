@@ -3,6 +3,7 @@
 **Branch:** `design/vardhan-natural-ui`  
 **Ground truth:** `docs/design-system.md`, `docs/reference/vardhan-landing.html`, `docs/reference/vardhan-dashboard.html`, `docs/reference/vardhan-login.html`  
 **Started:** 2026-08-02  
+**Updated:** 2026-08-02 (AI Chit upload + OCR diagnosis continuation)  
 **Constraint:** Visual/UX refactor only. No schema, secrets, env, push, or deploy.
 
 ---
@@ -17,6 +18,7 @@
 | 4 | All `/chits/*` operational screens | `design(chits): unify chit management experience` |
 | 5 | Partner OS branding surfaces + remaining product stubs | `design(partners): unify partner portal experience` |
 | 6 | Remaining modules, shared errors, final polish | `design(modules): align remaining product modules` |
+| 7 | AI Chit Capture shell + OCR contract honesty | `design(chits): align smart chit capture with shell` *(local work; not committed unless requested)* |
 
 **Note:** No dedicated School/College/Hostel/Insurance app routes exist beyond public product pages and roadmap stubs. Partner portal is represented by `/vardhan-os` public + platform Partner OS copy; no separate partner app router today.
 
@@ -26,12 +28,12 @@
 
 | Current shell | Used by | Target |
 |---|---|---|
-| `PublicSite` header/footer | All public routes | Keep; locked landing tokens (Batch 1 polish) |
-| `AuthLayout` + `premium-auth-*` | `/login` | Replace with login-reference 44/56 maroon panel (Batch 2) |
-| `AccessShell` | `/register`, forgot/reset | Same auth visual language (Batch 2) |
-| `DashboardLayout` + Sidebar/Topbar | `/dashboard`, products, upgrade | Unify to dashboard-reference shell (Batch 1) |
-| `AdminLayout` + AdminNavigation | `/admin/*` | Same shell chrome; menu differs (Batch 1+3) |
-| `ChitLayout` + ChitNavigation | `/chits/*` | Same shell chrome; menu differs (Batch 1+4) |
+| `PublicSite` header/footer | All public routes | Keep; locked landing tokens |
+| `AuthLayout` + `premium-auth-*` | `/login` | Login-reference 44/56 maroon panel |
+| `AccessShell` | `/register`, forgot/reset | Same auth visual language |
+| `DashboardLayout` + Sidebar/Topbar | `/dashboard`, products, upgrade | Dashboard-reference shell |
+| `AdminLayout` + AdminNavigation | `/admin/*` | Same shell chrome; menu differs |
+| `ChitLayout` + ChitNavigation | `/chits/*` including `/chits/ai-chit/*` | Same shell chrome; menu differs |
 
 ---
 
@@ -41,144 +43,115 @@
 
 | Path | Component | Design status | Target | Shared shell | Problems | Risks | Status |
 |---|---|---|---|---|---|---|---|
-| `/` | `PublicSite` HomeLanding | Partially redesigned | landing.html | Public | Residual “VARDHAN OS” in secondary pages | Preserve product links | In progress |
-| `/vardhan-os` | PublicSite OsPage | Mixed | landing tokens | Public | “Partner OS / VARDHAN OS” copy | Route must remain | Pending branding |
-| `/features` | ContentPage | Mixed | landing | Public | Generic content card | — | Pending |
-| `/how-it-works` | ContentPage | Mixed | landing | Public | Same | — | Pending |
-| `/pricing` | ContentPage | Mixed | landing | Public | Honest no-price copy OK | — | Pending |
-| `/demo` | ContentPage | Mixed | landing | Public | Same | — | Pending |
-| `/trial` | ContentPage | Mixed | landing | Public | Same | — | Pending |
-| `/videos` | ContentPage | Mixed | landing | Public | Same | — | Pending |
-| `/tutorials` | ContentPage | Mixed | landing | Public | Same | — | Pending |
-| `/documentation` | ContentPage | Mixed | landing | Public | Same | — | Pending |
-| `/blogs` | ContentPage | Mixed | landing | Public | Same | — | Pending |
-| `/customer-stories` | ContentPage | Mixed | landing | Public | Same | — | Pending |
-| `/security` | ContentPage | Mixed | landing | Public | Same | — | Pending |
-| `/contact` | ContentPage | Mixed | landing | Public | Same | — | Pending |
-| `/products/mitra-nidhi-chiti-pro` | ProductPage | Mixed | landing | Public | Status chip OK | Preserve Available truth | Pending polish |
-| `/products/school-erp` | ProductPage | Mixed | landing | Public | Roadmap only | No fake demos | Pending |
-| `/products/college-erp` | ProductPage | Mixed | landing | Public | Roadmap only | — | Pending |
-| `/products/private-hostels-erp` | ProductPage | Mixed | landing | Public | Roadmap only | — | Pending |
-| `/products/insurance-crm` | ProductPage | Mixed | landing | Public | Roadmap only | — | Pending |
+| `/` | `PublicSite` HomeLanding | Redesigned | landing.html | Public | — | Preserve product links | Done |
+| `/vardhan-os` | PublicSite OsPage | Aligned | landing tokens | Public | Partner OS copy kept intentional | Route must remain | Done |
+| `/features` | ContentPage | Aligned | landing | Public | — | — | Done |
+| `/how-it-works` | ContentPage | Aligned | landing | Public | — | — | Done |
+| `/pricing` | ContentPage | Aligned | landing | Public | Honest no-price copy OK | — | Done |
+| `/demo` | ContentPage | Aligned | landing | Public | — | — | Done |
+| `/trial` | ContentPage | Aligned | landing | Public | — | — | Done |
+| `/videos` | ContentPage | Aligned | landing | Public | — | — | Done |
+| `/tutorials` | ContentPage | Aligned | landing | Public | — | — | Done |
+| `/documentation` | ContentPage | Aligned | landing | Public | — | — | Done |
+| `/blogs` | ContentPage | Aligned | landing | Public | — | — | Done |
+| `/customer-stories` | ContentPage | Aligned | landing | Public | — | — | Done |
+| `/security` | ContentPage | Aligned | landing | Public | — | — | Done |
+| `/contact` | ContentPage | Aligned | landing | Public | — | — | Done |
+| `/products/mitra-nidhi-chiti-pro` | ProductPage | Aligned | landing | Public | Status chip OK | Preserve Available truth | Done |
+| `/products/school-erp` | ProductPage | Aligned | landing | Public | Roadmap only | No fake demos | Done |
+| `/products/college-erp` | ProductPage | Aligned | landing | Public | Roadmap only | — | Done |
+| `/products/private-hostels-erp` | ProductPage | Aligned | landing | Public | Roadmap only | — | Done |
+| `/products/insurance-crm` | ProductPage | Aligned | landing | Public | Roadmap only | — | Done |
 
 ### AUTH
 
 | Path | Component | Design status | Target | Shared shell | Problems | Risks | Status |
 |---|---|---|---|---|---|---|---|
-| `/login` | PremiumLogin + AuthLayout | Legacy purple/navy + theme/lang chrome | login.html | Auth shell | “VARDHAN OS”, language/theme toolbar, blue accents | Preserve OTP/password/passkey logic | Pending Batch 2 |
-| `/register` | Register + AccessShell | Violet gradients | login.html language | AccessShell | Glass/violet CTAs | Preserve register flow | Pending Batch 2 |
-| `/forgot-password` | ForgotPassword + AccessShell | Violet | login | AccessShell | Same | Preserve reset request | Pending Batch 2 |
-| `/reset-password` | ResetPassword + AccessShell | Violet | login | AccessShell | Same | Preserve token reset | Pending Batch 2 |
-| `/logout` | Logout | Minimal | system | — | Branding text | Session clear must stay | Pending Batch 2 |
+| `/login` | PremiumLogin + AuthLayout | Redesigned | login.html | Auth shell | — | Preserve OTP/password/passkey | Done |
+| `/register` | Register + AccessShell | Redesigned | login language | AccessShell | — | Preserve register flow | Done |
+| `/forgot-password` | ForgotPassword + AccessShell | Redesigned | login | AccessShell | — | Preserve reset request | Done |
+| `/reset-password` | ResetPassword + AccessShell | Redesigned | login | AccessShell | — | Preserve token reset | Done |
+| `/logout` | Logout | Minimal | system | — | — | Session clear must stay | Done |
 
 ### PARTNER OS / PLATFORM CORE (tenant dashboard)
 
 | Path | Component | Design status | Target | Shared shell | Problems | Risks | Status |
 |---|---|---|---|---|---|---|---|
-| `/dashboard` | Dashboard + DashboardLayout | Blue/gold gradients, AI SaaS | dashboard.html | AppShell | KPI decoration, Inter/system fonts | Real workspace data | Pending Batch 3 |
-| `/products/catalog` | ProductCatalog | Purple accents | dashboard shell | AppShell | Card gradients | Licensing state | Pending Batch 3 |
-| `/products/:productId` | ProductWorkspace | Mixed | dashboard shell | AppShell | Inconsistent header | Module gate | Pending Batch 3 |
-| `/upgrade-subscription` | UpgradeSubscription | Blue/purple | dashboard shell | AppShell | Hero gradients | Billing flow | Pending Batch 3 |
-| `/upgrade-subscription/:productId` | UpgradeSubscription | Same | dashboard shell | AppShell | Same | Same | Pending Batch 3 |
+| `/dashboard` | Dashboard + DashboardLayout | Mostly aligned | dashboard.html | AppShell | Residual decorative density in home widgets | Real workspace data | Polish remaining |
+| `/products/catalog` | ProductCatalog | Aligned | dashboard shell | AppShell | — | Licensing state | Done |
+| `/products/:productId` | ProductWorkspace | Aligned | dashboard shell | AppShell | — | Module gate | Done |
+| `/upgrade-subscription` | UpgradeSubscription | Aligned | dashboard shell | AppShell | — | Billing flow | Done |
+| `/upgrade-subscription/:productId` | UpgradeSubscription | Aligned | dashboard shell | AppShell | — | Same | Done |
 
 ### PLATFORM ADMIN
 
 | Path | Component | Design status | Target | Shared shell | Problems | Risks | Status |
 |---|---|---|---|---|---|---|---|
-| `/admin` | AdminDashboard | Legacy admin CSS | dashboard shell | Admin→AppShell | Separate nav chrome | platformOnly guard | Pending Batch 3 |
-| `/admin/companies` | Companies | Legacy | dashboard shell | Admin | Table chrome | — | Pending Batch 3 |
-| `/admin/company-approval` | CompanyApproval | Legacy | dashboard shell | Admin | — | Approval workflow | Pending Batch 3 |
-| `/admin/customers` | CustomerManagement | Legacy | dashboard shell | Admin | — | Tenant data | Pending Batch 3 |
-| `/admin/branches` | BranchManagement | Legacy | dashboard shell | Admin | — | — | Pending Batch 3 |
-| `/admin/departments` | DepartmentManagement | Legacy | dashboard shell | Admin | — | — | Pending Batch 3 |
-| `/admin/designations` | DesignationManagement | Legacy | dashboard shell | Admin | — | — | Pending Batch 3 |
-| `/admin/employees` | EmployeeManagement | Legacy | dashboard shell | Admin | — | — | Pending Batch 3 |
-| `/admin/users` | UserManagement | Legacy | dashboard shell | Admin | — | Roles | Pending Batch 3 |
-| `/admin/roles` | RolesPermissions | Legacy | dashboard shell | Admin | — | Permissions | Pending Batch 3 |
-| `/admin/products` | ProductCatalog platformMode | Legacy | dashboard shell | Admin | — | — | Pending Batch 3 |
-| `/admin/modules` | ModuleManagement | Legacy | dashboard shell | Admin | — | — | Pending Batch 3 |
-| `/admin/subscription` | SubscriptionManagement | Legacy | dashboard shell | Admin | — | Billing | Pending Batch 3 |
-| `/admin/licenses` | LicenseManagement | Legacy | dashboard shell | Admin | — | — | Pending Batch 3 |
-| `/admin/support` | SupportTickets | Legacy | dashboard shell | Admin | — | Tickets | Pending Batch 3 |
-| `/admin/notifications` | NotificationsPage | Legacy | dashboard shell | Admin | — | — | Pending Batch 3 |
-| `/admin/audit-logs` | AuditLogs | Legacy | dashboard shell | Admin | — | Audit integrity | Pending Batch 3 |
-| `/admin/backup` | BackupRestore | Legacy | dashboard shell | Admin | — | Destructive ops | Pending Batch 3 |
-| `/admin/health` | ProductionHealth | Legacy | dashboard shell | Admin | — | — | Pending Batch 3 |
-| `/admin/settings` | SystemSettings | Legacy | dashboard shell | Admin | — | Settings | Pending Batch 3 |
+| `/admin` … `/admin/settings` (19 routes) | Admin pages | Shell-aligned | dashboard shell | Admin→AppShell | Dense tables at 390px still need spot-check | platformOnly guard | Done (shell); responsive polish open |
 
 ### CHIT MANAGEMENT
 
 | Path | Component | Design status | Target | Shared shell | Problems | Risks | Status |
 |---|---|---|---|---|---|---|---|
-| `/chits` | ChitDashboard | Heavy purple “royal” CSS | dashboard shell | Chit→AppShell | Gradients, emoji-ish chrome, VARDHAN OS crumb | Real KPIs | Pending Batch 4 |
-| `/chits/groups` | ChitGroups | Mixed purple | dashboard | Chit | — | Group CRUD | Pending Batch 4 |
-| `/chits/batches` | Batches | Mixed | dashboard | Chit | — | — | Pending Batch 4 |
-| `/chits/members` | Members | Purple accents | dashboard | Chit | — | Member money path | Pending Batch 4 |
-| `/chits/member-ledger` | MemberLedger | Mixed | dashboard | Chit | Financial fonts wrong | Ledger integrity | Pending Batch 4 |
-| `/chits/collections` | Collections | Purple | dashboard | Chit | — | Collections | Pending Batch 4 |
-| `/chits/collections/pending` | PendingCollections | Mixed | dashboard | Chit | — | — | Pending Batch 4 |
-| `/chits/auctions` | Auctions | Purple | dashboard | Chit | — | Auction logic | Pending Batch 4 |
-| `/chits/finance` | FinanceAccounts | Purple | dashboard | Chit | — | Finance | Pending Batch 4 |
-| `/chits/lucky-draw` | LuckyDraw | Purple | dashboard | Chit | Decorative | Winner selection | Pending Batch 4 |
-| `/chits/payouts` | Payouts | Mixed | dashboard | Chit | — | Payouts | Pending Batch 4 |
-| `/chits/dividends` | Dividends | Mixed | dashboard | Chit | — | — | Pending Batch 4 |
-| `/chits/receipts` | Receipts | Mixed | dashboard | Chit | — | Receipts | Pending Batch 4 |
-| `/chits/reports` | Reports | Mixed | dashboard | Chit | Chart libs OK if restyled | Reports | Pending Batch 4 |
-| `/chits/documents` | Documents | Mixed | dashboard | Chit | — | Uploads | Pending Batch 4 |
-| `/chits/notifications` | Notifications | Mixed | dashboard | Chit | — | — | Pending Batch 4 |
-| `/chits/ai-chit/*` | AIChitFlow | Heavy purple wizard | dashboard | Chit | Nested wizard chrome | OCR/AI flows | Pending Batch 4 |
-| `/chits/smart-capture` | SmartChitCapturePage | Mixed | dashboard | Chit | — | OCR | Pending Batch 4 |
-| `/chits/academy` | Academy | Mixed | dashboard | Chit | — | Learning content | Pending Batch 4 |
-| `/chits/ai` | AIWorkspace | Mixed | dashboard | Chit | Floating AI chrome | AI chat | Pending Batch 4 |
-| `/chits/support` | Support | Mixed | dashboard | Chit | — | — | Pending Batch 4 |
-| `/chits/settings` | Settings | Mixed | dashboard | Chit | — | — | Pending Batch 4 |
-
-### EDUCATION / INSURANCE / SUBSCRIPTION / SUPPORT / SETTINGS
-
-| Path | Category | Notes | Status |
-|---|---|---|---|
-| Public school/college/hostel product pages | EDUCATION | Public stubs only; no internal ERP routes yet | Covered under PUBLIC |
-| Public insurance product page | INSURANCE | Public stub only | Covered under PUBLIC |
-| `/upgrade-subscription*` , `/admin/subscription`, `/admin/licenses` | SUBSCRIPTION | Listed above | Batch 3 |
-| `/admin/support`, `/chits/support`, `/contact` | SUPPORT | Listed above | Batch 3–4 |
-| `/admin/settings`, `/chits/settings` | SETTINGS | Listed above | Batch 3–4 |
+| `/chits` | ChitDashboard | Shell-aligned | dashboard shell | Chit→AppShell | High widget density | Real KPIs | Polish remaining |
+| `/chits/groups` | ChitGroups | Aligned | dashboard | Chit | — | Group CRUD | Done |
+| `/chits/batches` | Batches | Aligned | dashboard | Chit | — | — | Done |
+| `/chits/members` | Members | Aligned | dashboard | Chit | — | Member money path | Done |
+| `/chits/member-ledger` | MemberLedger | Aligned | dashboard | Chit | — | Ledger integrity | Done |
+| `/chits/collections` | Collections | Aligned | dashboard | Chit | — | Collections | Done |
+| `/chits/collections/pending` | PendingCollections | Aligned | dashboard | Chit | — | — | Done |
+| `/chits/auctions` | Auctions | Aligned | dashboard | Chit | — | Auction logic | Done |
+| `/chits/finance` | FinanceAccounts | Aligned | dashboard | Chit | — | Finance | Done |
+| `/chits/lucky-draw` | LuckyDraw | Aligned | dashboard | Chit | — | Winner selection | Done |
+| `/chits/payouts` | Payouts | Aligned | dashboard | Chit | — | Payouts | Done |
+| `/chits/dividends` | Dividends | Aligned | dashboard | Chit | — | — | Done |
+| `/chits/receipts` | Receipts | Aligned | dashboard | Chit | — | Receipts | Done |
+| `/chits/reports` | Reports | Aligned | dashboard | Chit | Chart libs OK | Reports | Done |
+| `/chits/documents` | Documents | Aligned (purple dropzone neutralized) | dashboard | Chit | — | Uploads | Done |
+| `/chits/notifications` | Notifications | Aligned | dashboard | Chit | — | — | Done |
+| `/chits/ai-chit/*` | AIChitFlow | **Redesigned into ChitLayout** | dashboard | Chit | Was dark navy/violet phone-frame wizard | OCR/AI flows preserved | **Done (Batch 7)** |
+| `/chits/smart-capture` | SmartChitCapturePage | **Now uses ChitLayout** | dashboard | Chit | — | OCR | **Done** |
+| `/chits/academy` | Academy | Aligned | dashboard | Chit | — | Learning content | Done |
+| `/chits/ai` | AIWorkspace | **Purple chrome removed** | dashboard | Chit | — | AI chat | **Done** |
+| `/chits/support` | Support | Aligned | dashboard | Chit | — | — | Done |
+| `/chits/settings` | Settings | Aligned | dashboard | Chit | — | — | Done |
 
 ### ERROR / SYSTEM
 
 | Path | Component | Design status | Target | Status |
 |---|---|---|---|---|
-| `*` | Navigate → `/dashboard` | System redirect | Keep behavior; optional branded fallback later | Preserve |
-| Suspense fallback | AppRouter RouteFallback | Plain “Loading…” | Calm ink/bg loader | Batch 1 |
-| ErrorBoundary | common/ErrorBoundary | Unknown | Calm error panel | Batch 6 |
+| `*` | Navigate → `/dashboard` | System redirect | Keep behavior | Preserve |
+| Suspense fallback | AppRouter RouteFallback | Calm loader | Calm ink/bg | Done |
+| ErrorBoundary | common/ErrorBoundary | Calm panel | Calm error panel | Done |
 
 ---
 
-## Counts
+## OCR diagnosis (2026-08-02)
 
-| Category | Routes |
-|---|---|
-| PUBLIC | 19 |
-| AUTH | 5 |
-| PARTNER OS / tenant core | 5 |
-| PLATFORM ADMIN | 19 |
-| CHIT MANAGEMENT | 22 |
-| ERROR / SYSTEM | 1+ |
-| **Total AppRouter paths** | **~71** |
+**Frontend request URL:** `POST /api/v1/ocr/extract` (via `VITE_PLATFORM_API_URL` default `/api`)
 
----
+**Proxy:** Vite `/api` → `http://127.0.0.1:8000` (no rewrite)
 
-## Legacy style hotspots (must neutralize)
+**Backend route:** FastAPI `/api` + `/v1/ocr/extract`
 
-- `src/styles/vds.css` — blue Inter SaaS tokens
-- `src/styles/theme.css` — blue accents / glass
-- `src/styles/access.css` — violet gradients
-- `src/layouts/AuthLayout.jsx` + premium auth CSS
-- `src/components/layout/DashboardLayout.css` — blue/gold glow
-- `src/components/chit/ChitLayout.css`, `ChitNavigation.css`
-- `src/pages/chits/ChitDashboard.css`, `AIChitFlow.css`, Collections/Members/Auctions CSS
-- `src/components/dashboard/Dashboard.css`
-- `src/components/common/Button.css` — blue gradient primaries
-- Hardcoded “VARDHAN OS” in AuthLayout, AccessShell, ChitLayout, PremiumLogin, PublicSite secondary pages
+**Health:** `GET /api/health` returns booleans only: `database`, `jwt`, `ocrProvider`. Local probe: all `true`. `ocrProvider` means `GEMINI_API_KEY` is non-empty — it does **not** live-call Gemini.
+
+| Env key | Root `.env` | Root `.env.local` | `backend/.env` | Notes |
+|---|---|---|---|---|
+| `GEMINI_API_KEY` | missing | missing | **SET** | Server-side only (correct) |
+| `GEMINI_MODEL` | missing | missing | **SET** (`gemini-3.6-flash`) | Model listing returns HTTP 200 |
+| `VITE_PLATFORM_API_URL` | missing | **SET** (`/api`) | n/a | Correct same-origin proxy |
+| `DATABASE_URL` | missing | missing | **SET** | Required for OCR workspace auth |
+| `SUPABASE_JWT_SECRET` | missing | missing | **SET** | JWT path ready |
+| `SUPABASE_URL` | missing | missing | missing | JWKS path unused; legacy JWT secret used |
+| OCR size/timeout/retry knobs | missing | missing | missing | Defaults apply |
+
+**Root cause of misleading `OCR_PROVIDER_UNAVAILABLE`:**  
+Frontend `normalizeErrorCode` previously mapped **all** HTTP 502/503 to `OCR_PROVIDER_UNAVAILABLE`, overriding backend domain codes such as `OCR_NOT_CONFIGURED` and `OCR_SCHEMA_INVALID`. Messages also preferred the status generic over the backend safe detail.
+
+**Fix applied:** Prefer known backend OCR codes; prefer backend safe message; structured `[OCR]` console logging (no secrets); Upload screen shows OCR status panel, Retry (max 3), manual entry, re-upload; no fake OCR results.
+
+**Unauthenticated probe:** `POST /api/v1/ocr/extract` → **401** (expected). Authenticated failures now surface the real domain code.
 
 ---
 
@@ -187,38 +160,34 @@
 | Date | Batch | Notes |
 |---|---|---|
 | 2026-08-02 | Audit | Inventory created |
-| 2026-08-02 | Pre | Public landing partially implemented in prior task |
-| 2026-08-02 | 1 | Foundation tokens, primitives, public landing, shell overrides — commit `design(ui): establish vardhan design foundation` |
-| 2026-08-02 | 2 | AuthLayout + AccessShell + PremiumLogin — commit `design(auth): unify authentication experience` |
-| 2026-08-02 | 3 | Admin nav, platform dashboard, product catalog/upgrade — commit `design(platform): refactor platform core screens` |
-| 2026-08-02 | 4 | Chit navigation + operational CSS — commit `design(chits): unify chit management experience` |
-| 2026-08-02 | 5 | Partner OS = public `/vardhan-os` + branding (no separate partner router) — commit `design(partners): unify partner portal experience` |
-| 2026-08-02 | 6 | Remaining public product stubs + system fallback polish — commit `design(modules): align remaining product modules` |
+| 2026-08-02 | 1–6 | Foundation through modules (prior commits on branch) |
+| 2026-08-02 | 7 | `/chits/ai-chit/*` + `/chits/smart-capture` + `/chits/ai` + OCR adapter honesty |
 
 ---
 
-## Acceptance checklist (2026-08-02)
+## Acceptance checklist (updated)
 
 - [x] Every AppRouter route audited in this document
 - [x] Locked tokens loaded globally via `vardhan-brand.css`
-- [x] Public landing + secondary public pages use locked public chrome
-- [x] Auth screens use maroon 44/56 split panel
-- [x] Authenticated shells (Dashboard / Admin / Chit) share white sidebar + calm headers
-- [x] “VARDHAN OS” branding removed from UI strings
-- [x] Tests 189 pass / build succeeds
+- [x] `/chits/ai-chit/upload` uses ChitLayout + locked tokens (no dark navy/violet phone frame)
+- [x] OCR error codes no longer collapsed incorrectly
+- [x] Tests **191** pass / production **build succeeds**
+- [x] Lint: no new UTF-8/build blockers; pre-existing unused-param warnings remain
 - [x] No secrets/env changes; no push/deploy
 
-### Manual visual review still recommended
+### Remaining legacy / polish routes
 
-- `/chits` command dashboard widgets (legacy density)
-- `/chits/ai-chit/*` wizard steps
-- `/dashboard` metric widgets with residual decorative CSS
-- Admin list tables at 390px width
-- Auth OTP + passkey messaging states
+These are **not** dark-purple AI demos anymore, but still deserve visual density/responsive spot-checks:
+
+1. `/dashboard` — residual decorative home widgets (`VardhanHome.css` partially cleaned)
+2. `/chits` — command dashboard widget density
+3. `/admin/*` list tables at 390px width
+4. Auth OTP + passkey messaging edge states
+5. Chart-heavy `/chits/reports` at narrow widths
 
 ### Remaining limitations
 
 - No dedicated School/College/Hostel/Insurance authenticated apps yet (public stubs only)
 - No separate Partner portal router (Partner OS = `/vardhan-os` + platform copy)
-- Some page-local CSS still contains decorative gradients overridden by brand layer / token remaps
 - Catch-all `*` still redirects to `/dashboard` (behavior preserved)
+- Live OCR still requires authenticated workspace + Gemini quota/network; failures stay explicit
