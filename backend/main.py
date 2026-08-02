@@ -880,7 +880,22 @@ async def health(request: Request) -> dict[str, Any]:
         "database": database_ready,
         "jwt": jwt_ready,
         "ocrProvider": provider_ready,
+        "ingestionQueue": _ingestion_queue_health(),
     }
+
+
+def _ingestion_queue_health() -> dict[str, Any]:
+    try:
+        from ingestion.queue.factory import queue_health_snapshot
+
+        return queue_health_snapshot()
+    except Exception as exc:  # noqa: BLE001
+        return {
+            "backend": "unknown",
+            "ready": False,
+            "errorCode": type(exc).__name__,
+            "productionLocked": False,
+        }
 
 
 @app.post("/v1/payables/calculate", response_model=PayableResult, response_model_by_alias=True)

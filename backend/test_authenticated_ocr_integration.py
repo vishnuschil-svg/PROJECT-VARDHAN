@@ -221,14 +221,21 @@ async def verify() -> None:
         "jwt": True,
         "ocrProvider": True,
     }
-    if health != required_health:
+    missing = [key for key, value in required_health.items() if health.get(key) != value]
+    if missing:
         raise VerificationError(
             "Health verification failed: "
             f"HTTP {status_code}, status={health.get('status')}, "
             f"database={bool(health.get('database'))}, jwt={bool(health.get('jwt'))}, "
-            f"ocrProvider={bool(health.get('ocrProvider'))}"
+            f"ocrProvider={bool(health.get('ocrProvider'))}, missing={missing}"
         )
     print("health: HTTP 200, database=true, jwt=true, ocrProvider=true")
+    if isinstance(health.get("ingestionQueue"), dict):
+        print(
+            "ingestionQueue:",
+            f"backend={health['ingestionQueue'].get('backend')},",
+            f"ready={bool(health['ingestionQueue'].get('ready'))}",
+        )
 
     if not FIXTURE.is_file():
         raise VerificationError(f"OCR fixture is missing: {FIXTURE}")

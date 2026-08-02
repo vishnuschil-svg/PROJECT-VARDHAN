@@ -5,23 +5,32 @@
 | Check | Endpoint / location |
 |---|---|
 | API liveness | `GET /api/health` |
-| Database | health payload `database` boolean |
-| JWT configured | health payload `jwt` |
-| OCR key present | health payload `ocrProvider` (config only, not live Gemini call) |
-| Ingestion queue | Inspect `INGESTION_QUEUE_BACKEND` + job table / SQLite file |
+| Database | `database` boolean |
+| JWT configured | `jwt` boolean |
+| OCR key present | `ocrProvider` boolean (config only) |
+| Ingestion queue | `ingestionQueue.backend` / `ingestionQueue.ready` |
 
-Do not expose raw DB/provider errors to customers. Map to domain codes (`OCR_RATE_LIMIT`, `DOCUMENT_UNREADABLE`, `AUTH_REQUIRED`, etc.).
+Never expose raw DB/provider errors or secret values to customers.
+
+## Queue configuration NAMES
+
+- `INGESTION_QUEUE_BACKEND`
+- `DATABASE_URL`
+- `APP_ENV`
+- `ENVIRONMENT`
+- `INGESTION_QUEUE_PATH` (sqlite/local only)
+
+Production must use Postgres. Invalid production queue config fails closed (`IngestionQueueConfigurationError`).
 
 ## Common failures
 
 | Symptom | Action |
 |---|---|
-| Gemini 429 / RATE_LIMITED | Continue with local draft + review; do not invent results; wait for quota |
-| Tesseract missing | Install Tesseract + `eng`/`tel` packs; XLSX/CSV/digital PDF still work |
-| LibreOffice missing | Legacy DOC conversion unavailable; ask for DOCX/PDF |
-| Job lost after restart (prod) | Switch to Postgres queue adapter (`docs/VARDHAN_INGESTION_QUEUE_PRODUCTION_MIGRATION.md`) |
-| Duplicate collection blocked | Expected — idempotency/duplicate guard working |
-| Trial limit reached | Archive/complete groups or upgrade ₹99/199/299 plan |
+| `ingestionQueue.ready=false` in production | Check `DATABASE_URL`, `psycopg`, network to Postgres |
+| Gemini 429 / RATE_LIMITED | Continue with local draft + review; do not invent results |
+| RLS 42501 on writes | User role lacks write permission (viewer cannot create groups) |
+| Frontend still local/demo | Set non-secret mode vars to Supabase/production intentionally before own-data UI trial |
+| Job lost after restart (prod) | Ensure Postgres queue; SQLite is forbidden in production |
 
 ## Maintenance mode
 
@@ -29,8 +38,8 @@ Prefer read-only subscription mode after trial expiry (data preserved). For full
 
 ## Backup / restore
 
-- Supabase: use platform backup for durable money-path tables.
-- Ingestion queue: Postgres `ingestion_jobs` + object/file store for binaries.
+- Supabase: platform backup for durable money-path tables.
+- Ingestion queue: Postgres `ingestion_jobs` (+ file store for binaries).
 - Local SQLite: copy `backend/data/ingestion_queue.db` and `ingestion_files/`.
 
 ## Rollback
@@ -43,4 +52,5 @@ Prefer read-only subscription mode after trial expiry (data preserved). For full
 
 - All Chit APIs require auth + workspace header.
 - Ingestion jobs are tenant-scoped on read/update.
+- Browser clients are denied direct `ingestion_jobs` access via RLS deny policies.
 - Immutable audit/receipts: correct via reversal entries, never silent edits.

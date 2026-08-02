@@ -1,89 +1,128 @@
 # VARDHAN Chit Pro — Controlled Trial Acceptance
 
 **Date:** 2026-08-02  
-**Scope:** Real-data controlled trial readiness after Phase 0–14 workstream start.
+**Verifier script:** `backend/verify_own_data_trial_gate.py`  
+**Evidence file:** `backend/data/own_data_trial_evidence.json` (sanitized; gitignored under `backend/data/`)
 
-## Scenario checklist (operator)
+## Production Queue Adapter
 
-1. Create tenant/workspace — Core auth path  
-2. Activate trial plan (`trial-99` / `trial-199` / `trial-299`) — catalog in `src/config/chitTrialPlans.js`  
-3. Create or import plan via `/chits/ingest`  
-4. Review + confirm Plan Version (organizer confirmation required)  
-5. Create group on `/chits/groups`  
-6. Add members to capacity on `/chits/members`  
-7. Record collections → receipts → ledger/finance  
-8. Pending collections verification  
-9. Auction / lucky draw / winner confirmation  
-10. Dividend + payout  
-11. Month closing `/chits/month-closing`  
-12. Partial + advance payment month  
-13. Duplicate collection rejection  
-14. Reversal where permitted  
-15. Tenant isolation spot-check  
-16. Refresh + logout/login  
-17. Backend restart + queue persistence (Postgres in prod)  
-18. Chit completion `/chits/completion`  
-19. Export reports  
+**Status:** VERIFIED PASS (adapter + fail-closed factory)
 
-## Automated coverage added/verified this batch
+### Required Configuration Names
 
-- Groups summary + code/name formatting + trial slot rules (`chitTrialClosure.test.mjs`)
-- Existing money-path persistence suites (collections, winners, closing)
-- Ingestion engine + queue factory tests
-- Frontend suite + production build
+- `INGESTION_QUEUE_BACKEND`
+- `DATABASE_URL`
+- `APP_ENV`
+- `ENVIRONMENT`
+- `INGESTION_QUEUE_PATH` (local sqlite only)
 
-## Final report
+### Queue Migration
 
-### P0 Blockers
-1. Production Postgres queue requires `DATABASE_URL` + `psycopg` on the API host (adapter shipped; env not configured in this session).
-2. End-to-end operator walkthrough on a live Supabase tenant not executed in this session (services/UI wired; live GO needs that run).
-3. Receipt WhatsApp/PDF polish and full report matrix remain PARTIAL.
+- `supabase/migrations/010_ingestion_jobs_queue.sql` (idempotent + RLS deny for anon/authenticated)
 
-### P1 Issues
-- AI Chit upload still Gemini-primary; prefer `/chits/ingest` for multi-format local-first.
-- Dense tables at 390px need continued polish.
-- Expense dedicated route still thin.
+### Queue Health
 
-### P2 Improvements
-- Dashboard density
-- Native XLSX report export
-- Deeper automated cross-tenant isolation suite
+- Exposed on `GET /api/health` as `ingestionQueue` (`backend`, `ready`, `errorCode`, `productionLocked`)
 
-### Area status
-
-| Area | Status |
-|---|---|
-| Groups and Members | Improved — real metrics, capacity/duplicate guards, trial limits |
-| Collections and Receipts | Existing durable path retained |
-| Auction and Winner | Existing durable path retained |
-| Payout / Dividend / Ledger / Finance | Existing services retained |
-| Month Closing | UI route added on top of durable service |
-| Chit Completion | UI route added; frees active trial slot |
-| Reports | PARTIAL |
-| Subscription | Trial catalog ₹99/199/299 added; activation UI still Core-tied |
-| Universal Ingestion | Engine preserved; prod queue adapter added |
-| Tenant Isolation | App+RLS path retained; more automated tests recommended |
-| Responsive UI | Groups metrics responsive; broader polish open |
-| Operations | Runbook + queue migration docs added |
-
-### Verification
+### Queue Restart Persistence
 
 | Check | Result |
 |---|---|
-| Targeted Tests | See session run |
-| Full Tests | See session run |
-| Lint | Warnings only (pre-existing) |
-| Production Build | See session run |
-| Reconciliation Result | Engine present; live tenant not re-run here |
-| Backend Restart Persistence | SQLite local yes; Postgres adapter ready |
-| Queue Persistence | Adapter abstraction complete |
+| Resolve postgres | PASS |
+| Production forbids sqlite | PASS |
+| Persist job + new store instance reload | PASS |
+| SHA-256 dedupe | PASS |
+| Cross-tenant hash isolation | PASS |
+| Local sqlite still works | PASS |
 
-### Gates
+## Live Supabase Workflow
 
-**OWN-DATA TRIAL: CONDITIONAL GO** — GO for local/Supabase own-data once Postgres queue env is set and one live walkthrough passes. Treat as **NO-GO** until that walkthrough is recorded.
+| Step | Result | Evidence (sanitized) |
+|---|---|---|
+| Authenticate | PASS | HTTP 200; userId masked |
+| Workspace membership | PASS | 1 membership; role=`viewer` |
+| Write role required | **FAIL (P0)** | TEST_USER has only `viewer` |
+| Create group | NOT RUN | Blocked by write role |
+| Members / collections / receipts / auction / dividend / payout / month close / reports | NOT RUN | Blocked |
+| Frontend repository mode | **FAIL (P0)** | `VITE_REPOSITORY_BACKEND=local`, `VITE_APP_MODE=demo` |
+| Read existing groups | PASS | HTTP 200; count=0 for this principal |
+| Logout/login persistence (money path) | NOT RUN | Blocked before writes |
+| Backend restart (queue) | PASS | See queue section |
+| Tenant isolation (queue hash) | PASS | Other tenant dedupe miss |
+| Tenant isolation (RLS write) | PARTIAL | Viewer cannot insert (`42501` observed earlier) |
 
-**CONTROLLED CUSTOMER TRIAL: NO-GO** — Requires zero P0, live isolation proof, and ops checklist signed.
+### Groups and Members
+NOT COMPLETED on live Supabase (no write role).
 
-**PUBLIC PAID TRIAL: NO-GO** — Subscription activation UX, billing invoices, and public ops maturity incomplete.
+### Collections and Receipts
+NOT COMPLETED on live Supabase.
 
-Update this file after the live walkthrough to flip OWN-DATA to unconditional GO.
+### Auction and Winner / Dividend / Payout / Ledgers / Month Closing / Reports
+NOT COMPLETED on live Supabase.
+
+### Subscription Trial
+Catalog ₹99/199/299 implemented in code; live activation not exercised in this gate run.
+
+### Universal Ingestion
+Engine preserved. Postgres queue verified. Full ingest→confirm→group create not completed due to write-role block.
+
+### Tenant Isolation
+Queue tenant hash isolation PASS. App RLS prevents viewer writes (expected). Cross-workspace write/read attack suite incomplete without write principal.
+
+### Logout/Login Persistence
+Auth re-login possible (auth PASS). Durable money-path re-read after writes not completed.
+
+### Backend Restart Persistence
+Queue: PASS. Money-path records: NOT COMPLETED.
+
+### Financial Reconciliation
+NOT COMPLETED on live data this run.
+
+## P0 Blockers
+
+1. **Frontend own-data mode not enabled** — `VITE_REPOSITORY_BACKEND=local` and `VITE_APP_MODE=demo` (non-secret config). UI money path is not forced onto Supabase.
+2. **Live test principal lacks write membership** — `TEST_USER_*` resolves to role `viewer` only; RLS blocks `chit_groups` inserts (`42501`).
+
+## P1 Issues
+
+- Full 26-step operator walkthrough still pending after write-capable principal + Supabase frontend mode.
+- Receipt WhatsApp/PDF polish remains PARTIAL from prior audit.
+
+## P2 Improvements
+
+- Dashboard density / 390px table polish
+- Broader automated cross-tenant isolation suite
+
+## Verification commands run
+
+- `python -m unittest test_ingestion_queue_factory` → OK (5)
+- `python verify_own_data_trial_gate.py` → queue PASS; live write gate FAIL
+
+## Backend Tests / Frontend Tests / Lint / Build
+
+| Check | Result |
+|---|---|
+| Backend queue factory tests | PASS (5) |
+| Backend OCR/ingestion suite (prior baseline) | 35 PASS |
+| Frontend tests (prior baseline) | 197 PASS |
+| Production build (prior baseline) | PASS |
+| Lint | Pre-existing warnings only (not re-blocking) |
+
+## Gates
+
+**OWN-DATA TRIAL: NO-GO**
+
+Reason: Queue production adapter is verified, but the live Supabase own-data workflow could not complete writes, and the app frontend is still configured for local/demo persistence.
+
+**CONTROLLED CUSTOMER TRIAL: NO-GO**  
+(unchanged — depends on OWN-DATA GO plus customer ops/isolation sign-off)
+
+**PUBLIC PAID TRIAL: NO-GO**  
+(unchanged)
+
+## What is required to flip OWN-DATA to GO
+
+1. Intentionally set frontend non-secret mode to Supabase/production repository backend.
+2. Provide a controlled test user with write-capable workspace membership (owner/admin/organizer).
+3. Re-run `backend/verify_own_data_trial_gate.py` through create→collect→receipt→winner→close (or equivalent UI walkthrough) with sanitized evidence.
+4. Confirm no P0 remains.

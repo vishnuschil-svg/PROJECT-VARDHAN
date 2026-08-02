@@ -114,8 +114,18 @@
 | A Groups + Members hardening | Done |
 | E Month closing + completion UI | Done |
 | F Trial plans ₹99/199/299 | Catalog + slot rules Done; Core activation UI PARTIAL |
-| G Production queue adapter | Done (SQLite kept) |
-| Docs (audit, ops, queue migration, acceptance) | Done |
+| G Production queue adapter | Done + **live restart persistence PASS** |
+| Queue fail-closed + health + migration 010 | Done |
+| Live Supabase own-data walkthrough | **STOPPED** — P0 write role + frontend local/demo |
 
-P0 remaining for unconditional OWN-DATA GO: live Supabase walkthrough + Postgres queue env on API host.
+## Gate after queue+live attempt (2026-08-02)
+
+| Gate | Decision |
+|---|---|
+| OWN-DATA TRIAL | **NO-GO** (queue verified; live write path blocked) |
+| CONTROLLED CUSTOMER TRIAL | **NO-GO** |
+| PUBLIC PAID TRIAL | **NO-GO** |
+
+Evidence: `docs/VARDHAN_CHIT_PRO_TRIAL_ACCEPTANCE.md`, `backend/data/own_data_trial_evidence.json` (local).
+
 

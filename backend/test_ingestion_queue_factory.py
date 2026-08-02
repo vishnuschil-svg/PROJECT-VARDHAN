@@ -8,24 +8,65 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from ingestion.queue.factory import create_ingestion_queue_store, resolve_queue_backend
+from ingestion.queue.factory import (
+    IngestionQueueConfigurationError,
+    create_ingestion_queue_store,
+    resolve_queue_backend,
+)
 from ingestion.queue.store import IngestionQueueStore
 
 
 class QueueFactoryTests(unittest.TestCase):
     def test_default_is_sqlite(self):
-        with patch.dict(os.environ, {"INGESTION_QUEUE_BACKEND": "", "APP_ENV": "development"}, clear=False):
+        env = {"APP_ENV": "development", "ENVIRONMENT": "development"}
+        with patch.dict(os.environ, env, clear=False):
             os.environ.pop("INGESTION_QUEUE_BACKEND", None)
             self.assertEqual(resolve_queue_backend(), "sqlite")
 
-    def test_explicit_postgres(self):
-        with patch.dict(os.environ, {"INGESTION_QUEUE_BACKEND": "postgres"}, clear=False):
-            self.assertEqual(resolve_queue_backend(), "postgres")
+    def test_explicit_postgres_requires_database_url(self):
+        with patch.dict(
+            os.environ,
+            {"INGESTION_QUEUE_BACKEND": "postgres", "APP_ENV": "development", "DATABASE_URL": ""},
+            clear=False,
+        ):
+            os.environ["DATABASE_URL"] = ""
+            with self.assertRaises(IngestionQueueConfigurationError):
+                resolve_queue_backend()
+
+    def test_production_forbids_sqlite(self):
+        with patch.dict(
+            os.environ,
+            {
+                "APP_ENV": "production",
+                "INGESTION_QUEUE_BACKEND": "sqlite",
+                "DATABASE_URL": "postgresql://example.invalid/postgres",
+            },
+            clear=False,
+        ):
+            with self.assertRaises(IngestionQueueConfigurationError):
+                resolve_queue_backend()
+
+    def test_production_without_database_url_fails(self):
+        with patch.dict(
+            os.environ,
+            {"APP_ENV": "production", "INGESTION_QUEUE_BACKEND": "postgres", "DATABASE_URL": ""},
+            clear=False,
+        ):
+            os.environ["DATABASE_URL"] = ""
+            with self.assertRaises(IngestionQueueConfigurationError):
+                resolve_queue_backend()
 
     def test_create_sqlite_store(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "q.db"
-            with patch.dict(os.environ, {"INGESTION_QUEUE_BACKEND": "sqlite", "INGESTION_QUEUE_PATH": str(path)}):
+            with patch.dict(
+                os.environ,
+                {
+                    "INGESTION_QUEUE_BACKEND": "sqlite",
+                    "INGESTION_QUEUE_PATH": str(path),
+                    "APP_ENV": "development",
+                },
+            ):
                 store = create_ingestion_queue_store()
                 self.assertIsInstance(store, IngestionQueueStore)
                 job = store.create_job(
