@@ -19,7 +19,7 @@ const COPY = {
   "en-IN": {
     eyebrow: "Private workspace",
     title: "Welcome back",
-    description: "Sign in to continue to your secure VARDHAN OS workspace.",
+    description: "Sign in to continue to your secure Vardhan workspace.",
     passwordTab: "Password",
     otpTab: "Mobile OTP",
     email: "Email address",

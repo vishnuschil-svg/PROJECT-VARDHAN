@@ -1,37 +1,57 @@
-import { CheckCircle2, Globe2, LockKeyhole, ShieldCheck, Sparkles } from "lucide-react";
+import { CheckCircle2, LockKeyhole, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useLocale } from "../../contexts/LocaleContext";
-
-const LANGUAGES = [
-  ["en-IN", "English"], ["te-IN", "Telugu"], ["hi-IN", "Hindi"],
-  ["ta-IN", "Tamil"], ["kn-IN", "Kannada"], ["ml-IN", "Malayalam"],
-];
 
 function AccessShell({ eyebrow, title, description, children, footer }) {
-  const { locale, setLocale } = useLocale();
   return (
-    <main className="access-shell">
-      <section className="access-story" aria-label="VARDHAN OS overview">
-        <Link className="access-brand" to="/">
-          <span className="access-brand-mark">V</span>
-          <span><strong>VARDHAN OS</strong><small>AI-Powered Business Operating System</small></span>
+    <main className="v-auth-screen access-shell">
+      <section className="v-auth-left" aria-label="Vardhan brand panel">
+        <Link className="v-brand v-brand-on-dark" to="/">
+          <span className="v-brand-mark v-brand-mark-on-dark">V</span>
+          <span className="v-brand-text">
+            <b>Vardhan</b>
+            <span>ERP PLATFORM</span>
+          </span>
         </Link>
-        <div className="access-story-copy">
-          <span className="access-kicker"><Sparkles size={16} /> Powerful inside. Simple outside.</span>
-          <h1>Run your business with clarity, confidence and control.</h1>
-          <p>One secure workspace for MITRA NIDHI CHITI PRO and every approved VARDHAN application.</p>
-          <div className="access-trust-list">
-            <span><ShieldCheck size={18} /> Tenant-isolated business data</span>
-            <span><CheckCircle2 size={18} /> Explainable calculations and audit history</span>
-            <span><LockKeyhole size={18} /> Role-aware access and protected sessions</span>
+        <div className="v-auth-left-mid">
+          <h1>Run your business with clarity and control.</h1>
+          <p className="v-auth-sub">
+            One secure workspace for MITRA NIDHI CHITI PRO and every approved Vardhan application.
+          </p>
+          <div className="v-auth-ledger">
+            <div className="v-auth-ledger-lbl">Trust</div>
+            <div className="v-auth-ledger-row">
+              <span className="k">
+                <ShieldCheck size={14} style={{ marginRight: 6, verticalAlign: -2 }} />
+                Tenant isolation
+              </span>
+              <span className="v">Built-in</span>
+            </div>
+            <div className="v-auth-ledger-row">
+              <span className="k">
+                <CheckCircle2 size={14} style={{ marginRight: 6, verticalAlign: -2 }} />
+                Explainable math
+              </span>
+              <span className="v">Visible</span>
+            </div>
+            <div className="v-auth-ledger-row">
+              <span className="k">
+                <LockKeyhole size={14} style={{ marginRight: 6, verticalAlign: -2 }} />
+                Role-aware access
+              </span>
+              <span className="v">Enforced</span>
+            </div>
           </div>
         </div>
-        <p className="access-company">VARDHAN SOFTWARE SOLUTIONS · Smart Software. Simple Management.</p>
+        <p className="v-auth-left-foot">Vardhan Solutions · Smart Software. Simple Management.</p>
       </section>
-      <section className="access-panel">
-        <div className="access-language"><Globe2 size={16} /><select aria-label="Language" value={locale} onChange={(event) => setLocale(event.target.value)}>{LANGUAGES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
+
+      <section className="v-auth-right">
         <div className="access-card">
-          <header><span className="access-eyebrow">{eyebrow}</span><h2>{title}</h2><p>{description}</p></header>
+          <header>
+            <span className="access-eyebrow">{eyebrow}</span>
+            <h2>{title}</h2>
+            <p>{description}</p>
+          </header>
           {children}
           {footer && <footer className="access-footer">{footer}</footer>}
         </div>
