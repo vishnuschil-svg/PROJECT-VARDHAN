@@ -133,33 +133,7 @@ def create_rate_limit_adapter() -> RateLimitAdapter:
     backend = os.getenv("RATE_LIMIT_BACKEND", "local").strip().lower()
     environment = os.getenv("VARDHAN_ENV", os.getenv("ENVIRONMENT", "development")).strip().lower()
     if backend == "redis":
-        redis_url = resolve_redis_url()
-        # #region agent log
-        try:
-            import json as _json
-            from pathlib import Path as _Path
-            from urllib.parse import urlparse as _urlparse
-            _payload = {
-                "sessionId": "9aee38",
-                "runId": "post-fix",
-                "hypothesisId": "H-redis-scheme",
-                "location": "backend/rate_limit.py:create_rate_limit_adapter",
-                "message": "redis rate limit adapter configured",
-                "data": {
-                    "scheme": _urlparse(redis_url).scheme.lower(),
-                    "backend": backend,
-                    "environment": environment,
-                    "hasRedisUrl": bool(os.getenv("REDIS_URL", "").strip()),
-                    "hasPrefixedRedisUrl": bool(os.getenv("REDIS_URL_REDIS_URL", "").strip()),
-                },
-                "timestamp": int(time.time() * 1000),
-            }
-            print(_json.dumps({"vardhan_debug": _payload}), flush=True)
-            _Path("debug-9aee38.log").open("a", encoding="utf-8").write(_json.dumps(_payload) + "\n")
-        except Exception:
-            pass
-        # #endregion
-        return RedisRateLimitAdapter(redis_url, os.getenv("RATE_LIMIT_REDIS_PREFIX", "vardhan:rate-limit"))
+        return RedisRateLimitAdapter(resolve_redis_url(), os.getenv("RATE_LIMIT_REDIS_PREFIX", "vardhan:rate-limit"))
     if backend == "gateway":
         return GatewayRateLimitAdapter(os.getenv("RATE_LIMIT_GATEWAY_TOKEN", ""))
     if backend == "local" and environment not in {"production", "prod"}:
