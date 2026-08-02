@@ -190,5 +190,7 @@
 | 2026-08-02 | Pre | Public landing partially implemented in prior task |
 | 2026-08-02 | 1 | Foundation tokens, primitives, public landing, shell overrides — commit `design(ui): establish vardhan design foundation` |
 | 2026-08-02 | 2 | AuthLayout + AccessShell + PremiumLogin — commit `design(auth): unify authentication experience` |
-| 2026-08-02 | 3–4 | Admin/Chit white sidebars, platform/product heroes, bulk navy/purple CSS neutralization |
-| | 5–6 | Partner OS is public `/vardhan-os` only; remaining polish + audit closeout |
+| 2026-08-02 | 3 | Admin nav, platform dashboard, product catalog/upgrade — commit `design(platform): refactor platform core screens` |
+| 2026-08-02 | 4 | Chit navigation + operational CSS — commit `design(chits): unify chit management experience` |
+| 2026-08-02 | 5 | Partner OS = public `/vardhan-os` + branding (no separate partner router) — commit `design(partners): unify partner portal experience` |
+| 2026-08-02 | 6 | Remaining public product stubs + system fallback polish — commit `design(modules): align remaining product modules` |
