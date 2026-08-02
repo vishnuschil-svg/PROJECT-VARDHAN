@@ -102,12 +102,20 @@ export function createExternalOCRProviderAdapter({
           const backendMessage = typeof result?.detail === "string"
             ? result.detail
             : detail?.message;
+          const code = normalizeErrorCode(detail?.code, response.status);
+          const retryable = Boolean(detail?.retryable || response.status === 429 || response.status >= 500);
+          logOcrFailure({
+            endpoint: normalizedEndpoint,
+            status: response.status,
+            code,
+            retryable,
+          });
           throw new OCRProviderError(
-            normalizeErrorCode(detail?.code, response.status),
-            safeResponseMessage(response.status, backendMessage),
+            code,
+            safeResponseMessage(response.status, backendMessage, code),
             {
               status: response.status,
-              retryable: Boolean(detail?.retryable || response.status >= 500),
+              retryable,
             }
           );
         }
@@ -270,6 +278,9 @@ function sendRequest(fetchImpl, endpoint, body, accessToken, workspaceId, signal
 }
 
 function normalizeErrorCode(code, status) {
+  // Prefer the backend domain code when it is a known OCR contract value.
+  // Do not collapse OCR_NOT_CONFIGURED / OCR_SCHEMA_INVALID into PROVIDER_UNAVAILABLE.
+  if (typeof code === "string" && ERROR_CODES.has(code)) return code;
   const byStatus = {
     401: "SESSION_EXPIRED",
     403: "WORKSPACE_ACCESS_DENIED",
@@ -279,20 +290,51 @@ function normalizeErrorCode(code, status) {
     429: "OCR_RATE_LIMIT",
     502: "OCR_PROVIDER_UNAVAILABLE",
     503: "OCR_PROVIDER_UNAVAILABLE",
+    504: "OCR_TIMEOUT",
   };
-  return byStatus[status] || code || "OCR_FAILED";
+  return byStatus[status] || "OCR_FAILED";
 }
 
-function safeResponseMessage(status, backendMessage) {
-  const messages = {
-    401: "Your session has expired. Sign in again to continue.",
-    403: "You do not have access to use OCR in this workspace.",
-    413: "The selected document exceeds the upload size limit.",
-    415: "This document type is not supported.",
-    422: "The uploaded document could not be validated.",
-    429: "OCR is temporarily rate limited. Wait a moment and retry.",
-    502: "The OCR provider is temporarily unavailable.",
-    503: "The OCR provider is temporarily unavailable.",
+function safeResponseMessage(status, backendMessage, code) {
+  const byCode = {
+    OCR_NOT_CONFIGURED: "Document extraction is not configured for this environment. Enter details manually or contact support.",
+    OCR_TIMEOUT: "Document extraction timed out. Retry once, or enter the visible text manually.",
+    OCR_RATE_LIMIT: "OCR is temporarily rate limited. Wait a moment and retry.",
+    OCR_PROVIDER_UNAVAILABLE: "The OCR provider is temporarily unavailable. Retry, or enter details manually.",
+    OCR_SCHEMA_INVALID: "The OCR provider returned an unreadable response. Retry, or enter details manually.",
+    DOCUMENT_UNREADABLE: "No usable chit details could be read from this document. Enter the visible text manually.",
+    SESSION_EXPIRED: "Your session has expired. Sign in again to continue.",
+    WORKSPACE_ACCESS_DENIED: "You do not have access to use OCR in this workspace.",
+    FILE_TOO_LARGE: "The selected document exceeds the upload size limit.",
+    UNSUPPORTED_FILE: "This document type is not supported.",
+    INVALID_UPLOAD: "The uploaded document could not be validated.",
   };
-  return messages[status] || backendMessage || "Document extraction failed. Please retry.";
+  const byStatus = {
+    401: byCode.SESSION_EXPIRED,
+    403: byCode.WORKSPACE_ACCESS_DENIED,
+    413: byCode.FILE_TOO_LARGE,
+    415: byCode.UNSUPPORTED_FILE,
+    422: byCode.INVALID_UPLOAD,
+    429: byCode.OCR_RATE_LIMIT,
+    502: byCode.OCR_PROVIDER_UNAVAILABLE,
+    503: byCode.OCR_PROVIDER_UNAVAILABLE,
+    504: byCode.OCR_TIMEOUT,
+  };
+  const safeBackend = typeof backendMessage === "string" && backendMessage.trim() && backendMessage.length <= 280
+    ? backendMessage.trim()
+    : "";
+  return safeBackend || byCode[code] || byStatus[status] || "Document extraction failed. Please retry.";
+}
+
+function logOcrFailure({ endpoint, status, code, retryable }) {
+  try {
+    console.warn("[OCR]", {
+      endpoint: String(endpoint || "").replace(/([?&]key=)[^&]+/gi, "$1[REDACTED]"),
+      status,
+      code,
+      retryable: Boolean(retryable),
+    });
+  } catch {
+    // Never block extraction on logging failures.
+  }
 }

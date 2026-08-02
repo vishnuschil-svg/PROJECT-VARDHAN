@@ -43,7 +43,20 @@ test("dedicated page contains tabs, schedule editing, provider honesty, mobile n
   for (const text of ["Core Business Fields","Add missing row","Delete duplicate row","Manual evidence path used","AI Assistant","Confirm & Create Chit Group","Total chit groups"]) assert.match(source,new RegExp(text.replace(/[&]/g,"&")));
   assert.doesNotMatch(source, /<Modal|ChitStudioLauncher/);
   const css = await readFile(new URL("../../pages/chits/AIChitFlow.css", import.meta.url), "utf8");
-  assert.match(css,/overflow-x:hidden/); assert.match(css,/@media\(max-width:360px\)/); assert.match(css,/@media\(min-width:768px\)/); assert.match(css,/min-height:44px/);
+  assert.match(css, /overflow-x:\s*hidden/);
+  assert.match(css, /@media\s*\(\s*max-width:\s*360px\s*\)/);
+  assert.match(css, /@media\s*\(\s*min-width:\s*768px\s*\)/);
+  assert.match(css, /min-height:\s*44px/);
+  assert.match(css, /#7A1F3D|#7a1f3d|--maroon/);
+  assert.doesNotMatch(css, /#07091a|#11132d|#2d1d69/);
+});
+
+test("AI chit flow uses the shared ChitLayout shell", async () => {
+  const source = await readFile(new URL("../../pages/chits/AIChitFlow.jsx", import.meta.url), "utf8");
+  assert.match(source, /import ChitLayout/);
+  assert.match(source, /<ChitLayout/);
+  assert.match(source, /MAX_OCR_RETRIES/);
+  assert.match(source, /ai-ocr-status/);
 });
 
 test("active entry points route to dedicated flow and groups no longer auto-open studio modal", async () => {

@@ -384,7 +384,18 @@ class GeminiVisionProvider:
             parsed = json.loads(cleaned)
             parsed = canonicalize_provider_payload(parsed)
             validated = ProviderExtractionResult.model_validate(parsed)
-            return normalize_provider_result(validated)
+            try:
+                return normalize_provider_result(validated)
+            except ValueError as normalize_exc:
+                message = str(normalize_exc)
+                if message == "DOCUMENT_UNREADABLE":
+                    raise VisionProviderError(
+                        "DOCUMENT_UNREADABLE",
+                        "Document could not be understood from the extracted content.",
+                    ) from normalize_exc
+                raise
+        except VisionProviderError:
+            raise
         except (json.JSONDecodeError, ValidationError, ValueError) as exc:
             if strategy == "structured":
                 # Should not happen with structured output, but handle gracefully
@@ -504,9 +515,11 @@ def canonicalize_provider_payload(payload: Any) -> Any:
 # use `additionalProperties: true` (implicit) to avoid HTTP 400 errors.
 # ---------------------------------------------------------------------------
 
-NULLABLE_STRING = {"type": ["string", "null"]}
-NULLABLE_NUMBER = {"type": ["number", "null"]}
-NULLABLE_INTEGER = {"type": ["integer", "null"]}
+# Gemini responseSchema rejects JSON-Schema union forms like {"type": ["string","null"]}.
+# Use OpenAPI-style nullable primitives instead.
+NULLABLE_STRING = {"type": "string", "nullable": True}
+NULLABLE_NUMBER = {"type": "number", "nullable": True}
+NULLABLE_INTEGER = {"type": "integer", "nullable": True}
 
 SCHEDULE_PROPERTIES = {
     "monthNumber": {"type": "integer"},

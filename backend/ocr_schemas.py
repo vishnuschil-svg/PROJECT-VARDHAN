@@ -18,22 +18,42 @@ class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class FieldResult(StrictModel):
+class ProviderModel(BaseModel):
+    """Gemini extraction payloads may include extra keys; ignore them during ingest."""
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class FieldResult(ProviderModel):
     value: str | float | int | bool | None = None
     confidence: float = Field(default=0, ge=0, le=1)
     sourceText: str = Field(default="", max_length=2000)
     status: FieldStatus = "NOT_FOUND"
     warning: str | None = Field(default=None, max_length=500)
 
+    @field_validator("confidence", mode="before")
+    @classmethod
+    def normalize_confidence(cls, value: Any) -> Any:
+        if isinstance(value, (int, float)) and value > 1:
+            return float(value) / 100.0
+        return value
 
-class MemberExtraction(StrictModel):
+    @field_validator("status", mode="before")
+    @classmethod
+    def normalize_status(cls, value: Any) -> Any:
+        text = str(value or "NOT_FOUND").strip().upper()
+        allowed = {"FOUND", "AMBIGUOUS", "NOT_FOUND", "INVALID"}
+        return text if text in allowed else "NOT_FOUND"
+
+
+class MemberExtraction(ProviderModel):
     memberNumber: int | None = Field(default=None, ge=1)
     name: str | None = Field(default=None, max_length=200)
     contact: str | None = Field(default=None, max_length=80)
     address: str | None = Field(default=None, max_length=500)
 
 
-class InstallmentScheduleEntry(StrictModel):
+class InstallmentScheduleEntry(ProviderModel):
     monthNumber: int = Field(ge=1, le=1200)
     monthLabel: str | None = Field(default=None, max_length=120)
     standardPayment: float | None = Field(default=None, ge=0)
@@ -49,8 +69,15 @@ class InstallmentScheduleEntry(StrictModel):
     netAmount: float | None = Field(default=None, ge=0)
     confidence: float = Field(default=0, ge=0, le=1)
 
+    @field_validator("confidence", mode="before")
+    @classmethod
+    def normalize_confidence(cls, value: Any) -> Any:
+        if isinstance(value, (int, float)) and value > 1:
+            return float(value) / 100.0
+        return value
 
-class ChitExtraction(StrictModel):
+
+class ChitExtraction(ProviderModel):
     chitName: str | None = Field(default=None, max_length=240)
     chitCode: str | None = Field(default=None, max_length=120)
     organizerName: str | None = Field(default=None, max_length=240)
@@ -78,33 +105,64 @@ class ChitExtraction(StrictModel):
     collections: list[dict[str, Any]] = Field(default_factory=list, max_length=100000)
     dividends: list[dict[str, Any]] = Field(default_factory=list, max_length=1200)
 
-    @field_validator("startDate")
+    @field_validator("installmentPattern", mode="before")
     @classmethod
-    def validate_start_date(cls, value: str | None) -> str | None:
-        if value is None:
+    def normalize_installment_pattern(cls, value: Any) -> Any:
+        text = str(value or "UNKNOWN").strip().upper()
+        allowed = {
+            "FIXED_MONTHLY",
+            "VARIABLE_MONTHLY",
+            "LIFTED_NON_LIFTED",
+            "CUSTOM_RULE",
+            "UNKNOWN",
+        }
+        return text if text in allowed else "UNKNOWN"
+
+    @field_validator("startDate", mode="before")
+    @classmethod
+    def validate_start_date(cls, value: Any) -> str | None:
+        if value is None or value == "":
             return None
-        date.fromisoformat(value)
-        return value
+        text = str(value).strip()
+        try:
+            date.fromisoformat(text)
+        except ValueError:
+            return None
+        return text
 
 
-class ExtractionConfidence(StrictModel):
+class ExtractionConfidence(ProviderModel):
     overallScore: float = Field(default=0, ge=0, le=1)
     fieldScores: dict[str, float] = Field(default_factory=dict)
     mathValidated: bool = False
     requiresHumanReview: bool = True
+
+    @field_validator("overallScore", mode="before")
+    @classmethod
+    def normalize_overall_score(cls, value: Any) -> Any:
+        if isinstance(value, (int, float)) and value > 1:
+            return float(value) / 100.0
+        return value
 
     @field_validator("fieldScores")
     @classmethod
     def validate_field_scores(cls, value: dict[str, float]) -> dict[str, float]:
         if len(value) > 100:
             raise ValueError("At most 100 field confidence scores are allowed")
+        normalized: dict[str, float] = {}
         for key, score in value.items():
-            if not key or len(key) > 100 or not 0 <= score <= 1:
+            if not key or len(key) > 100:
                 raise ValueError("Field confidence scores must use safe keys and values from 0 to 1")
-        return value
+            numeric = float(score)
+            if numeric > 1:
+                numeric = numeric / 100.0
+            if not 0 <= numeric <= 1:
+                raise ValueError("Field confidence scores must use safe keys and values from 0 to 1")
+            normalized[key] = numeric
+        return normalized
 
 
-class ProviderExtractionResult(StrictModel):
+class ProviderExtractionResult(ProviderModel):
     rawText: str = Field(default="", max_length=2_000_000)
     documentType: DocumentType = "UNKNOWN"
     languageDetected: LanguageDetected = "UNKNOWN"
@@ -112,6 +170,20 @@ class ProviderExtractionResult(StrictModel):
     confidence: ExtractionConfidence = Field(default_factory=ExtractionConfidence)
     missingFields: list[str] = Field(default_factory=list, max_length=100)
     warnings: list[str] = Field(default_factory=list, max_length=100)
+
+    @field_validator("documentType", mode="before")
+    @classmethod
+    def normalize_document_type(cls, value: Any) -> Any:
+        text = str(value or "UNKNOWN").strip().upper()
+        allowed = {"CHIT_REGISTER", "CHIT_POSTER", "CHIT_PLAN", "INSTALLMENT_SCHEDULE", "UNKNOWN"}
+        return text if text in allowed else "UNKNOWN"
+
+    @field_validator("languageDetected", mode="before")
+    @classmethod
+    def normalize_language(cls, value: Any) -> Any:
+        text = str(value or "UNKNOWN").strip().upper()
+        allowed = {"TELUGU", "ENGLISH", "BILINGUAL", "UNKNOWN"}
+        return text if text in allowed else "UNKNOWN"
 
 
 class OCRExtractionResponse(ProviderExtractionResult):

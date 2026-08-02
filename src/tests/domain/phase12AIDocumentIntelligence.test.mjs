@@ -94,3 +94,31 @@ test("the isolated document engine has no repository or ledger dependency", asyn
   assert.match(serviceSource, /buildDraftFromNormalizedJSON/);
   assert.match(serviceSource, /validateDraft\(draft\)/);
 });
+
+test("OCR adapter preserves backend domain codes on 502/503 instead of collapsing them", async () => {
+  const cases = [
+    { status: 503, code: "OCR_NOT_CONFIGURED", message: "Document extraction is not configured." },
+    { status: 502, code: "OCR_SCHEMA_INVALID", message: "Vision provider output is not valid JSON." },
+    { status: 503, code: "OCR_PROVIDER_UNAVAILABLE", message: "The OCR provider is temporarily unavailable." },
+  ];
+  for (const sample of cases) {
+    const adapter = createExternalOCRProviderAdapter({
+      endpoint: "/api/v1/ocr/extract",
+      getAccessToken: async () => "test-token",
+      fetchImpl: async () => ({
+        ok: false,
+        status: sample.status,
+        headers: { get: () => "application/json" },
+        json: async () => ({ detail: { code: sample.code, message: sample.message, retryable: true } }),
+      }),
+    });
+    await assert.rejects(
+      () => adapter.extract(new File(["image"], "plan.png", { type: "image/png" }), { workspaceId: "workspace-1" }),
+      (error) => {
+        assert.equal(error.code, sample.code);
+        assert.match(error.message, new RegExp(sample.message.slice(0, 20)));
+        return true;
+      }
+    );
+  }
+});

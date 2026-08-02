@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   AlertTriangle, ArrowLeft, ArrowRight, Bot, Check, ChevronRight,
-  FileText, Home, Image, LayoutGrid, MoreHorizontal,
-  Plus, ShieldCheck, Sparkles, Trash2, Upload, Users, Info, DollarSign,
-  Calendar, Camera, List, Sliders, HelpCircle, Eye, Edit3, X, FileQuestion, ScanText,
+  FileText, Image, LayoutGrid,
+  Plus, ShieldCheck, Trash2, Upload, Info, DollarSign,
+  Calendar, Camera, List, Sliders, HelpCircle, Edit3, X, FileQuestion, ScanText,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import ChitLayout from "../../components/chit/ChitLayout";
 import {
   generateBusinessUnderstanding,
   applyOwnerCorrections,
@@ -34,6 +35,56 @@ const EDITABLE_BUSINESS_FIELDS = Object.freeze([
   "fractionalTicketInformation", "specialRules", "notes",
 ]);
 
+const STEP_META = Object.freeze({
+  welcome: { title: "Create Chit", subtitle: "Upload a document or continue from an existing workspace" },
+  upload: { title: "Upload & Understand", subtitle: "Extract objective facts from a chit document" },
+  analyzing: { title: "Understanding document", subtitle: "Extracting facts ? no assumptions" },
+  summary: { title: "Business summary", subtitle: "Review extracted facts before creation" },
+  details: { title: "Core fields", subtitle: "Confirm or correct extracted values" },
+  schedule: { title: "Month schedule", subtitle: "Review installment schedule rows" },
+  rules: { title: "Business rules", subtitle: "Confirm detected financial rules" },
+  terms: { title: "Terms", subtitle: "Review terms before owner confirmation" },
+  review: { title: "Review & create", subtitle: "Owner confirmation gate before ERP records" },
+  success: { title: "Chit created", subtitle: "Group created in your workspace" },
+});
+
+const OCR_UNAVAILABLE_CODES = new Set([
+  "OCR_NOT_CONFIGURED",
+  "OCR_PROVIDER_UNAVAILABLE",
+  "OCR_TIMEOUT",
+  "OCR_RATE_LIMIT",
+]);
+const MAX_OCR_RETRIES = 3;
+
+function ocrRecoveryCopy(errorCode) {
+  if (errorCode === "OCR_RATE_LIMIT") {
+    return {
+      title: "OCR rate limit reached",
+      subtitle: "Gemini quota was exceeded. Wait before retrying, or enter visible text manually.",
+      retryHint: "Wait a few minutes, then retry",
+    };
+  }
+  if (errorCode === "OCR_TIMEOUT") {
+    return {
+      title: "OCR timed out",
+      subtitle: "The vision provider did not finish in time. Retry, re-upload, or enter visible text.",
+      retryHint: null,
+    };
+  }
+  if (errorCode === "OCR_NOT_CONFIGURED") {
+    return {
+      title: "OCR is not configured",
+      subtitle: "The vision provider is not available in this environment. Enter visible text manually.",
+      retryHint: null,
+    };
+  }
+  return {
+    title: "OCR is currently unavailable",
+    subtitle: "Your document was kept. Retry, re-upload, or continue with visible text.",
+    retryHint: null,
+  };
+}
+
 function AIChitFlow() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -53,9 +104,11 @@ function AIChitFlow() {
       navigate("/chits/ai-chit/upload", { replace: true });
   }, [navigate, requiresAnalysis, state.draft, state.created]);
 
+  const meta = STEP_META[step] || STEP_META.welcome;
+
   return (
-    <div className="ai-chit-shell">
-      <div className={`ai-chit-frame ai-step-${step}`}>
+    <ChitLayout title={meta.title} subtitle={meta.subtitle} showFloatingAI={false}>
+      <div className={`ai-chit-shell ai-step-${step}`}>
         <FlowHeader step={step} onBack={() => navigate(-1)} />
         <main className="ai-chit-main">
           {step === "welcome" && <Welcome go={go} context={activeTenantContext} profile={profile} />}
@@ -76,9 +129,8 @@ function AIChitFlow() {
           )}
           {step === "success" && <Success state={state} go={go} context={activeTenantContext} profile={profile} />}
         </main>
-        {["welcome", "success"].includes(step) && <BottomNav go={go} />}
       </div>
-    </div>
+    </ChitLayout>
   );
 }
 
@@ -86,10 +138,10 @@ function FlowHeader({ step, onBack }) {
   return (
     <header className="ai-flow-header">
       {step !== "welcome" && (
-        <button onClick={onBack} aria-label="Go back"><ArrowLeft /></button>
+        <button type="button" onClick={onBack} aria-label="Go back"><ArrowLeft /></button>
       )}
-      <div><Sparkles /><span>VARDHAN AI</span></div>
-      <small>{step === "welcome" ? "CHIT OPERATING SYSTEM" : "BUSINESS UNDERSTANDING WORKSPACE"}</small>
+      <div><ScanText /><span>Smart Chit Capture</span></div>
+      <small>{step === "welcome" ? "Create workspace" : "Document understanding"}</small>
     </header>
   );
 }
@@ -99,20 +151,20 @@ function Welcome({ go, context, profile }) {
   return (
     <div className="ai-welcome">
       <section className="ai-hero">
-        <span className="ai-orb"><Sparkles /></span>
-        <p>VARDHAN AI</p>
-        <h1>Business<br />Understanding Engine</h1>
-        <h2>Upload any document — we extract facts, not assumptions.</h2>
-        <small>{profile?.full_name ? `Welcome, ${profile.full_name}` : "One workspace for any chit pattern"}</small>
+        <span className="ai-orb" aria-hidden="true"><ScanText /></span>
+        <p>MITRA NIDHI</p>
+        <h1>Create a chit from a document</h1>
+        <h2>Upload any register, poster, or schedule ? we extract facts, not assumptions.</h2>
+        <small>{profile?.full_name ? `Signed in as ${profile.full_name}` : "Tenant-scoped workspace"}</small>
       </section>
       <section className="ai-action-grid">
-        <button className="primary" onClick={() => go("upload")}>
+        <button type="button" className="primary" onClick={() => go("upload")}>
           <Upload /><span><strong>Upload Document</strong><small>JPG, JPEG, PNG, WebP, PDF, or a camera photo</small></span><ChevronRight />
         </button>
-        <button onClick={() => window.location.assign("/chits/smart-capture")}><ScanText /><span><strong>Smart Chit Capture</strong><small>Authenticated Gemini OCR with editable review</small></span><ChevronRight /></button>
-        <button onClick={() => window.location.assign("/chits/ai")}><Bot /><span><strong>AI Assistant</strong><small>Ask about your chit business</small></span></button>
-        <button onClick={() => window.location.assign("/chits/groups")}><LayoutGrid /><span><strong>My Chit Groups</strong><small>{groups.length} tenant-scoped groups</small></span></button>
-        <button onClick={() => window.location.assign("/chits/academy")}><FileText /><span><strong>Knowledge Base</strong><small>Guides and verified help</small></span></button>
+        <button type="button" onClick={() => window.location.assign("/chits/smart-capture")}><ScanText /><span><strong>Smart Chit Capture</strong><small>Authenticated OCR with editable review</small></span><ChevronRight /></button>
+        <button type="button" onClick={() => window.location.assign("/chits/ai")}><Bot /><span><strong>AI Assistant</strong><small>Ask about your chit business</small></span></button>
+        <button type="button" onClick={() => window.location.assign("/chits/groups")}><LayoutGrid /><span><strong>My Chit Groups</strong><small>{groups.length} tenant-scoped groups</small></span></button>
+        <button type="button" onClick={() => window.location.assign("/chits/academy")}><FileText /><span><strong>Knowledge Base</strong><small>Guides and verified help</small></span></button>
       </section>
     </div>
   );
@@ -127,9 +179,11 @@ function UploadScreen({ state, update, go, context }) {
   const [name, setName] = useState(state.documentName || "");
   const [manualText, setManualText] = useState("");
   const [error, setError] = useState("");
+  const [errorCode, setErrorCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [phase, setPhase] = useState("form");
   const [stageIndex, setStageIndex] = useState(0);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     const isImage = file && (file.type.startsWith("image/") || /\.(jpe?g|png|webp)$/i.test(file.name));
@@ -143,7 +197,28 @@ function UploadScreen({ state, update, go, context }) {
     return () => URL.revokeObjectURL(objectUrl);
   }, [file]);
 
-  const choose = (selected) => { setFile(selected); setError(""); };
+  const ocrStatus = (() => {
+    if (["uploading", "extracting", "validating"].includes(phase)) {
+      return { tone: "active", label: "OCR in progress", detail: "Authenticated request to /api/v1/ocr/extract" };
+    }
+    if (phase === "unavailable" || errorCode) {
+      return {
+        tone: "danger",
+        label: errorCode || "OCR unavailable",
+        detail: error || "Document extraction failed. Retry or enter visible text manually.",
+      };
+    }
+    if (file) return { tone: "ready", label: "Ready to extract", detail: "Upload & Understand will call the workspace OCR proxy" };
+    return { tone: "idle", label: "Waiting for document", detail: "Choose a file or capture a photo to begin" };
+  })();
+
+  const choose = (selected) => {
+    setFile(selected);
+    setError("");
+    setErrorCode("");
+    setRetryCount(0);
+    setPhase("form");
+  };
   const handleFileChange = (event) => {
     choose(event.target.files[0] || null);
     event.target.value = "";
@@ -152,26 +227,37 @@ function UploadScreen({ state, update, go, context }) {
     setFile(null);
     setPreviewUrl("");
     setError("");
+    setErrorCode("");
+    setRetryCount(0);
+    setPhase("form");
     if (fileRef.current) fileRef.current.value = "";
     if (cameraRef.current) cameraRef.current.value = "";
   };
-  const analyze = async () => {
-    if (!file) return;
+  const analyze = async ({ isRetry = false } = {}) => {
+    if (!file || busy) return;
+    if (isRetry && retryCount >= MAX_OCR_RETRIES) {
+      setErrorCode("OCR_FAILED");
+      setError(`OCR_FAILED: Maximum retries (${MAX_OCR_RETRIES}) reached. Enter the visible text manually or re-upload.`);
+      setPhase("unavailable");
+      return;
+    }
+    if (isRetry) setRetryCount((count) => count + 1);
     setBusy(true);
     setError("");
+    setErrorCode("");
     setPhase("uploading");
     setStageIndex(0);
     try {
       await new Promise((resolve) => requestAnimationFrame(resolve));
       setPhase("extracting");
       setStageIndex(1);
-      // Generate DraftBusinessModel via the UBRE pipeline
+      const workspaceId = context?.workspace_id || context?.workspaceId;
       const {
         draft, validation, normalizedJSON, legacy,
         extractionStatus, confidence, warnings,
       } = await generateBusinessUnderstanding(file, {
         manualText,
-        workspaceId: context?.workspace_id,
+        workspaceId,
       });
       setPhase("validating");
       setStageIndex(3);
@@ -181,10 +267,10 @@ function UploadScreen({ state, update, go, context }) {
           ? "low_confidence"
           : "manual_confirmation_required";
       update({
-        draft,          // DraftBusinessModel — single source of truth
-        validation,     // Validation result (VALID | INVALID | NEEDS_OWNER_CONFIRMATION)
-        normalizedJSON, // Raw normalized JSON (for advanced use)
-        analysis: legacy, // Legacy format (backward compatibility)
+        draft,
+        validation,
+        normalizedJSON,
+        analysis: legacy,
         documentName: name || file.name,
         confirmed: false,
         created: null,
@@ -193,30 +279,47 @@ function UploadScreen({ state, update, go, context }) {
         extractionWarnings: warnings,
         reviewState,
       });
+      setRetryCount(0);
       go("review");
     } catch (e) {
-      setPhase(e.code === "OCR_NOT_CONFIGURED" ? "unavailable" : "failed");
-      setError(`${e.code ? `${e.code}: ` : ""}${e.message}`);
+      const code = e?.code || "OCR_FAILED";
+      setErrorCode(code);
+      setError(`${code}: ${e?.message || "Document extraction failed."}`);
+      setPhase(OCR_UNAVAILABLE_CODES.has(code) ? "unavailable" : "form");
+      try {
+        console.warn("[OCR][AIChitFlow]", { code, retryable: Boolean(e?.retryable), retryCount: isRetry ? retryCount + 1 : retryCount });
+      } catch { /* ignore logging failures */ }
     } finally {
       setBusy(false);
     }
   };
 
   if (phase === "unavailable") {
+    const retriesLeft = Math.max(0, MAX_OCR_RETRIES - retryCount);
+    const recovery = ocrRecoveryCopy(errorCode);
+    const retrySmall = retriesLeft <= 0
+      ? "Retry limit reached"
+      : recovery.retryHint
+        ? `${recovery.retryHint} \u00B7 ${retriesLeft} left`
+        : `${retriesLeft} attempt${retriesLeft === 1 ? "" : "s"} left`;
     return (
-      <StepCard eyebrow="AI document analysis" title="AI provider is currently unavailable" subtitle="The AI analysis engine could not process your document right now. You can continue manually.">
+      <StepCard eyebrow="Document OCR" title={recovery.title} subtitle={recovery.subtitle}>
+        <div className={`ai-ocr-status ${ocrStatus.tone}`} role="status">
+          <strong>{ocrStatus.label}</strong>
+          <span>{ocrStatus.detail}</span>
+        </div>
         <div className="ai-unavailable">
           <div className="ai-unavailable-icon"><AlertTriangle size={28} /></div>
-          <p className="ai-unavailable-desc">Document <strong>{file?.name}</strong> was received. AI analysis is not reachable at this time. No data is lost.</p>
+          <p className="ai-unavailable-desc">Document <strong>{file?.name}</strong> was received. No fabricated OCR result was created. {retriesLeft} retry{retriesLeft === 1 ? "" : "s"} remaining.</p>
         </div>
         <div className="ai-unavailable-actions">
-          <button className="ai-unavailable-btn primary" onClick={() => { setPhase("form"); setTimeout(() => manualRef.current?.focus(), 0); }}>
-            <span><strong>Enter details manually</strong><small>Use this document and provide its visible text</small></span><ArrowRight />
+          <button type="button" className="ai-unavailable-btn primary" onClick={() => { setPhase("form"); setTimeout(() => manualRef.current?.focus(), 0); }}>
+            <span><strong>Enter details manually</strong><small>Paste visible text as evidence</small></span><ArrowRight />
           </button>
-          <button className="ai-unavailable-btn secondary" onClick={analyze}>
-            <span><strong>Retry AI Analysis</strong><small>Keep this document and try the provider again</small></span>
+          <button type="button" className="ai-unavailable-btn secondary" disabled={busy || retriesLeft <= 0} onClick={() => analyze({ isRetry: true })}>
+            <span><strong>Retry OCR</strong><small>{retrySmall}</small></span>
           </button>
-          <button className="ai-unavailable-btn secondary" onClick={() => { setPhase("form"); setTimeout(() => fileRef.current?.click(), 0); }}>
+          <button type="button" className="ai-unavailable-btn secondary" onClick={() => { setPhase("form"); setTimeout(() => fileRef.current?.click(), 0); }}>
             <span><strong>Re-upload document</strong><small>Choose another file</small></span>
           </button>
         </div>
@@ -227,8 +330,12 @@ function UploadScreen({ state, update, go, context }) {
   if (["uploading", "extracting", "validating"].includes(phase)) {
     const stageLabels = ["Classifying document type", "Extracting text and numbers", "Detecting business rules", "Building workspace"];
     return (
-      <StepCard eyebrow="AI analysis" title="VARDHAN AI is understanding your document..." subtitle="Extracting objective facts. No assumptions are made.">
-        <div className="ai-file-accepted"><FileText /><div><strong>{file?.name}</strong><small>Document uploaded successfully</small></div><Check /></div>
+      <StepCard eyebrow="Document OCR" title="Understanding your document?" subtitle="Extracting objective facts. No assumptions are made.">
+        <div className={`ai-ocr-status ${ocrStatus.tone}`} role="status" aria-live="polite">
+          <strong>{ocrStatus.label}</strong>
+          <span>{ocrStatus.detail}</span>
+        </div>
+        <div className="ai-file-accepted"><FileText /><div><strong>{file?.name}</strong><small>Document accepted</small></div><Check /></div>
         <div className="ai-stage-list" aria-live="polite">
           {stageLabels.map((label, i) => (
             <div key={label} className={i < stageIndex ? "done" : i === stageIndex ? "active" : "pending"}>
@@ -245,28 +352,32 @@ function UploadScreen({ state, update, go, context }) {
 
   return (
     <StepCard
-      eyebrow="Upload any document"
+      eyebrow="Document upload"
       title="Upload your chit document"
       subtitle="We extract only objective facts. No business model is assumed."
     >
+      <div className={`ai-ocr-status ${ocrStatus.tone}`} role="status">
+        <strong>{ocrStatus.label}</strong>
+        <span>{ocrStatus.detail}</span>
+      </div>
       <div className="ai-input-types">
         {[[Image, "JPG/JPEG"], [Image, "PNG/WebP"], [FileText, "PDF"], [Camera, "Camera"]].map(([Icon, label]) => (
           <span key={label}><Icon />{label}</span>
         ))}
       </div>
-      <button className={`ai-dropzone ${file ? "has-file" : ""}`} onClick={() => fileRef.current?.click()}>
+      <button type="button" className={`ai-dropzone ${file ? "has-file" : ""}`} onClick={() => fileRef.current?.click()}>
         {previewUrl ? (
           <>
             <img className="ai-image-preview" src={previewUrl} alt={`Preview of ${file.name}`} />
             <span className="ai-preview-details">
               <strong>{file.name}</strong>
-              <small>{Math.ceil(file.size / 1024)} KB · Tap to change document</small>
+              <small>{Math.ceil(file.size / 1024)} KB ? Click to change document</small>
             </span>
           </>
         ) : file ? (
-          <><FileText /><strong>{file.name}</strong><small>{Math.ceil(file.size / 1024)} KB · Tap to change document</small></>
+          <><FileText /><strong>{file.name}</strong><small>{Math.ceil(file.size / 1024)} KB ? Click to change document</small></>
         ) : (
-          <><Upload /><strong>Choose a document</strong><small>JPG, JPEG, PNG, WebP, or PDF · 15 MB max</small></>
+          <><Upload /><strong>Choose a document</strong><small>JPG, JPEG, PNG, WebP, or PDF ? 15 MB max</small></>
         )}
       </button>
       <input ref={fileRef} hidden type="file" accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf" onChange={handleFileChange} />
@@ -279,33 +390,35 @@ function UploadScreen({ state, update, go, context }) {
         <Camera /><span><strong>Take Photo</strong><small>Use your device's rear camera when supported</small></span>
       </button>
       <input ref={cameraRef} hidden type="file" accept="image/*" capture="environment" onChange={handleFileChange} />
-      <label className="ai-field">
-        Document name <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Optional business-friendly name" />
-      </label>
-      <label className="ai-field">
-        Visible text (optional) <textarea ref={manualRef} value={manualText} onChange={(e) => setManualText(e.target.value)} placeholder="Paste text from the document if it cannot be processed automatically." />
-        <small>Manual evidence path used when OCR is unavailable.</small>
-      </label>
+      <div className="ai-form-section">
+        <label className="ai-field">
+          Document name <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Optional business-friendly name" />
+        </label>
+        <label className="ai-field">
+          Visible text (optional) <textarea ref={manualRef} value={manualText} onChange={(e) => setManualText(e.target.value)} placeholder="Paste text from the document if it cannot be processed automatically." />
+          <small>Manual evidence path used when OCR is unavailable.</small>
+        </label>
+      </div>
       {error && (
         <div className="ai-extraction-error" role="alert">
           <Notice tone="danger"><AlertTriangle />{error}</Notice>
           <div className="ai-error-actions">
-            <button type="button" onClick={analyze}>Retry</button>
+            <button type="button" disabled={busy || retryCount >= MAX_OCR_RETRIES} onClick={() => analyze({ isRetry: true })}>Retry</button>
             <button type="button" onClick={() => manualRef.current?.focus()}>Enter details manually</button>
             <button type="button" onClick={() => fileRef.current?.click()}>Re-upload document</button>
           </div>
         </div>
       )}
       <Notice><ShieldCheck /> Your document stays tenant-scoped. Only objective facts are extracted.</Notice>
-      <StickyAction disabled={!file || busy} onClick={analyze}>
-        {busy ? "Analyzing document…" : "Upload & Understand"}<ArrowRight />
+      <StickyAction disabled={!file || busy} onClick={() => analyze()}>
+        {busy ? "Analyzing document?" : "Upload & Understand"}<ArrowRight />
       </StickyAction>
     </StepCard>
   );
 }
 
 /**
- * Business Workspace — reads ONLY from DraftBusinessModel.
+ * Business Workspace ? reads ONLY from DraftBusinessModel.
  * Never reads directly from OCR or AI output.
  * "Create Chit Group" enabled ONLY when validation == VALID.
  */
@@ -352,7 +465,7 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
   };
   const legacyFieldConfidence = (key) => Math.round((f[key]?.confidence || 0) * 100);
 
-  // Unified field accessors — prefer DraftBusinessModel
+  // Unified field accessors ? prefer DraftBusinessModel
   const fieldStatus = (key) => draftMode ? draftFieldState(key) : legacyFieldStatus(key);
   const fieldValue = (key) => draftMode ? draftFieldValue(key) : legacyFieldValue(key);
   const fieldConfidence = (key) => draftMode ? draftFieldConfidence(key) : legacyFieldConfidence(key);
@@ -599,7 +712,7 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
           </div>
         </div>
       )}
-      {/* Section navigation — Schedule is first */}
+      {/* Section navigation ? Schedule is first */}
       <nav className="bw-nav">
         {sections.map((s) => (
           <button
@@ -625,11 +738,11 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
             </div>
           </div>
 
-        {/* 0. CORE FIELDS — Primary editable section */}
+        {/* 0. CORE FIELDS ? Primary editable section */}
         {activeSection === "core" && (
           <div className="bw-card">
             <h2 className="bw-card-title"><Edit3 size={20} /> Core Business Fields</h2>
-            <p className="bw-card-desc">Enter the 5 essential chit details. Validation re-runs automatically as you type. Blank values remain null — never defaulted to 0.</p>
+            <p className="bw-card-desc">Enter the 5 essential chit details. Validation re-runs automatically as you type. Blank values remain null ? never defaulted to 0.</p>
             <div className="bw-detail-fields">
               {draftMode ? (
                 <>
@@ -657,7 +770,7 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
                             onChange={(e) => updateField(key, e.target.value)}
                             style={{ minHeight: "40px", padding: "6px 10px", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "12px", background: "#fff" }}
                           >
-                            <option value="">— Select pattern —</option>
+                            <option value="">? Select pattern ?</option>
                             <option value="FIXED_MONTHLY">Fixed Monthly</option>
                             <option value="VARIABLE_MONTHLY">Variable Monthly</option>
                             <option value="LIFTED_NON_LIFTED">Lifted / Non-Lifted</option>
@@ -668,7 +781,7 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
                             value={item.value || ""}
                             onChange={(e) => updateField(key, e.target.value)}
                           >
-                            <option value="">— Select mode —</option>
+                            <option value="">? Select mode ?</option>
                             <option value="FIXED">Fixed</option>
                             <option value="VARIABLE">Variable</option>
                             <option value="LIFTED_NON_LIFTED">Lifted / Non-Lifted</option>
@@ -685,7 +798,7 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
                           />
                         )}
                         <small>
-                          {draft?.evidence?.business?.[key] || "Extracted from document"} · {Math.round((draft?.confidence?.business?.[key] || 0) * 100)}% confidence
+                          {draft?.evidence?.business?.[key] || "Extracted from document"} ? {Math.round((draft?.confidence?.business?.[key] || 0) * 100)}% confidence
                         </small>
                       </label>
                     );
@@ -735,7 +848,7 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
           </div>
         )}
 
-        {/* 1. MONTH-WISE SCHEDULE — Primary Section */}
+        {/* 1. MONTH-WISE SCHEDULE ? Primary Section */}
         {activeSection === "schedule" && (
           <div className="bw-card bw-card-wide">
             <h2 className="bw-card-title"><Calendar size={20} /> Month-wise Operational Schedule</h2>
@@ -777,7 +890,7 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
                             type="number"
                             value={row.standardPayment !== null && row.standardPayment !== undefined ? row.standardPayment : ""}
                             onChange={(e) => updateScheduleCell(i, "standardPayment", e.target.value)}
-                            placeholder="—"
+                            placeholder="?"
                           />
                         </td>
                         <td>
@@ -785,7 +898,7 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
                             type="number"
                             value={row.nonLiftedPayment !== null && row.nonLiftedPayment !== undefined ? row.nonLiftedPayment : ""}
                             onChange={(e) => updateScheduleCell(i, "nonLiftedPayment", e.target.value)}
-                            placeholder="—"
+                            placeholder="?"
                           />
                         </td>
                         <td>
@@ -793,7 +906,7 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
                             type="number"
                             value={row.liftedPayment !== null && row.liftedPayment !== undefined ? row.liftedPayment : ""}
                             onChange={(e) => updateScheduleCell(i, "liftedPayment", e.target.value)}
-                            placeholder="—"
+                            placeholder="?"
                           />
                         </td>
                         <td>
@@ -801,7 +914,7 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
                             type="number"
                             value={row.prizeAmount !== null && row.prizeAmount !== undefined ? row.prizeAmount : ""}
                             onChange={(e) => updateScheduleCell(i, "prizeAmount", e.target.value)}
-                            placeholder="—"
+                            placeholder="?"
                           />
                         </td>
                         <td>
@@ -809,7 +922,7 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
                             type="number"
                             value={row.commissionValue !== null && row.commissionValue !== undefined ? row.commissionValue : ""}
                             onChange={(e) => updateScheduleCell(i, "commissionValue", e.target.value)}
-                            placeholder="—"
+                            placeholder="?"
                           />
                         </td>
                         <td>
@@ -817,7 +930,7 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
                             type="number"
                             value={row.deposit !== null && row.deposit !== undefined ? row.deposit : ""}
                             onChange={(e) => updateScheduleCell(i, "deposit", e.target.value)}
-                            placeholder="—"
+                            placeholder="?"
                           />
                         </td>
                         <td>
@@ -825,7 +938,7 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
                             type="number"
                             value={row.dividendPerMember !== null && row.dividendPerMember !== undefined ? row.dividendPerMember : ""}
                             onChange={(e) => updateScheduleCell(i, "dividendPerMember", e.target.value)}
-                            placeholder="—"
+                            placeholder="?"
                           />
                         </td>
                         <td>
@@ -833,7 +946,7 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
                             type="number"
                             value={row.penalty !== null && row.penalty !== undefined ? row.penalty : ""}
                             onChange={(e) => updateScheduleCell(i, "penalty", e.target.value)}
-                            placeholder="—"
+                            placeholder="?"
                           />
                         </td>
                         <td>
@@ -841,7 +954,7 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
                             type="number"
                             value={row.bidAmount !== null && row.bidAmount !== undefined ? row.bidAmount : ""}
                             onChange={(e) => updateScheduleCell(i, "bidAmount", e.target.value)}
-                            placeholder="—"
+                            placeholder="?"
                           />
                         </td>
                         <td>
@@ -849,7 +962,7 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
                             type="number"
                             value={row.otherDeductions !== null && row.otherDeductions !== undefined ? row.otherDeductions : ""}
                             onChange={(e) => updateScheduleCell(i, "otherDeductions", e.target.value)}
-                            placeholder="—"
+                            placeholder="?"
                           />
                         </td>
                         <td>
@@ -857,7 +970,7 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
                             type="number"
                             value={row.netAmount !== null && row.netAmount !== undefined ? row.netAmount : ""}
                             onChange={(e) => updateScheduleCell(i, "netAmount", e.target.value)}
-                            placeholder="—"
+                            placeholder="?"
                           />
                         </td>
                         <td>{Math.round((row.confidence || 0) * 100)}%</td>
@@ -918,7 +1031,7 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
                         aria-invalid={invalidBusinessFields.has(key)}
                       />
                       <small>
-                        {draft.evidence?.business?.[key] || "Extracted from document"} · {Math.round((draft.confidence?.business?.[key] || 0) * 100)}% confidence
+                        {draft.evidence?.business?.[key] || "Extracted from document"} ? {Math.round((draft.confidence?.business?.[key] || 0) * 100)}% confidence
                       </small>
                     </label>
                   ))
@@ -940,7 +1053,7 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
                         onChange={(e) => updateField(key, e.target.value)}
                         placeholder={item.status === FIELD_STATUS.NOT_FOUND ? "Not mentioned in document" : ""}
                       />
-                      <small>{item.evidence} · {Math.round(item.confidence * 100)}% confidence</small>
+                      <small>{item.evidence} ? {Math.round(item.confidence * 100)}% confidence</small>
                     </label>
                   ))
               }
@@ -948,7 +1061,7 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
           </div>
         )}
 
-        {/* 4. Financial Rules — Three-state support */}
+        {/* 4. Financial Rules ? Three-state support */}
         {activeSection === "financialRules" && (
           <div className="bw-card">
             <h2 className="bw-card-title"><DollarSign size={20} /> Financial Rules</h2>
@@ -1101,14 +1214,14 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
           {dslMapping.status === BUSINESS_DSL_STATUS.SUCCESS && (
             <div className="bw-dsl-preview" data-dsl-status={dslMapping.status}>
               <strong>Mapped Business DSL</strong>
-              <small>{Object.keys(dslMapping.model).join(" · ")}</small>
+              <small>{Object.keys(dslMapping.model).join(" ? ")}</small>
             </div>
           )}
 
           <div className={`bw-simulation-preview ${simulation.status.toLowerCase()}`} data-simulation-status={simulation.status}>
             <strong>Simulation {simulation.status}</strong>
             {simulation.status === SIMULATION_STATUS.PASS ? (
-              <small>Collections {money(simulation.totals.monthlyCollections)} · Prize {money(simulation.prizeAmount)} · Owner profit {money(simulation.ownerProfit)}</small>
+              <small>Collections {money(simulation.totals.monthlyCollections)} ? Prize {money(simulation.prizeAmount)} ? Owner profit {money(simulation.ownerProfit)}</small>
             ) : (
               <small>{simulation.errors?.[0] || "Simulation cannot run until DSL mapping succeeds."}</small>
             )}
@@ -1166,7 +1279,7 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
             disabled={saving}
             onClick={saveDraft}
           >
-            <FileText size={18} /> {saving ? "Saving…" : "Save Draft"}
+            <FileText size={18} /> {saving ? "Saving?" : "Save Draft"}
           </button>
           {state.draftSaveStatus && (
             <small className="bw-save-status" role="status">
@@ -1189,7 +1302,7 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
 }
 
 /**
- * Financial Rule Card — displays one of Commission, Deposit, Dividend, Penalty,
+ * Financial Rule Card ? displays one of Commission, Deposit, Dividend, Penalty,
  * Bid Rule, Prize Rule, Lift Rule with three-state support.
  */
 function FinancialRuleCard({ rule, fieldValue, fieldConfidence, fieldStatus, isRule, ruleStatus, ruleConfirmed, onSetValue, onClearValue, onToggleRule }) {
@@ -1201,9 +1314,9 @@ function FinancialRuleCard({ rule, fieldValue, fieldConfidence, fieldStatus, isR
   const effectiveValue = isRule ? (ruleConfirmed ? "Confirmed" : null) : fieldValue;
   const effectiveConfidence = isRule ? Math.round((fieldConfidence || 0)) : fieldConfidence;
 
-  const stateLabel = effectiveStatus === VALUE_STATE.FOUND ? "FOUND — Document Value"
+  const stateLabel = effectiveStatus === VALUE_STATE.FOUND ? "FOUND ? Document Value"
     : effectiveStatus === VALUE_STATE.OWNER_DEFINED || ruleConfirmed ? "OWNER_DEFINED"
-    : "NOT_FOUND — Not Mentioned";
+    : "NOT_FOUND ? Not Mentioned";
 
   const stateClass = effectiveStatus === VALUE_STATE.FOUND ? "found"
     : effectiveStatus === VALUE_STATE.OWNER_DEFINED || ruleConfirmed ? "owner-defined"
@@ -1338,7 +1451,7 @@ function SummaryField({ label, value, status, confidence, format, suffix }) {
     ? format === "money"
       ? money(value)
       : `${value}${suffix || ""}`
-    : "—";
+    : "?";
 
   const statusLabel = status === VALUE_STATE.NOT_FOUND || status === FIELD_STATUS.NOT_FOUND ? "NOT_FOUND"
     : status === VALUE_STATE.OWNER_DEFINED || status === FIELD_STATUS.OWNER_DEFINED ? "OWNER_DEFINED"
@@ -1352,7 +1465,7 @@ function SummaryField({ label, value, status, confidence, format, suffix }) {
         <span className={`bw-field-status-tag ${status === VALUE_STATE.NOT_FOUND || status === FIELD_STATUS.NOT_FOUND ? "not-found" : "found"}`}>
           {statusLabel}
         </span>
-        {' · '}{confidence}% confidence
+        {" \u00B7 "}{confidence}% confidence
       </small>
     </div>
   );
@@ -1392,24 +1505,12 @@ function Success({ state, go, context, profile }) {
         <h3>Recent chit groups</h3>
         {groups.slice(0, 3).map((group) => (
           <button onClick={() => window.location.assign("/chits/groups")} key={group.id}>
-            <span><strong>{group.chit_name}</strong><small>{group.total_members} members · {money(group.chit_value)}</small></span>
+            <span><strong>{group.chit_name}</strong><small>{group.total_members} members ? {money(group.chit_value)}</small></span>
             <ArrowRight />
           </button>
         ))}
       </section>
     </div>
-  );
-}
-
-function BottomNav({ go }) {
-  return (
-    <nav className="ai-bottom-nav">
-      <button onClick={() => go("")}><Home />Home</button>
-      <button onClick={() => go("upload")}><Upload />Upload</button>
-      <button onClick={() => window.location.assign("/chits/groups")}><Users />Groups</button>
-      <button onClick={() => window.location.assign("/chits/reports")}><FileText />Reports</button>
-      <button onClick={() => window.location.assign("/chits/settings")}><MoreHorizontal />More</button>
-    </nav>
   );
 }
 
@@ -1440,9 +1541,9 @@ function Metric({ label, value }) {
 }
 
 function money(value) {
-  if (value === null || value === undefined || value === "") return "—";
+  if (value === null || value === undefined || value === "") return "?";
   const num = Number(value);
-  if (isNaN(num)) return "—";
+  if (isNaN(num)) return "?";
   return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(num);
 }
 

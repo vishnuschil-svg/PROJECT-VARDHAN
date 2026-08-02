@@ -116,6 +116,53 @@ class OCRSchemaTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "DOCUMENT_UNREADABLE"):
             normalize_provider_result(ProviderExtractionResult())
 
+    def test_gemini_extras_and_quirks_are_tolerated_on_ingest(self):
+        """Application schema validation must not fail solely on Gemini extras/enums."""
+        payload = {
+            "rawText": "Sample chit",
+            "documentType": "CHIT_FORM",
+            "languageDetected": "HI",
+            "extraTopLevel": "ignored",
+            "extraction": {
+                "chitName": "Test Chit",
+                "chitValue": 100000,
+                "durationMonths": 20,
+                "memberCount": 20,
+                "monthlyInstallment": 5000,
+                "installmentPattern": "MONTHLY",
+                "startDate": "15/01/2026",
+                "geminiOnlyField": True,
+                "members": [{"name": "A", "ticketNumber": "3", "foo": 1}],
+                "fieldResults": {
+                    "chitName": {
+                        "value": "Test Chit",
+                        "confidence": 96,
+                        "status": "ok",
+                        "sourceText": "Test Chit",
+                    }
+                },
+            },
+            "confidence": {
+                "overallScore": 96,
+                "fieldScores": {"chitName": 90},
+                "mathValidated": False,
+                "requiresHumanReview": True,
+                "providerExtra": True,
+            },
+            "missingFields": [],
+            "warnings": [],
+        }
+        result = ProviderExtractionResult.model_validate(payload)
+        self.assertEqual(result.documentType, "UNKNOWN")
+        self.assertEqual(result.languageDetected, "UNKNOWN")
+        self.assertEqual(result.extraction.installmentPattern, "UNKNOWN")
+        self.assertIsNone(result.extraction.startDate)
+        self.assertAlmostEqual(result.confidence.overallScore, 0.96)
+        self.assertAlmostEqual(result.extraction.fieldResults["chitName"].confidence, 0.96)
+        self.assertEqual(result.extraction.fieldResults["chitName"].status, "NOT_FOUND")
+        normalized = normalize_provider_result(result)
+        self.assertEqual(normalized.extraction.chitName, "Test Chit")
+
     def test_upload_guards_mime_signature_path_and_pdf_limit(self):
         validate_signature(b"\xff\xd8\xffdata", "image/jpeg")
         validate_signature(b"\x89PNG\r\n\x1a\ndata", "image/png")

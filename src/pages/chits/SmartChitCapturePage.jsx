@@ -1,20 +1,23 @@
-import { ArrowLeft, ShieldCheck } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { ShieldCheck } from "lucide-react";
+import ChitLayout from "../../components/chit/ChitLayout";
 import SmartChitCapture from "../../components/ai/SmartChitCapture.jsx";
 import { useAuth } from "../../hooks/useAuth.js";
-import "../../components/dashboard/Dashboard.css";
 
 function SmartChitCapturePage() {
-  const navigate = useNavigate();
   const { activeTenantContext } = useAuth();
   return (
-    <main className="smart-capture-page">
-      <header className="smart-capture-page-header">
-        <button type="button" onClick={() => navigate(-1)}><ArrowLeft size={18} /> Back</button>
-        <div><h1>Smart Chit Capture</h1><p><ShieldCheck size={16} /> Authenticated and workspace-scoped</p></div>
-      </header>
-      <SmartChitCapture activeTenantContext={activeTenantContext} />
-    </main>
+    <ChitLayout
+      title="Smart Chit Capture"
+      subtitle="Authenticated, workspace-scoped document extraction with editable review"
+      showFloatingAI={false}
+    >
+      <div className="smart-capture-page">
+        <p className="smart-capture-trust">
+          <ShieldCheck size={16} /> Authenticated OCR proxy â€" no provider keys in the browser
+        </p>
+        <SmartChitCapture activeTenantContext={activeTenantContext} />
+      </div>
+    </ChitLayout>
   );
 }
 
