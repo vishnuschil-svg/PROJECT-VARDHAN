@@ -57,6 +57,10 @@ const AIWorkspace = lazy(() => import("../pages/chits/AIWorkspace"));
 const Academy = lazy(() => import("../pages/chits/Academy"));
 const AIChitFlow = lazy(() => import("../pages/chits/AIChitFlow"));
 const SmartChitCapturePage = lazy(() => import("../pages/chits/SmartChitCapturePage"));
+const FileIngestionPage = lazy(() => import("../pages/chits/FileIngestionPage"));
+const IngestionReviewPage = lazy(() => import("../pages/chits/IngestionReviewPage"));
+const MonthClosingPage = lazy(() => import("../pages/chits/MonthClosing"));
+const ChitCompletionPage = lazy(() => import("../pages/chits/ChitCompletion"));
 const PublicSite = lazy(() => import("../pages/public/PublicSite"));
 
 function RouteFallback() {
@@ -424,6 +428,22 @@ function AppRouter() {
         <Route
           path="/chits/smart-capture"
           element={<ProtectedRoute moduleId={CHIT_MANAGEMENT_ERP}><SmartChitCapturePage /></ProtectedRoute>}
+        />
+        <Route
+          path="/chits/ingest"
+          element={<ProtectedRoute moduleId={CHIT_MANAGEMENT_ERP}><FileIngestionPage /></ProtectedRoute>}
+        />
+        <Route
+          path="/chits/ingest/:jobId/review"
+          element={<ProtectedRoute moduleId={CHIT_MANAGEMENT_ERP}><IngestionReviewPage /></ProtectedRoute>}
+        />
+        <Route
+          path="/chits/month-closing"
+          element={<ProtectedRoute moduleId={CHIT_MANAGEMENT_ERP}><MonthClosingPage /></ProtectedRoute>}
+        />
+        <Route
+          path="/chits/completion"
+          element={<ProtectedRoute moduleId={CHIT_MANAGEMENT_ERP}><ChitCompletionPage /></ProtectedRoute>}
         />
         <Route
           path="/chits/academy"

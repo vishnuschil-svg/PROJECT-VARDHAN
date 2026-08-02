@@ -5,13 +5,13 @@ import "./ChitNavigation.css";
 
 export const CHIT_WORKFLOW_NAV = [
   { label: "Home", icon: Home, path: "/chits", exact: true },
-  { label: "Chit Groups", icon: ClipboardList, path: "/chits/groups", related: [{ label: "Batches", path: "/chits/batches" }, { label: "Import documents", path: "/chits/documents" }] },
+  { label: "Chit Groups", icon: ClipboardList, path: "/chits/groups", related: [{ label: "Batches", path: "/chits/batches" }, { label: "Import documents", path: "/chits/documents" }, { label: "File ingestion", path: "/chits/ingest" }] },
   { label: "Members", icon: Users, path: "/chits/members" },
   { label: "Collections", icon: WalletCards, path: "/chits/collections" },
   { label: "Auctions and Lift", icon: Target, path: "/chits/auctions", related: [{ label: "Lucky draw", path: "/chits/lucky-draw" }] },
   { label: "Pending and Follow-up", icon: HandCoins, path: "/chits/collections/pending", related: [{ label: "Reminders", path: "/chits/notifications" }] },
   { label: "Receipts and Ledger", icon: ReceiptText, path: "/chits/receipts", related: [{ label: "Member ledger", path: "/chits/member-ledger" }] },
-  { label: "Finance and Profit", icon: Scale, path: "/chits/finance", related: [{ label: "Payouts", path: "/chits/payouts" }, { label: "Dividends", path: "/chits/dividends" }] },
+  { label: "Finance and Profit", icon: Scale, path: "/chits/finance", related: [{ label: "Payouts", path: "/chits/payouts" }, { label: "Dividends", path: "/chits/dividends" }, { label: "Month closing", path: "/chits/month-closing" }, { label: "Chit completion", path: "/chits/completion" }] },
   { label: "Reports", icon: FileBarChart, path: "/chits/reports" },
   { label: "AI Assistant", icon: Bot, path: "/chits/ai" },
   { label: "Academy", icon: GraduationCap, path: "/chits/academy" },

@@ -1,0 +1,78 @@
+.month-close-shell,
+.chit-complete-shell {
+  display: grid;
+  gap: 1rem;
+  color: #1a1a1a;
+}
+
+.month-close-form,
+.month-close-preview,
+.month-close-reopen,
+.month-close-history,
+.chit-complete-panel {
+  background: #fff;
+  border: 1px solid rgba(26, 26, 26, 0.09);
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.month-close-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+
+.month-close-preview header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.month-close-preview.ready {
+  border-color: #c9e2d2;
+  background: #f3fbf6;
+}
+
+.month-close-preview.warning {
+  border-color: #f0d9a8;
+  background: #fff8ef;
+}
+
+.month-close-preview.blocked {
+  border-color: #efc2c2;
+  background: #fff5f5;
+}
+
+.month-close-error {
+  border: 1px solid #efc2c2;
+  background: #fff5f5;
+  color: #8a1f1f;
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+}
+
+.month-close-ok {
+  border: 1px solid #c9e2d2;
+  background: #f3fbf6;
+  color: #1f5c3a;
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+}
+
+.month-close-preview ul,
+.month-close-history ul,
+.chit-complete-panel ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.month-close-issues p {
+  margin: 0.25rem 0 0;
+}
+
+.chit-complete-panel strong.metric {
+  font-family: "Sora", "Segoe UI", sans-serif;
+  font-size: 1.25rem;
+}
