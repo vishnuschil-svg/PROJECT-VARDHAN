@@ -374,6 +374,47 @@ textarea:focus-visible {
   color: var(--ink) !important;
 }
 
+/* Flatten legacy “royal / navy glass” dashboard shells */
+.royal-dashboard-shell,
+.royal-dashboard-hero,
+.business-health-hero,
+.chit-command-hero,
+.upgrade-hero {
+  background: var(--bg) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: none !important;
+  color: var(--ink) !important;
+  border-radius: 14px !important;
+}
+
+.royal-dashboard-shell::before,
+.royal-dashboard-shell::after,
+.business-health-hero::after,
+.royal-hero::before {
+  display: none !important;
+}
+
+.royal-dashboard-header-copy h1,
+.royal-dashboard-hero h2,
+.royal-business-health h3,
+.royal-dashboard-header-copy span,
+.royal-dashboard-eyebrow,
+.business-health-hero h2,
+.chit-command-hero h2 {
+  color: var(--ink) !important;
+}
+
+.royal-dashboard-eyebrow,
+.health-eyebrow {
+  color: var(--maroon) !important;
+}
+
+.royal-dashboard-header-copy p,
+.business-health-hero p,
+.chit-command-hero p {
+  color: var(--ink-soft) !important;
+}
+
 @media (max-width: 760px) {
   .sidebar:not(.open) {
     transform: translateX(-105%);

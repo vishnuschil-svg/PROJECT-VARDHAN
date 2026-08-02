@@ -6,25 +6,26 @@
 
 .upgrade-hero {
   padding: 32px;
-  color: #ffffff;
-  background:
-    radial-gradient(circle at 84% 8%, rgba(243, 201, 105, 0.28), transparent 32%),
-    linear-gradient(135deg, #07111f, #102044 56%, #1d4ed8);
-  border: 1px solid rgba(212, 175, 55, 0.28);
-  border-radius: var(--vds-radius-2xl, 22px);
-  box-shadow: var(--vds-shadow-lg, 0 22px 54px rgba(7, 17, 31, 0.14));
+  color: var(--ink, #1a1a1a);
+  background: var(--bg, #fff);
+  border: 1px solid var(--line, rgba(26, 26, 26, 0.09));
+  border-radius: 14px;
+  box-shadow: none;
 }
 
 .upgrade-hero h1 {
   margin: 14px 0 8px;
+  font-family: var(--font-heading, "Sora", sans-serif);
   font-size: clamp(26px, 4vw, 42px);
-  letter-spacing: 0;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--ink, #1a1a1a);
 }
 
 .upgrade-hero p {
   max-width: 760px;
   margin: 0;
-  color: rgba(226, 232, 240, 0.86);
+  color: var(--ink-soft, #5b5560);
   line-height: 1.6;
 }
 
@@ -46,7 +47,7 @@
   flex-direction: column;
   gap: 12px;
   padding: 20px;
-  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  background: var(--bg, #fff);
   border: 1px solid rgba(148, 163, 184, 0.22);
   border-radius: var(--vds-radius-xl, 18px);
   box-shadow: var(--vds-shadow-md, 0 14px 34px rgba(7, 17, 31, 0.1));

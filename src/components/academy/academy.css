@@ -94,7 +94,7 @@
 .academy-walkthrough-start-btn {
   margin-left: auto;
   padding: 0.375rem 0.75rem;
-  background: #3b82f6;
+  background: #7A1F3D;
   color: white;
   border: none;
   border-radius: 6px;
@@ -104,7 +104,7 @@
 }
 
 .academy-walkthrough-start-btn:hover {
-  background: #2563eb;
+  background: #7A1F3D;
 }
 
 .academy-step-target-link {
@@ -210,7 +210,7 @@
 }
 
 .academy-walkthrough-dot.is-active {
-  background: #3b82f6;
+  background: #7A1F3D;
   transform: scale(1.25);
 }
 
@@ -286,15 +286,15 @@
 }
 
 .academy-walkthrough-complete-btn {
-  background: #3b82f6;
+  background: #7A1F3D;
   color: white;
-  border-color: #3b82f6;
+  border-color: #7A1F3D;
   margin-left: auto;
 }
 
 .academy-walkthrough-complete-btn:hover {
-  background: #2563eb;
-  border-color: #2563eb;
+  background: #7A1F3D;
+  border-color: #7A1F3D;
 }
 
 .academy-walkthrough-complete-btn.is-completed {
@@ -502,7 +502,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.625rem 1rem;
-  background: #3b82f6;
+  background: #7A1F3D;
   color: white;
   border: none;
   border-radius: 6px;
@@ -514,7 +514,7 @@
 
 .academy-start-button:hover,
 .academy-reset-button:hover {
-  background: #2563eb;
+  background: #7A1F3D;
 }
 
 .academy-reset-button {
@@ -646,7 +646,7 @@
 
 .academy-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #3b82f6, #22c55e);
+  background: linear-gradient(90deg, #7A1F3D, #22c55e);
   transition: width 0.3s ease;
 }
 

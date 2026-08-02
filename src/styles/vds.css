@@ -7,12 +7,12 @@
   color-scheme: light;
 
   /* Brand palette */
-  --vds-navy-950: #07111f;
-  --vds-navy-900: #0b1730;
-  --vds-navy-800: #102044;
-  --vds-blue-700: #1d4ed8;
-  --vds-blue-600: #2563eb;
-  --vds-blue-500: #3b82f6;
+  --vds-navy-950: #1A1A1A;
+  --vds-navy-900: #1A1A1A;
+  --vds-navy-800: #5A1730;
+  --vds-blue-700: #7A1F3D;
+  --vds-blue-600: #7A1F3D;
+  --vds-blue-500: #7A1F3D;
   --vds-gold-600: #b88908;
   --vds-gold-500: #d4af37;
   --vds-gold-400: #f3c969;
@@ -135,9 +135,9 @@
 .dark-theme {
   color-scheme: dark;
   --vds-bg-canvas: var(--vds-navy-950);
-  --vds-bg-page: linear-gradient(135deg, #07111f 0%, #0b1730 48%, #102044 100%);
-  --vds-bg-surface: #0b1730;
-  --vds-bg-surface-soft: #102044;
+  --vds-bg-page: var(--maroon, #7A1F3D);
+  --vds-bg-surface: #1A1A1A;
+  --vds-bg-surface-soft: #5A1730;
   --vds-bg-muted: rgba(255, 255, 255, 0.06);
   --vds-text-strong: #f8fafc;
   --vds-text: #dbeafe;
@@ -376,8 +376,6 @@ textarea {
 
 .auth-page {
   background:
-    radial-gradient(circle at 18% 10%, rgba(212, 175, 55, 0.2), transparent 28%),
-    radial-gradient(circle at 86% 6%, rgba(37, 99, 235, 0.24), transparent 30%),
     linear-gradient(135deg, var(--vds-navy-950), var(--vds-navy-900) 48%, var(--vds-blue-700));
 }
 
@@ -496,7 +494,7 @@ textarea {
 }
 
 .vds-chart-card {
-  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  background: var(--bg, #fff);
   border: 1px solid var(--vds-border);
   border-radius: var(--vds-radius-xl);
   box-shadow: var(--vds-shadow-md);

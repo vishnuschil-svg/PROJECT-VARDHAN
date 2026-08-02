@@ -9,33 +9,34 @@
   justify-content: space-between;
   gap: 20px;
   padding: 24px;
-  background:
-    radial-gradient(circle at right top, rgba(243, 201, 105, 0.22), transparent 34%),
-    linear-gradient(135deg, #07111f, #102044 56%, #1d4ed8);
-  border: 1px solid rgba(212, 175, 55, 0.28);
-  border-radius: var(--vds-radius-2xl, 22px);
-  box-shadow: var(--vds-shadow-lg, 0 22px 54px rgba(7, 17, 31, 0.14));
-  color: #ffffff;
+  background: var(--bg, #fff);
+  border: 1px solid var(--line, rgba(26, 26, 26, 0.09));
+  border-radius: 14px;
+  box-shadow: none;
+  color: var(--ink, #1a1a1a);
 }
 
 .product-catalog-eyebrow {
-  color: rgba(243, 201, 105, 0.9);
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.8px;
+  color: var(--maroon, #7a1f3d);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .product-catalog-summary h2 {
   margin: 8px 0 6px;
+  font-family: var(--font-heading, "Sora", sans-serif);
   font-size: 26px;
-  letter-spacing: 0;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--ink, #1a1a1a);
 }
 
 .product-catalog-summary p {
   max-width: 680px;
   margin: 0;
-  color: rgba(226, 232, 240, 0.86);
+  color: var(--ink-soft, #5b5560);
 }
 
 .product-catalog-kpis {
@@ -76,7 +77,7 @@
   flex-direction: column;
   gap: 16px;
   padding: 20px;
-  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  background: var(--bg, #fff);
   border: 1px solid rgba(148, 163, 184, 0.22);
   border-radius: var(--vds-radius-xl, 18px);
   box-shadow: var(--vds-shadow-md, 0 14px 34px rgba(7, 17, 31, 0.1));

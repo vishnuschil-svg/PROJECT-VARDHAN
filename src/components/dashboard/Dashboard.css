@@ -805,9 +805,8 @@
   height: 164px;
   border-radius: 50%;
   color: #ffffff;
-  background:
-    radial-gradient(circle at center, rgba(255, 255, 255, 0.16) 0 48%, transparent 49%),
-    conic-gradient(from 40deg, #f4d66f, #38bdf8, #22c55e, #f4d66f);
+  background: var(--maroon, #7A1F3D);
+
   box-shadow: inset 0 0 0 12px rgba(10, 20, 40, 0.76);
 }
 
@@ -2214,7 +2213,7 @@
 
 .vardhan-ai-panel-header h3 {
   margin: 4px 0 0;
-  color: #07111f;
+  color: #1A1A1A;
 }
 
 .vardhan-ai-panel button,
@@ -2227,7 +2226,7 @@
   border: 1px solid rgba(212, 175, 55, 0.34);
   border-radius: 12px;
   padding: 8px 12px;
-  color: #07111f;
+  color: #1A1A1A;
   background: #ffffff;
   font-weight: 900;
   cursor: pointer;
@@ -2256,7 +2255,7 @@
   border: 1px solid rgba(148, 163, 184, 0.28);
   border-radius: 12px;
   padding: 8px 10px;
-  color: #07111f;
+  color: #1A1A1A;
   background: #ffffff;
   font: inherit;
   font-weight: 800;
@@ -2283,7 +2282,7 @@
 .vardhan-ai-summary-grid strong {
   display: block;
   margin-top: 5px;
-  color: #07111f;
+  color: #1A1A1A;
 }
 
 .vardhan-ai-table-wrap {
@@ -2410,7 +2409,7 @@
 }
 
 .smart-capture-validation strong {
-  color: #07111f;
+  color: #1A1A1A;
 }
 
 .smart-capture-validation.valid {
@@ -2574,7 +2573,7 @@
   padding: 5px 8px;
   border-radius: 999px;
   background: #eff6ff;
-  color: #1d4ed8 !important;
+  color: #7A1F3D !important;
   font-weight: 900;
 }
 
@@ -2608,7 +2607,7 @@
   border-radius: 10px;
   padding: 8px 10px;
   background: #fff;
-  color: #07111f;
+  color: #1A1A1A;
   font: inherit;
   font-weight: 800;
 }

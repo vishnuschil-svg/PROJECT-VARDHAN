@@ -16,8 +16,7 @@
   border: 1px solid rgba(212, 175, 55, 0.28);
   border-radius: 22px;
   background:
-    radial-gradient(circle at 84% 12%, rgba(212, 175, 55, 0.22), transparent 30%),
-    linear-gradient(135deg, #07111f 0%, #0b1f3d 50%, #12346d 100%);
+    var(--maroon, #7A1F3D);
   box-shadow: 0 24px 70px rgba(7, 17, 31, 0.18);
   color: #f8fafc;
 }
@@ -174,7 +173,7 @@
   height: 38px;
   border-radius: 12px;
   color: #ffffff;
-  background: linear-gradient(135deg, #0b1f3d, #2563eb);
+  background: linear-gradient(135deg, #0b1f3d, #7A1F3D);
   box-shadow: 0 12px 26px rgba(37, 99, 235, 0.2);
 }
 

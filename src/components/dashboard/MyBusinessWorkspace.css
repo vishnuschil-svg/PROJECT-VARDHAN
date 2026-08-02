@@ -5,11 +5,10 @@
   gap: 20px;
   padding: 22px;
   background:
-    radial-gradient(circle at right top, rgba(212, 175, 55, 0.18), transparent 34%),
-    linear-gradient(180deg, #ffffff, #f8fbff);
+    var(--bg, #fff);
   border: 1px solid rgba(148, 163, 184, 0.22);
   border-radius: 18px;
-  box-shadow: var(--shadow-md);
+  box-shadow: none;
 }
 
 .my-business-content {

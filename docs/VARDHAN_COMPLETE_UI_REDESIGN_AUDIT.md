@@ -188,4 +188,7 @@
 |---|---|---|
 | 2026-08-02 | Audit | Inventory created |
 | 2026-08-02 | Pre | Public landing partially implemented in prior task |
-| | 1–6 | Updated as batches complete |
+| 2026-08-02 | 1 | Foundation tokens, primitives, public landing, shell overrides — commit `design(ui): establish vardhan design foundation` |
+| 2026-08-02 | 2 | AuthLayout + AccessShell + PremiumLogin — commit `design(auth): unify authentication experience` |
+| 2026-08-02 | 3–4 | Admin/Chit white sidebars, platform/product heroes, bulk navy/purple CSS neutralization |
+| | 5–6 | Partner OS is public `/vardhan-os` only; remaining polish + audit closeout |

@@ -42,7 +42,7 @@
   gap: 12px;
   padding: 14px;
   color: #ffffff;
-  background: linear-gradient(135deg, #07111f, #102044);
+  background: var(--maroon, #7A1F3D);
 }
 
 .vardhan-floating-ai-header div {
