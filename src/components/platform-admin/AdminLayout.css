@@ -1,30 +1,27 @@
 .admin-layout {
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: var(--sidebar-w, 252px) 1fr;
   gap: 0;
-  min-height: calc(100vh - 70px);
+  min-height: 100vh;
+  background: var(--bg-soft, #f7f4ef);
 }
 
 .admin-main {
-  background:
-    radial-gradient(circle at 92% 0%, rgba(37, 99, 235, 0.12), transparent 28%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(238, 243, 251, 0.88));
+  background: var(--bg-soft, #f7f4ef);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .admin-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: 24px;
-  padding: 28px;
-  background:
-    radial-gradient(circle at 90% 0%, rgba(243, 201, 105, 0.2), transparent 28%),
-    linear-gradient(135deg, #07111f, #102044 58%, #1d4ed8);
-  border-bottom: 1px solid rgba(212, 175, 55, 0.28);
-  box-shadow: var(--shadow-md);
+  padding: 28px 32px;
+  background: var(--bg, #fff);
+  border-bottom: 1px solid var(--line, rgba(26, 26, 26, 0.09));
 }
 
 .admin-header-left {
@@ -33,16 +30,17 @@
 
 .admin-title {
   margin: 0;
-  font-size: 24px;
+  font-family: var(--font-heading, "Sora", sans-serif);
+  font-size: 26px;
   font-weight: 800;
-  color: #ffffff;
-  letter-spacing: 0;
+  color: var(--ink, #1a1a1a);
+  letter-spacing: -0.01em;
 }
 
 .admin-subtitle {
-  margin: 4px 0 0;
-  font-size: 13px;
-  color: rgba(226, 232, 240, 0.82);
+  margin: 6px 0 0;
+  font-size: 14.5px;
+  color: var(--ink-soft, #5b5560);
 }
 
 .admin-header-actions {
@@ -54,7 +52,7 @@
 
 .admin-content {
   flex: 1;
-  padding: 24px;
+  padding: 24px 32px 32px;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -67,7 +65,8 @@
 
   .admin-header {
     flex-direction: column;
-    padding: 16px;
+    align-items: flex-start;
+    padding: 18px 20px;
   }
 
   .admin-header-actions {
@@ -75,6 +74,6 @@
   }
 
   .admin-content {
-    padding: 16px;
+    padding: 16px 20px 24px;
   }
 }

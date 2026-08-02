@@ -60,7 +60,7 @@ const SmartChitCapturePage = lazy(() => import("../pages/chits/SmartChitCaptureP
 const PublicSite = lazy(() => import("../pages/public/PublicSite"));
 
 function RouteFallback() {
-  return <div style={{ padding: 40 }}>Loading...</div>;
+  return <div className="route-fallback">Loading…</div>;
 }
 
 function AppRouter() {

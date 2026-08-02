@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
-import { NavLink } from "react-router-dom";
-import { getAccessibleModules, isPlatformOwner, PLATFORM_NAME } from "../../config/erpModules";
+import { Link, NavLink } from "react-router-dom";
+import { getAccessibleModules, isPlatformOwner } from "../../config/erpModules";
 import { getProductsWithSubscriptionState } from "../../config/productLicensing";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -79,7 +79,13 @@ function Sidebar({ isOpen, onClose }) {
   return (
     <aside className={`sidebar ${isOpen ? "open" : ""}`} aria-label="Primary product navigation">
       <div className="sidebar-header">
-        <h2>{PLATFORM_NAME}</h2>
+        <Link className="v-brand" to="/dashboard" onClick={handleLinkClick}>
+          <span className="v-brand-mark" aria-hidden="true">V</span>
+          <span className="v-brand-text">
+            <b>Vardhan</b>
+            <span>ERP PLATFORM</span>
+          </span>
+        </Link>
         <button className="sidebar-mobile-close" type="button" onClick={onClose} aria-label="Close navigation"><X size={18} /></button>
       </div>
 

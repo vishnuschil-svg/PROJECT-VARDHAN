@@ -31,7 +31,7 @@ function ChitNavigation() {
   const location = useLocation();
   return <>
     <nav className="chit-navigation" aria-label="MITRA NIDHI workflow">
-      <div className="chit-nav-header"><div><span>VARDHAN OS</span><h3>{CHIT_PRODUCT_NAME}</h3></div></div>
+      <div className="chit-nav-header"><div><span>Vardhan</span><h3>{CHIT_PRODUCT_NAME}</h3></div></div>
       <div className="chit-menu">{CHIT_WORKFLOW_NAV.map((item) => {
         const Icon = item.icon; const active = isWorkflowActive(item, location.pathname);
         return <div className="chit-menu-group" key={item.label}>

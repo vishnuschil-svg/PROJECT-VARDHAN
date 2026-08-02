@@ -18,5 +18,5 @@ export class AIOrchestrator {
     return {...command,status:command.confidence<.5?"needs_review":"ready",source:"Local deterministic command router",providerStatus:this.getProviderStatus(),requiresConfirmation:false,suggestedNextAction:command.action};
   }
 }
-function response(title,message,status,confidence,extra={}){return{title,message,status,confidence,source:"VARDHAN OS",warnings:extra.warning?[extra.warning]:[],actions:[],support:{available:true,route:"/chits/support"},...extra}}
+function response(title,message,status,confidence,extra={}){return{title,message,status,confidence,source:"Vardhan",warnings:extra.warning?[extra.warning]:[],actions:[],support:{available:true,route:"/chits/support"},...extra}}
 export const aiOrchestrator=new AIOrchestrator();

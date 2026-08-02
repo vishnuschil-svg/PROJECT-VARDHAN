@@ -11,12 +11,12 @@ function DashboardCharts({ commandModel, paymentModes, text, money, fadeUp }) {
           {commandModel.collectionTrend.length ? (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={commandModel.collectionTrend} margin={{ top: 12, right: 4, left: -14, bottom: 0 }}>
-                <defs><linearGradient id="collectionGlow" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#7c3aed" stopOpacity={0.42} /><stop offset="100%" stopColor="#7c3aed" stopOpacity={0.02} /></linearGradient></defs>
+                <defs><linearGradient id="collectionGlow" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#7A1F3D" stopOpacity={0.42} /><stop offset="100%" stopColor="#7A1F3D" stopOpacity={0.02} /></linearGradient></defs>
                 <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--v2-chart-grid)" />
                 <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={11} />
                 <YAxis tickLine={false} axisLine={false} fontSize={11} tickFormatter={(value) => `₹${Math.round(value / 1000)}k`} />
                 <Tooltip content={({ active, payload, label }) => active && payload?.length ? <div className="v2-chart-tooltip"><small>Day {label}</small><strong>{money(payload[0].value)}</strong></div> : null} />
-                <Area type="monotone" dataKey="value" stroke="#7c3aed" strokeWidth={3} fill="url(#collectionGlow)" activeDot={{ r: 5, strokeWidth: 3 }} />
+                <Area type="monotone" dataKey="value" stroke="#7A1F3D" strokeWidth={3} fill="url(#collectionGlow)" activeDot={{ r: 5, strokeWidth: 3 }} />
               </AreaChart>
             </ResponsiveContainer>
           ) : <div className="v2-empty-chart"><Activity size={24} /><p>{text.emptyChart}</p></div>}

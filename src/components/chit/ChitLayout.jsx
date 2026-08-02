@@ -14,7 +14,7 @@ function ChitLayout({ title, subtitle, actions, children, showFloatingAI = true 
         {(title || subtitle || actions) && (
           <div className="chit-header">
             <div className="chit-header-left">
-              <nav className="chit-breadcrumbs" aria-label="Breadcrumb"><Link to="/dashboard">VARDHAN OS</Link><span>/</span><Link to="/chits">MITRA NIDHI</Link>{location.pathname !== "/chits" && <><span>/</span><b>{title}</b></>}</nav>
+              <nav className="chit-breadcrumbs" aria-label="Breadcrumb"><Link to="/dashboard">Vardhan</Link><span>/</span><Link to="/chits">MITRA NIDHI</Link>{location.pathname !== "/chits" && <><span>/</span><b>{title}</b></>}</nav>
               <h1 className="chit-page-title">{title}</h1>
               {subtitle && <p className="chit-page-subtitle">{subtitle}</p>}
             </div>

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vardhan ERP — Sign in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1A1A1A; --ink-soft:#6B6570;
+    --bg:#FFFFFF; --bg-soft:#F7F4EF;
+    --maroon:#7A1F3D; --maroon-dark:#4E1226;
+    --amber:#F0B94A; --amber-soft:#FBEED9;
+    --green:#5FCB8C;
+    --line:rgba(26,26,26,0.1);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'IBM Plex Sans', sans-serif; color:var(--ink); -webkit-font-smoothing:antialiased;}
+  h1,h2,h3{font-family:'Sora', sans-serif; margin:0; letter-spacing:-0.01em;}
+  p{margin:0;}
+  :focus-visible{outline:2px solid var(--maroon); outline-offset:2px;}
+
+  .screen{display:grid; grid-template-columns:44% 56%; min-height:100vh;}
+
+  /* ---------- LEFT PANEL ---------- */
+  .left{
+    background:radial-gradient(120% 120% at 15% 10%, #8E2A4C 0%, var(--maroon) 42%, var(--maroon-dark) 100%);
+    color:#fff; padding:48px 52px; display:flex; flex-direction:column; justify-content:space-between;
+    position:relative; overflow:hidden;
+  }
+  .left::after{
+    content:""; position:absolute; inset:0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.055) 1.4px, transparent 1.5px);
+    background-size: 20px 20px; pointer-events:none;
+  }
+  .brand{display:flex; align-items:center; gap:10px; position:relative;}
+  .brand-mark{width:32px; height:32px; border-radius:8px; background:rgba(255,255,255,0.14); display:flex; align-items:center; justify-content:center; font-family:'Sora',sans-serif; font-weight:800; font-size:17px;}
+  .brand-text b{font-family:'Sora',sans-serif; font-size:16.5px; font-weight:700; display:block;}
+  .brand-text span{font-size:9px; letter-spacing:0.12em; color:rgba(255,255,255,0.65); font-weight:500;}
+
+  .left-mid{position:relative;}
+  .left-mid h1{font-size:clamp(26px,2.6vw,34px); font-weight:800; line-height:1.15; max-width:380px;}
+  .left-mid p.sub{margin-top:14px; font-size:14.5px; color:rgba(255,255,255,0.75); max-width:340px; line-height:1.6;}
+
+  .ledger{
+    margin-top:34px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.16);
+    border-radius:14px; padding:20px 22px; backdrop-filter:blur(6px); max-width:340px;
+  }
+  .ledger .lbl{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.6);}
+  .ledger-row{display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-top:1px dashed rgba(255,255,255,0.18);}
+  .ledger-row:first-of-type{border-top:none; padding-top:14px;}
+  .ledger-row .k{font-size:12.5px; color:rgba(255,255,255,0.72);}
+  .ledger-row .v{font-family:'IBM Plex Mono',monospace; font-size:17px; font-weight:600;}
+  .ledger-row .v.g{color:var(--green);}
+
+  .quote{position:relative; margin-top:26px;}
+  .quote .txt{font-family:'Caveat', cursive; font-size:22px; font-weight:600; color:var(--amber-soft); line-height:1.25; transform:rotate(-0.8deg); display:inline-block;}
+  .quote .who{font-size:11.5px; color:rgba(255,255,255,0.55); margin-top:6px;}
+
+  .left-foot{font-size:11.5px; color:rgba(255,255,255,0.5); position:relative;}
+
+  /* ---------- RIGHT PANEL ---------- */
+  .right{display:flex; align-items:center; justify-content:center; padding:40px; background:var(--bg);}
+  .card{width:100%; max-width:380px;}
+  .card h2{font-size:24px; font-weight:800;}
+  .card p.hint{font-size:14px; color:var(--ink-soft); margin-top:8px;}
+
+  .tabs{display:flex; background:var(--bg-soft); border-radius:10px; padding:4px; margin-top:26px; gap:4px;}
+  .tab{flex:1; text-align:center; padding:9px; border-radius:8px; font-size:13.5px; font-weight:600; color:var(--ink-soft); cursor:pointer; transition:background .15s, color .15s;}
+  .tab.active{background:#fff; color:var(--maroon); box-shadow:0 1px 3px rgba(26,26,26,0.12);}
+
+  .field{margin-top:20px;}
+  .field label{font-size:13px; font-weight:600; display:block; margin-bottom:7px;}
+  .field .row{display:flex; gap:8px;}
+  .field input{
+    width:100%; padding:12px 14px; border-radius:9px; border:1px solid var(--line);
+    font-size:14.5px; font-family:'IBM Plex Sans',sans-serif; color:var(--ink); background:#fff;
+  }
+  .field input::placeholder{color:#A39D9D;}
+  .field input:focus{border-color:var(--maroon);}
+  .prefix{display:flex; align-items:center; padding:0 12px; border-radius:9px; border:1px solid var(--line); background:var(--bg-soft); font-size:14px; font-weight:600; color:var(--ink-soft);}
+
+  .otp-row{display:flex; gap:8px; margin-top:20px;}
+  .otp-row input{width:44px; height:50px; text-align:center; border-radius:9px; border:1px solid var(--line); font-size:19px; font-family:'Sora',sans-serif; font-weight:700;}
+  .otp-row input:focus{border-color:var(--maroon);}
+  .resend{font-size:12.5px; color:var(--ink-soft); margin-top:12px;}
+  .resend b{color:var(--maroon); font-weight:600; cursor:pointer;}
+
+  .send-otp-btn{
+    margin-top:8px; width:100%; background:var(--bg-soft); border:1px solid var(--line); color:var(--maroon);
+    font-weight:600; font-size:14px; padding:11px; border-radius:9px; cursor:pointer;
+  }
+  .send-otp-btn:hover{border-color:var(--maroon);}
+
+  .row-between{display:flex; justify-content:space-between; align-items:center; margin-top:16px; font-size:13px;}
+  .row-between a{color:var(--maroon); font-weight:600;}
+  .remember{display:flex; align-items:center; gap:7px; color:var(--ink-soft);}
+
+  .btn-primary{
+    width:100%; margin-top:22px; background:var(--maroon); color:#fff; font-weight:700; font-size:15px;
+    padding:13px; border-radius:9px; border:none; cursor:pointer; transition:background .15s;
+  }
+  .btn-primary:hover{background:var(--maroon-dark);}
+
+  .divider{display:flex; align-items:center; gap:12px; margin:24px 0; color:var(--ink-soft); font-size:12px;}
+  .divider::before, .divider::after{content:""; flex:1; height:1px; background:var(--line);}
+
+  .btn-demo{
+    width:100%; background:#fff; border:1px solid var(--line); color:var(--ink); font-weight:600; font-size:14px;
+    padding:11px; border-radius:9px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .btn-demo:hover{border-color:var(--maroon); color:var(--maroon);}
+
+  .signup{margin-top:26px; text-align:center; font-size:13.5px; color:var(--ink-soft);}
+  .signup a{color:var(--maroon); font-weight:600;}
+
+  .panel{display:none;}
+  .panel.show{display:block;}
+
+  @media (max-width: 860px){
+    .screen{grid-template-columns:1fr;}
+    .left{display:none;}
+    .right{padding:24px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="screen">
+  <div class="left">
+    <div class="brand">
+      <div class="brand-mark">V</div>
+      <div class="brand-text"><b>Vardhan</b><span>ERP PLATFORM</span></div>
+    </div>
+
+    <div class="left-mid">
+      <h1>Every business you run, one ledger you can trust.</h1>
+      <p class="sub">Chit funds, schools, hostels, hospitals and insurance — reconciled the moment you log in.</p>
+
+      <div class="ledger">
+        <div class="lbl">Live today</div>
+        <div class="ledger-row"><span class="k">Businesses on Vardhan</span><span class="v" id="l1">0</span></div>
+        <div class="ledger-row"><span class="k">Collected this month</span><span class="v g" id="l2">₹0L</span></div>
+        <div class="ledger-row"><span class="k">Uptime, last 90 days</span><span class="v g" id="l3">0%</span></div>
+      </div>
+
+      <div class="quote">
+        <span class="txt">"Switched our 6 chit branches over<br>in a single weekend."</span>
+        <div class="who">— Ramesh Kumar, Vardhan Solutions</div>
+      </div>
+    </div>
+
+    <div class="left-foot">© 2026 Vardhan Solutions · Data hosted in India</div>
+  </div>
+
+  <div class="right">
+    <div class="card">
+      <h2>Welcome back</h2>
+      <p class="hint">Sign in to your workspace to continue.</p>
+
+      <div class="tabs">
+        <div class="tab active" id="tabMobile" onclick="switchTab('mobile')">Mobile OTP</div>
+        <div class="tab" id="tabEmail" onclick="switchTab('email')">Email & password</div>
+      </div>
+
+      <div class="panel show" id="panelMobile">
+        <div class="field">
+          <label>Mobile number</label>
+          <div class="row">
+            <div class="prefix">🇮🇳 +91</div>
+            <input type="tel" placeholder="98765 43210" id="mobileInput">
+          </div>
+        </div>
+        <button class="send-otp-btn" onclick="sendOtp()" id="otpBtn">Send OTP</button>
+
+        <div class="otp-row" id="otpRow" style="display:none;">
+          <input maxlength="1" type="text">
+          <input maxlength="1" type="text">
+          <input maxlength="1" type="text">
+          <input maxlength="1" type="text">
+        </div>
+        <p class="resend" id="resendTxt" style="display:none;">Didn't get it? <b>Resend OTP</b></p>
+
+        <button class="btn-primary">Verify & sign in</button>
+      </div>
+
+      <div class="panel" id="panelEmail">
+        <div class="field">
+          <label>Email</label>
+          <input type="email" placeholder="you@company.com">
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" placeholder="Enter your password">
+        </div>
+        <div class="row-between">
+          <label class="remember"><input type="checkbox"> Remember me</label>
+          <a href="#">Forgot password?</a>
+        </div>
+        <button class="btn-primary">Sign in</button>
+      </div>
+
+      <div class="divider">or</div>
+      <button class="btn-demo">▶ Explore a live demo workspace</button>
+
+      <p class="signup">New to Vardhan? <a href="#">Start your free trial</a></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  function switchTab(t){
+    document.getElementById('tabMobile').classList.toggle('active', t==='mobile');
+    document.getElementById('tabEmail').classList.toggle('active', t==='email');
+    document.getElementById('panelMobile').classList.toggle('show', t==='mobile');
+    document.getElementById('panelEmail').classList.toggle('show', t==='email');
+  }
+  function sendOtp(){
+    document.getElementById('otpRow').style.display = 'flex';
+    document.getElementById('resendTxt').style.display = 'block';
+    document.getElementById('otpBtn').textContent = 'OTP sent ✓';
+  }
+  // otp auto-advance
+  document.querySelectorAll('.otp-row input').forEach(function(el, i, arr){
+    el.addEventListener('input', function(){
+      if(el.value && arr[i+1]) arr[i+1].focus();
+    });
+  });
+
+  function animateCount(el, end, prefix, suffix, decimals){
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(reduce){ el.textContent = prefix + end.toFixed(decimals) + suffix; return; }
+    var duration = 1300, startTime = null;
+    function step(ts){
+      if(!startTime) startTime = ts;
+      var progress = Math.min((ts - startTime) / duration, 1);
+      var eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = prefix + (end * eased).toFixed(decimals) + suffix;
+      if(progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  window.addEventListener('load', function(){
+    animateCount(document.getElementById('l1'), 2845, '', '', 0);
+    animateCount(document.getElementById('l2'), 24.58, '₹', 'L', 2);
+    animateCount(document.getElementById('l3'), 99.9, '', '%', 1);
+  });
+</script>
+
+</body>
+</html>

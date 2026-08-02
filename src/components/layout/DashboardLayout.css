@@ -1,10 +1,7 @@
 .dashboard-layout {
   display: flex;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 12% 0%, rgba(212, 175, 55, 0.16), transparent 28%),
-    radial-gradient(circle at 92% 8%, rgba(37, 99, 235, 0.16), transparent 28%),
-    linear-gradient(135deg, #f7f9fd 0%, #edf3ff 44%, #f8fafc 100%);
+  background: var(--bg-soft, #f7f4ef);
 }
 
 .dashboard-skip-link {
@@ -13,9 +10,9 @@
   top: 10px;
   left: 12px;
   padding: 10px 14px;
-  border-radius: 12px;
+  border-radius: 8px;
   color: #fff;
-  background: #4f46e5;
+  background: var(--maroon, #7a1f3d);
   transform: translateY(-160%);
   transition: transform 160ms ease;
 }
@@ -34,8 +31,11 @@
 
 .search-bar[type="button"] {
   width: 100%;
-  color: var(--text-tertiary);
+  color: var(--ink-soft, #5b5560);
   cursor: pointer;
+  background: var(--bg-soft, #f7f4ef);
+  border: 1px solid var(--line, rgba(26, 26, 26, 0.09));
+  border-radius: 8px;
 }
 
 .search-bar[type="button"] span {
@@ -45,10 +45,11 @@
 
 .search-bar[type="button"] kbd {
   padding: 3px 6px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--line, rgba(26, 26, 26, 0.09));
   border-radius: 6px;
-  background: var(--bg-primary);
-  font: 700 9px/1 system-ui;
+  background: var(--bg, #fff);
+  font: 600 9px/1 var(--font-body, "IBM Plex Sans", sans-serif);
+  color: var(--ink-soft, #5b5560);
 }
 
 .dashboard-content {
@@ -60,37 +61,40 @@
 
 .dashboard-main-content {
   flex: 1;
-  padding: 28px;
+  padding: 32px;
   overflow: auto;
-  background:
-    radial-gradient(circle at 92% 0%, rgba(37, 99, 235, 0.12), transparent 28%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(238, 243, 251, 0.88));
+  background: var(--bg-soft, #f7f4ef);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 760px) {
   .sidebar-mobile-close {
     display: grid;
     width: 34px;
     height: 34px;
     place-items: center;
-    border: 1px solid var(--border-color);
-    border-radius: 11px;
-    color: var(--text-primary);
-    background: var(--bg-tertiary);
+    border: 1px solid var(--line, rgba(26, 26, 26, 0.09));
+    border-radius: 8px;
+    color: var(--ink, #1a1a1a);
+    background: var(--bg-soft, #f7f4ef);
     cursor: pointer;
   }
 
   .dashboard-sidebar-scrim {
-    position: fixed;
-    z-index: 999;
-    inset: 0;
     display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 40;
     border: 0;
-    background: rgba(2, 6, 23, 0.5);
-    backdrop-filter: blur(4px);
+    background: rgba(26, 26, 26, 0.28);
   }
 
   .dashboard-main-content {
-    padding: 14px 12px 96px;
+    padding: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-skip-link {
+    transition: none;
   }
 }

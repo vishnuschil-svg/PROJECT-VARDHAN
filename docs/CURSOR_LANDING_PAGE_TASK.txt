@@ -1,0 +1,87 @@
+You are working inside the existing VARDHAN ERP PLATFORM repository.
+
+GOAL
+Redesign and implement ONLY the current public VARDHAN landing page so it feels like a mature, naturally designed, real ERP product—not a generic AI-generated SaaS template.
+
+SAFETY FIRST
+1. Run `git status` and report the current branch and any uncommitted changes.
+2. Do not discard, reset, overwrite, or delete existing user work.
+3. If the branch `design/vardhan-natural-ui` does not exist, create it from the current safe state. If it exists, switch to it only when doing so will not lose work.
+4. Do not push, deploy, modify secrets, or change environment variables.
+
+READ THESE FILES BEFORE CODING
+- /docs/design-system.md
+- /docs/reference/vardhan-landing.html
+- /docs/reference/vardhan-dashboard.html
+- /docs/reference/vardhan-login.html
+
+These files are locked visual ground truth. Follow their colors, typography, spacing, radii, section rhythm, component patterns, and responsive behavior. Do not improvise new colors, fonts, gradients, shadows, or spacing systems.
+
+LOCKED DESIGN TOKENS
+- Primary: #7A1F3D
+- Primary hover: #5A1730
+- Accent: #F0B94A
+- Accent tint: #FBEED9
+- Ink: #1A1A1A
+- Soft text: #5B5560
+- Background: #FFFFFF
+- Alternate background: #F7F4EF
+- Borders: rgba(26,26,26,0.09)
+- Headings and metrics: Sora 600/700/800
+- Body and controls: IBM Plex Sans 400/500/600/700
+- Caveat: maximum one meaningful handwritten callout on the page
+- Radius: 8px buttons/inputs, 14px cards, 20–24px large hero/CTA bands
+- Minimal shadows only
+- No glassmorphism
+- No emoji in production UI
+
+FUNCTIONAL SAFETY
+- Preserve all existing routes, links, Supabase integrations, API calls, analytics hooks, authentication links, and business logic.
+- Treat this as a visual and UX refactor only.
+- Do not replace real data with mock data.
+- Do not add fake customer numbers, fake revenue, fake testimonials, or unsupported claims.
+- Do not copy Odoo logos, assets, text, illustrations, or copyrighted material. Use only the product-design philosophy and the VARDHAN visual identity.
+
+LANDING PAGE REQUIREMENTS
+1. Use the navigation, hero rhythm, module icon strip, clean content rows, feature checklist, CTA band, and footer pattern from `/docs/reference/vardhan-landing.html` as primary visual ground truth.
+2. The hero must be left-aligned, spacious, and product-led. Use only one amber marker highlight phrase.
+3. Present VARDHAN as a modular multi-industry Business OS with actual product families:
+   - VARDHAN Chit Management Pro
+   - School ERP
+   - College ERP
+   - Private Hostel ERP
+   - Partner OS
+   - Future business applications only where existing product copy supports them
+4. Use flat rounded-square module icons with simple 2px-stroke line icons. Tint backgrounds may rotate only through:
+   - #F6E3E9
+   - #E1F2E7
+   - #FBEED9
+   - #EBE3F0
+   - #F8E1E6
+   - #DEEAF5
+5. Avoid filling the page with bordered cards. Prefer clean horizontal rows, hairline dividers, whitespace, clear headings, short descriptions, and direct actions.
+6. No generic KPI dashboard sections on the public landing page.
+7. Keep the page responsive at 1440px, 1280px, 768px, and 390px without horizontal overflow.
+8. Support `prefers-reduced-motion` and disable non-essential transitions when enabled.
+9. Reuse existing components and design primitives before creating new ones.
+
+WORKFLOW
+1. Inspect the current landing-page route, existing components, styles, and content.
+2. Print the proposed component tree and exact files to modify.
+3. Continue implementation automatically without waiting for approval.
+4. Implement only the landing page and directly related reusable public components.
+5. Run the relevant lint, tests, and production build.
+6. Fix errors caused by this task.
+7. Verify existing routes and key landing-page actions still work.
+
+FINAL REPORT
+Report:
+- branch used
+- files created
+- files modified
+- components reused
+- responsive behavior verified
+- lint/test/build results
+- any remaining limitations
+
+Do not push or deploy.

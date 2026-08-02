@@ -1,0 +1,394 @@
+/* =========================================================
+   VARDHAN locked brand layer (loaded last)
+   Ground truth: docs/design-system.md + reference HTML
+   ========================================================= */
+
+:root {
+  --ink: #1a1a1a;
+  --ink-soft: #5b5560;
+  --bg: #ffffff;
+  --bg-soft: #f7f4ef;
+  --maroon: #7a1f3d;
+  --maroon-dark: #5a1730;
+  --amber: #f0b94a;
+  --amber-soft: #fbeed9;
+  --line: rgba(26, 26, 26, 0.09);
+  --green: #2f7a52;
+  --green-soft: #e4f3ea;
+  --red: #c24545;
+  --icon-tint-1: #f6e3e9;
+  --icon-tint-2: #e1f2e7;
+  --icon-tint-3: #fbeed9;
+  --icon-tint-4: #ebe3f0;
+  --icon-tint-5: #f8e1e6;
+  --icon-tint-6: #deeaf5;
+  --sidebar-w: 252px;
+
+  --font-heading: "Sora", sans-serif;
+  --font-body: "IBM Plex Sans", sans-serif;
+  --font-hand: "Caveat", cursive;
+
+  /* Remap legacy VDS / theme aliases */
+  --vds-blue-700: var(--maroon);
+  --vds-blue-600: var(--maroon-dark);
+  --vds-blue-500: var(--maroon);
+  --vds-navy-950: var(--ink);
+  --vds-navy-900: var(--ink);
+  --vds-navy-800: var(--maroon-dark);
+  --vds-gold-600: #c49a3a;
+  --vds-gold-500: var(--amber);
+  --vds-gold-400: var(--amber);
+  --vds-amber-500: var(--amber);
+  --vds-crimson-600: var(--red);
+  --vds-crimson-500: var(--red);
+  --vds-emerald-600: var(--green);
+  --vds-emerald-500: var(--green);
+
+  --vds-bg-canvas: var(--bg-soft);
+  --vds-bg-page: var(--bg-soft);
+  --vds-bg-surface: var(--bg);
+  --vds-bg-surface-soft: var(--bg-soft);
+  --vds-bg-muted: var(--bg-soft);
+  --vds-text-strong: var(--ink);
+  --vds-text: var(--ink);
+  --vds-text-muted: var(--ink-soft);
+  --vds-border: var(--line);
+  --vds-border-strong: rgba(26, 26, 26, 0.14);
+  --vds-focus: rgba(122, 31, 61, 0.22);
+  --vds-font-sans: var(--font-body);
+  --vds-radius-sm: 8px;
+  --vds-radius-md: 8px;
+  --vds-radius-lg: 14px;
+  --vds-radius-xl: 14px;
+  --vds-radius-2xl: 20px;
+  --vds-radius-pill: 8px;
+  --vds-shadow-sm: 0 1px 2px rgba(26, 26, 26, 0.04);
+  --vds-shadow-md: 0 12px 24px -14px rgba(26, 26, 26, 0.2);
+  --vds-shadow-lg: 0 12px 24px -14px rgba(26, 26, 26, 0.2);
+  --vds-shadow-xl: 0 12px 24px -14px rgba(26, 26, 26, 0.2);
+  --vds-shadow-blue: 0 12px 24px -14px rgba(122, 31, 61, 0.22);
+  --vds-shell-width: var(--sidebar-w);
+
+  --bg-primary: var(--bg);
+  --bg-secondary: var(--bg-soft);
+  --bg-tertiary: var(--bg-soft);
+  --text-primary: var(--ink);
+  --text-secondary: var(--ink-soft);
+  --text-tertiary: var(--ink-soft);
+  --border-color: var(--line);
+  --border-light: var(--line);
+  --accent-color: var(--maroon);
+  --accent-hover: var(--maroon-dark);
+  --accent-light: var(--icon-tint-1);
+  --success-color: var(--green);
+  --warning-color: var(--amber);
+  --error-color: var(--red);
+  --info-color: var(--maroon);
+  --shadow-sm: var(--vds-shadow-sm);
+  --shadow-md: var(--vds-shadow-md);
+  --shadow-lg: var(--vds-shadow-lg);
+  --shadow-xl: var(--vds-shadow-xl);
+}
+
+/* Light-only product chrome — no neon dark glass auth skins */
+[data-theme="dark"],
+.dark-theme {
+  color-scheme: light;
+  --vds-bg-canvas: var(--bg-soft);
+  --vds-bg-page: var(--bg-soft);
+  --vds-bg-surface: var(--bg);
+  --vds-bg-surface-soft: var(--bg-soft);
+  --vds-bg-muted: var(--bg-soft);
+  --vds-text-strong: var(--ink);
+  --vds-text: var(--ink);
+  --vds-text-muted: var(--ink-soft);
+  --vds-border: var(--line);
+  --vds-border-strong: rgba(26, 26, 26, 0.14);
+  --accent-color: var(--maroon);
+  --accent-hover: var(--maroon-dark);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-soft) !important;
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+.metric,
+.revenue-num,
+.stat b,
+.public-proof-big {
+  font-family: var(--font-heading);
+  letter-spacing: -0.01em;
+}
+
+button,
+input,
+select,
+textarea,
+label,
+td,
+th,
+p,
+span,
+a,
+li {
+  font-family: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--maroon);
+  outline-offset: 3px;
+}
+
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  box-shadow: none;
+  outline: 2px solid var(--maroon);
+  outline-offset: 3px;
+}
+
+/* ---------- Shared app shell primitives ---------- */
+
+.v-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.v-brand-mark {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--maroon);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 16px;
+  flex: none;
+}
+
+.v-brand-text b {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 15.5px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+.v-brand-text span {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+.v-page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 26px;
+}
+
+.v-page-head h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.v-page-head p {
+  margin: 6px 0 0;
+  font-size: 14.5px;
+  color: var(--ink-soft);
+}
+
+.v-card {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: none;
+}
+
+.v-icon-sq {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+  color: var(--maroon);
+  flex: none;
+}
+
+.route-fallback {
+  min-height: 40vh;
+  display: grid;
+  place-items: center;
+  color: var(--ink-soft);
+  font-family: var(--font-body);
+  font-size: 15px;
+  background: var(--bg-soft);
+}
+
+/* ---------- Shell overrides (sidebar / topbar) ---------- */
+
+.dashboard-layout,
+.admin-layout,
+.chit-layout {
+  background: var(--bg-soft) !important;
+}
+
+.dashboard-main-content,
+.admin-main,
+.chit-content {
+  background: var(--bg-soft) !important;
+}
+
+.sidebar {
+  width: var(--sidebar-w) !important;
+  background: var(--bg) !important;
+  border-right: 1px solid var(--line) !important;
+  box-shadow: none !important;
+}
+
+.sidebar-header h2 {
+  font-family: var(--font-heading) !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: var(--ink) !important;
+}
+
+.sidebar-section-title {
+  font-size: 10.5px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: var(--ink-soft) !important;
+}
+
+.sidebar-menu-link,
+.sidebar-menu-submenu-toggle,
+.admin-nav-link,
+.chit-nav-link {
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  color: var(--ink) !important;
+}
+
+.sidebar-menu-link:hover,
+.sidebar-menu-submenu-toggle:hover,
+.admin-nav-link:hover,
+.chit-nav-link:hover {
+  background: var(--bg-soft) !important;
+  color: var(--ink) !important;
+}
+
+.sidebar-menu-link.active,
+.sidebar-submenu-link.active,
+.admin-nav-link.active,
+.chit-nav-link.active {
+  background: #f6e3e9 !important;
+  color: var(--maroon) !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+
+.topbar {
+  background: var(--bg) !important;
+  border-bottom: 1px solid var(--line) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+.topbar-button,
+.icon-btn {
+  background: var(--bg-soft) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 9px !important;
+  color: var(--ink) !important;
+}
+
+.topbar-company-name,
+.crumb b {
+  color: var(--ink) !important;
+  font-weight: 600;
+}
+
+/* Calm page headers (kill navy/gold hero bars) */
+.admin-header,
+.chit-header {
+  background: var(--bg) !important;
+  border-bottom: 1px solid var(--line) !important;
+  box-shadow: none !important;
+  color: var(--ink) !important;
+}
+
+.admin-header::after,
+.chit-header::after,
+.chit-header::before {
+  display: none !important;
+}
+
+.admin-title,
+.chit-page-title {
+  color: var(--ink) !important;
+  font-family: var(--font-heading) !important;
+  font-weight: 800 !important;
+}
+
+.admin-subtitle,
+.chit-page-subtitle,
+.chit-breadcrumbs {
+  color: var(--ink-soft) !important;
+}
+
+.chit-breadcrumbs a {
+  color: var(--maroon) !important;
+}
+
+.chit-breadcrumbs b {
+  color: var(--ink) !important;
+}
+
+@media (max-width: 760px) {
+  .sidebar:not(.open) {
+    transform: translateX(-105%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

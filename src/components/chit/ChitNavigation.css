@@ -153,5 +153,5 @@
     display:none;
   }
   .chit-bottom-navigation{position:fixed;z-index:1100;right:10px;bottom:9px;left:10px;display:grid;grid-template-columns:repeat(5,1fr);padding:7px;border:1px solid rgba(124,58,237,.18);border-radius:18px;background:rgba(255,255,255,.96);box-shadow:0 18px 45px rgba(15,23,42,.2);backdrop-filter:blur(18px)}
-  .chit-bottom-navigation a{display:grid;place-items:center;gap:3px;min-height:44px;border-radius:12px;color:#64748b;text-decoration:none;font-size:10px;font-weight:800}.chit-bottom-navigation a.active{color:#6d3ed4;background:#f2edff}
+  .chit-bottom-navigation a{display:grid;place-items:center;gap:3px;min-height:44px;border-radius:12px;color:#64748b;text-decoration:none;font-size:10px;font-weight:800}.chit-bottom-navigation a.active{color:#7A1F3D;background:#F6E3E9}
 }
