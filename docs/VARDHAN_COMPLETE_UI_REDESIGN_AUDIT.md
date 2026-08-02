@@ -194,3 +194,31 @@
 | 2026-08-02 | 4 | Chit navigation + operational CSS — commit `design(chits): unify chit management experience` |
 | 2026-08-02 | 5 | Partner OS = public `/vardhan-os` + branding (no separate partner router) — commit `design(partners): unify partner portal experience` |
 | 2026-08-02 | 6 | Remaining public product stubs + system fallback polish — commit `design(modules): align remaining product modules` |
+
+---
+
+## Acceptance checklist (2026-08-02)
+
+- [x] Every AppRouter route audited in this document
+- [x] Locked tokens loaded globally via `vardhan-brand.css`
+- [x] Public landing + secondary public pages use locked public chrome
+- [x] Auth screens use maroon 44/56 split panel
+- [x] Authenticated shells (Dashboard / Admin / Chit) share white sidebar + calm headers
+- [x] “VARDHAN OS” branding removed from UI strings
+- [x] Tests 189 pass / build succeeds
+- [x] No secrets/env changes; no push/deploy
+
+### Manual visual review still recommended
+
+- `/chits` command dashboard widgets (legacy density)
+- `/chits/ai-chit/*` wizard steps
+- `/dashboard` metric widgets with residual decorative CSS
+- Admin list tables at 390px width
+- Auth OTP + passkey messaging states
+
+### Remaining limitations
+
+- No dedicated School/College/Hostel/Insurance authenticated apps yet (public stubs only)
+- No separate Partner portal router (Partner OS = `/vardhan-os` + platform copy)
+- Some page-local CSS still contains decorative gradients overridden by brand layer / token remaps
+- Catch-all `*` still redirects to `/dashboard` (behavior preserved)
