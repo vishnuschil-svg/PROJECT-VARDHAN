@@ -1,20 +1,37 @@
-import { CollectionEngine } from "../domain/chit/services/CollectionEngine";
-import { ActivityRepository } from "../repositories/ActivityRepository";
-import { CollectionsRepository } from "../repositories/CollectionsRepository";
-import { NotificationRepository } from "../repositories/NotificationRepository";
-import { createReceiptPayload, createReceiptImageUrl } from "../config/chitReceiptImage";
-import { formatCurrency } from "../config/chitPhaseOneData";
+import { CollectionEngine } from "../domain/chit/services/CollectionEngine.js";
+import { ActivityRepository } from "../repositories/ActivityRepository.js";
+import { CollectionsRepository } from "../repositories/CollectionsRepository.js";
+import { NotificationRepository } from "../repositories/NotificationRepository.js";
+import { createReceiptPayload, createReceiptImageUrl } from "../config/chitReceiptImage.js";
+import { formatCurrency } from "../config/chitPhaseOneData.js";
+import {
+  isProductionRepositoryMode,
+  listTenantCollectionsPersistent,
+  listTenantReceiptsPersistent,
+  saveCollectionRecordPersistent,
+  saveFinanceEntryPersistent,
+  saveReceiptRecordPersistent,
+} from "./chitDataService.js";
+import { createEntityId } from "./productionChitPersistence.js";
+import { notifyCollectionsChanged } from "./chitCollectionsStore.js";
 
-export function getCollectionPageModel({ activeTenantContext, groups = [], members = [] } = {}) {
-  const collections = CollectionsRepository.listCollections(activeTenantContext);
-  const totalPaid = sum(collections, (collection) => collection.paid_amount);
-  const totalPending = sum(collections, (collection) => collection.pending_amount);
-  const partialCount = collections.filter((collection) => Number(collection.pending_amount || 0) > 0).length;
+export function getCollectionPageModel({
+  activeTenantContext,
+  groups = [],
+  members = [],
+  collections,
+} = {}) {
+  const rows =
+    collections ||
+    CollectionsRepository.listCollections(activeTenantContext);
+  const totalPaid = sum(rows, (collection) => collection.paid_amount);
+  const totalPending = sum(rows, (collection) => collection.pending_amount);
+  const partialCount = rows.filter((collection) => Number(collection.pending_amount || 0) > 0).length;
 
   return {
-    collections,
+    collections: rows,
     summary: [
-      { label: "Collections Saved", value: collections.length },
+      { label: "Collections Saved", value: rows.length },
       { label: "Total Paid", value: formatCurrency(totalPaid) },
       { label: "Total Balance", value: formatCurrency(totalPending) },
       { label: "Partial/Pending", value: partialCount },
@@ -28,8 +45,21 @@ export function getCollectionPageModel({ activeTenantContext, groups = [], membe
   };
 }
 
-export function buildCollectionDraft({ formData, members, groups, activeTenantContext } = {}) {
-  const { collections, receipts } = CollectionsRepository.getSource(activeTenantContext);
+export function buildCollectionDraft({
+  formData,
+  members,
+  groups,
+  activeTenantContext,
+  collections,
+  receipts,
+} = {}) {
+  const source =
+    collections || receipts
+      ? {
+          collections: collections || [],
+          receipts: receipts || [],
+        }
+      : CollectionsRepository.getSource(activeTenantContext);
   const member = members.find((item) => item.id === formData.member_id) || null;
   const group = groups.find((item) => item.id === formData.chit_group_id) || null;
 
@@ -37,19 +67,39 @@ export function buildCollectionDraft({ formData, members, groups, activeTenantCo
     formData,
     member,
     group,
-    collections,
-    receipts,
+    collections: source.collections,
+    receipts: source.receipts,
   });
 }
 
-export function recordCollectionPayment({
+export async function recordCollectionPayment({
   formData,
   members,
   groups,
   activeTenantContext,
   companyName,
+  collections,
+  receipts,
 } = {}) {
-  const draft = buildCollectionDraft({ formData, members, groups, activeTenantContext });
+  const existingCollections =
+    collections ||
+    (isProductionRepositoryMode()
+      ? await listTenantCollectionsPersistent(activeTenantContext)
+      : CollectionsRepository.listCollections(activeTenantContext));
+  const existingReceipts =
+    receipts ||
+    (isProductionRepositoryMode()
+      ? await listTenantReceiptsPersistent(activeTenantContext)
+      : CollectionsRepository.listReceipts(activeTenantContext));
+
+  const draft = buildCollectionDraft({
+    formData,
+    members,
+    groups,
+    activeTenantContext,
+    collections: existingCollections,
+    receipts: existingReceipts,
+  });
 
   if (!draft.validation.isValid) {
     return {
@@ -61,8 +111,11 @@ export function recordCollectionPayment({
   }
 
   const now = new Date().toISOString();
-  const collection = CollectionsRepository.saveCollection({
-    id: `collection-${Date.now()}`,
+  const collectionId = isProductionRepositoryMode()
+    ? createEntityId()
+    : `collection-${Date.now()}`;
+  const collectionPayload = {
+    id: collectionId,
     member_id: formData.member_id,
     group_id: formData.chit_group_id,
     chit_group_id: formData.chit_group_id,
@@ -76,14 +129,21 @@ export function recordCollectionPayment({
     pending_amount: draft.pendingAmount,
     advance_amount: draft.advanceAmount,
     payment_date: formData.payment_date,
+    collection_date: formData.payment_date,
     payment_method: formData.payment_method,
     payment_type: draft.paymentType,
     collected_by: formData.collected_by,
     receipt_number: draft.receiptNumber,
+    receipt_no: draft.receiptNumber,
     is_partial: draft.pendingAmount > 0,
     notes: formData.notes,
     created_at: now,
-  }, activeTenantContext);
+  };
+
+  const collection = isProductionRepositoryMode()
+    ? await saveCollectionRecordPersistent(collectionPayload, activeTenantContext)
+    : CollectionsRepository.saveCollection(collectionPayload, activeTenantContext);
+
   const receipt = createReceiptPayload({
     collection,
     member: draft.member,
@@ -92,11 +152,12 @@ export function recordCollectionPayment({
     companyName,
   });
 
-  persistReceipt({ collection, receipt, activeTenantContext, createdAt: now });
-  persistFinanceEntry({ collection, receipt, activeTenantContext, createdAt: now });
+  await persistReceipt({ collection, receipt, activeTenantContext, createdAt: now });
+  await persistFinanceEntry({ collection, receipt, activeTenantContext, createdAt: now });
   persistReportEntry({ collection, receipt, activeTenantContext, createdAt: now });
   persistActivity({ collection, receipt, activeTenantContext, createdAt: now });
   persistNotification({ collection, receipt, activeTenantContext, createdAt: now });
+  notifyCollectionsChanged();
 
   return {
     success: true,
@@ -110,32 +171,39 @@ export function recordCollectionPayment({
   };
 }
 
-function persistReceipt({ collection, receipt, activeTenantContext, createdAt }) {
-  CollectionsRepository.saveReceipt({
-    id: `receipt-${collection.id}`,
-    receipt_number: collection.receipt_number,
+async function persistReceipt({ collection, receipt, activeTenantContext, createdAt }) {
+  const payload = {
+    id: isProductionRepositoryMode() ? createEntityId() : `receipt-${collection.id}`,
+    receipt_number: collection.receipt_number || collection.receipt_no,
+    receipt_no: collection.receipt_number || collection.receipt_no,
     collection_id: collection.id,
     member_id: collection.member_id,
-    group_id: collection.group_id,
+    group_id: collection.group_id || collection.chit_group_id,
     amount: collection.paid_amount,
-    payment_date: collection.payment_date,
+    payment_date: collection.payment_date || collection.collection_date,
     payment_method: collection.payment_method,
     notes: collection.notes,
     can_print_pdf: true,
     can_print_whatsapp: true,
     created_at: createdAt,
     receipt_model: receipt,
-  }, activeTenantContext);
+  };
+
+  if (isProductionRepositoryMode()) {
+    return saveReceiptRecordPersistent(payload, activeTenantContext);
+  }
+
+  return CollectionsRepository.saveReceipt(payload, activeTenantContext);
 }
 
-function persistFinanceEntry({ collection, receipt, activeTenantContext, createdAt }) {
+async function persistFinanceEntry({ collection, receipt, activeTenantContext, createdAt }) {
   const isBankMode = ["upi", "bank transfer", "cheque", "online"].includes(
     String(collection.payment_method || "").toLowerCase()
   );
-
-  CollectionsRepository.saveFinanceEntry({
-    id: `finance-${collection.id}`,
+  const payload = {
+    id: isProductionRepositoryMode() ? createEntityId() : `finance-${collection.id}`,
     type: "income",
+    entry_type: "income",
     category: "Collection",
     particulars: receipt.receipt_number,
     description: `${receipt.member_name} - ${receipt.chit_name}`,
@@ -147,9 +215,19 @@ function persistFinanceEntry({ collection, receipt, activeTenantContext, created
     payment_mode: collection.payment_method,
     status: "Posted",
     receipt_no: receipt.receipt_number,
-    date: collection.payment_date,
+    date: collection.payment_date || collection.collection_date,
+    entry_date: collection.payment_date || collection.collection_date,
+    group_id: collection.group_id || collection.chit_group_id,
+    member_id: collection.member_id,
+    collection_id: collection.id,
     created_at: createdAt,
-  }, activeTenantContext);
+  };
+
+  if (isProductionRepositoryMode()) {
+    return saveFinanceEntryPersistent(payload, activeTenantContext);
+  }
+
+  return CollectionsRepository.saveFinanceEntry(payload, activeTenantContext);
 }
 
 function persistReportEntry({ collection, receipt, activeTenantContext, createdAt }) {

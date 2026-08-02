@@ -1,4 +1,8 @@
 import { SupabaseRepository } from "../../lib/supabase/SupabaseRepository.js";
+import {
+  fromProductionMember,
+  toProductionMember,
+} from "../../services/productionChitPersistence.js";
 
 export const MembersRepository = new SupabaseRepository({
   tableName: "chit_members",
@@ -10,10 +14,6 @@ export const MembersRepository = new SupabaseRepository({
     "email",
     "status",
   ],
-  normalizeInput: (member) => ({
-    ...member,
-    group_id: member.group_id || member.chit_group_id || member.groupId,
-    member_name: member.member_name || member.name,
-    mobile_number: member.mobile_number || member.mobile,
-  }),
+  normalizeInput: (member) => toProductionMember(member),
+  normalizeOutput: (member) => fromProductionMember(member),
 });

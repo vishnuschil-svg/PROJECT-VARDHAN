@@ -1,5 +1,5 @@
 import { MessageCircle, Pencil, ReceiptText } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ChitLayout from "../../components/chit/ChitLayout";
 import Table from "../../components/common/Table";
@@ -8,7 +8,7 @@ import HelpButton from "../../components/common/HelpButton";
 import { formatCurrency } from "../../config/chitPhaseOneData";
 import { useAuth } from "../../hooks/useAuth";
 import { useTenantCollections } from "../../services/chitCollectionsStore";
-import { listTenantMembers } from "../../services/chitDataService";
+import { listTenantMembersPersistent } from "../../services/chitDataService";
 import "./PendingCollections.css";
 import { createMessageJob } from "../../services/communicationService";
 
@@ -16,11 +16,25 @@ function PendingCollections() {
   const { activeTenantContext } = useAuth();
   const navigate = useNavigate();
   const [notice, setNotice] = useState("");
+  const [tenantMembers, setTenantMembers] = useState([]);
   const collections = useTenantCollections(activeTenantContext);
-  const tenantMembers = useMemo(
-    () => listTenantMembers(activeTenantContext),
-    [activeTenantContext]
-  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    listTenantMembersPersistent(activeTenantContext)
+      .then((members) => {
+        if (!cancelled) setTenantMembers(members);
+      })
+      .catch(() => {
+        if (!cancelled) setTenantMembers([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTenantContext]);
+
   const pendingCollections = collections.filter((collection) => collection.is_partial);
   const pendingTotal = pendingCollections.reduce(
     (sum, collection) => sum + Number(collection.pending_amount || 0),

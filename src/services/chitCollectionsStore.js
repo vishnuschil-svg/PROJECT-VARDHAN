@@ -1,6 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { getTenantScope } from "../repositories/chits";
-import { ChitDataService } from "./chitDataService";
+import {
+  ChitDataService,
+  listTenantCollections,
+  listTenantCollectionsPersistent,
+} from "./chitDataService";
 
 const STORE_EVENT = "vardhan:chit-collections-changed";
 
@@ -15,14 +19,23 @@ export function listCollections(activeTenantContext) {
     return [];
   }
 
-  return ChitDataService.collections.list({
-    activeTenantContext,
-    pageSize: Number.MAX_SAFE_INTEGER,
-  }).data;
+  return listTenantCollections(activeTenantContext);
+}
+
+export async function listCollectionsPersistent(activeTenantContext) {
+  const scopeKey = getCollectionScopeKey(activeTenantContext);
+
+  if (!scopeKey) {
+    return [];
+  }
+
+  return listTenantCollectionsPersistent(activeTenantContext);
 }
 
 export function saveCollection(collection, activeTenantContext) {
-  const normalizedCollection = ChitDataService.collections.upsert(collection, { activeTenantContext });
+  const normalizedCollection = ChitDataService.collections.upsert(collection, {
+    activeTenantContext,
+  });
   notifyCollectionsChanged();
 
   return normalizedCollection;
@@ -36,9 +49,9 @@ export function buildCollectionReceipts(collections = []) {
     data_scope: collection.data_scope,
     group_id: collection.group_id || collection.chit_group_id,
     member_id: collection.member_id,
-    receipt_number: collection.receipt_number,
+    receipt_number: collection.receipt_number || collection.receipt_no,
     amount: Number(collection.paid_amount || 0),
-    payment_date: collection.payment_date,
+    payment_date: collection.payment_date || collection.collection_date,
     payment_method: collection.payment_method,
     notes: collection.notes || "",
     can_print_pdf: true,
@@ -50,6 +63,7 @@ export function buildCollectionReceipts(collections = []) {
 
 export function useTenantCollections(activeTenantContext) {
   const scopeKey = getCollectionScopeKey(activeTenantContext);
+  const [collections, setCollections] = useState([]);
   const [version, setVersion] = useState(0);
 
   useEffect(() => {
@@ -64,12 +78,35 @@ export function useTenantCollections(activeTenantContext) {
     };
   }, []);
 
-  return useMemo(
-    () => listCollections(activeTenantContext),
-    [activeTenantContext, scopeKey, version]
-  );
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      if (!scopeKey) {
+        if (!cancelled) setCollections([]);
+        return;
+      }
+
+      try {
+        const rows = await listCollectionsPersistent(activeTenantContext);
+        if (!cancelled) setCollections(rows);
+      } catch {
+        if (!cancelled) setCollections([]);
+      }
+    }
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTenantContext, scopeKey, version]);
+
+  return collections;
 }
 
-function notifyCollectionsChanged() {
-  window.dispatchEvent(new CustomEvent(STORE_EVENT));
+export function notifyCollectionsChanged() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent(STORE_EVENT));
+  }
 }

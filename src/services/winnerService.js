@@ -1,24 +1,37 @@
 import { ActivityRepository } from "../repositories/ActivityRepository.js";
-import { FinanceRepository } from "../repositories/chits/FinanceRepository.js";
 import { ReportsRepository } from "../repositories/chits/ReportsRepository.js";
 import { MemberStateRepository } from "../repositories/MemberStateRepository.js";
 import { NotificationRepository } from "../repositories/NotificationRepository.js";
 import { WinnerRepository } from "../repositories/WinnerRepository.js";
 import { WinnerStateEngine } from "../domain/chit/services/WinnerStateEngine.js";
+import { saveFinanceEntryPersistent } from "./chitDataService.js";
+import { createEntityId, isUuid } from "./productionChitPersistence.js";
 
 export function listWinnerResults(activeTenantContext) {
   return WinnerRepository.list(activeTenantContext);
 }
 
-export function confirmWinnerResult({ winner, ruleSet = {}, activeTenantContext, userId = "local-user", memberName = "member", groupName = "chit group" } = {}) {
-  const { winner: confirmedWinner, memberStatePatch } = WinnerStateEngine.confirmWinner(winner, ruleSet, userId);
+export async function confirmWinnerResult({
+  winner,
+  ruleSet = {},
+  activeTenantContext,
+  userId = "local-user",
+  memberName = "member",
+  groupName = "chit group",
+} = {}) {
+  const { winner: confirmedWinner, memberStatePatch } = WinnerStateEngine.confirmWinner(
+    winner,
+    ruleSet,
+    userId
+  );
   const savedWinner = WinnerRepository.save(confirmedWinner, activeTenantContext);
   const savedMemberState = MemberStateRepository.save(memberStatePatch, activeTenantContext);
   const now = new Date().toISOString();
 
-  FinanceRepository.upsert({
-    id: `winner-finance-${savedWinner.id}`,
+  await saveFinanceEntryPersistent({
+    id: createEntityId(),
     type: "payout_obligation",
+    entry_type: "payout_obligation",
     category: savedWinner.winnerMode,
     particulars: `${groupName} - ${memberName}`,
     description: `Payout obligation for ${memberName}`,
@@ -30,8 +43,12 @@ export function confirmWinnerResult({ winner, ruleSet = {}, activeTenantContext,
     payment_mode: "Pending",
     status: "Obligation",
     date: now.slice(0, 10),
+    entry_date: now.slice(0, 10),
+    group_id: isUuid(savedWinner.group_id) ? savedWinner.group_id : null,
+    member_id: isUuid(savedWinner.member_id) ? savedWinner.member_id : null,
+    metadata: { winner_id: savedWinner.id },
     created_at: now,
-  }, { activeTenantContext });
+  }, activeTenantContext);
   ReportsRepository.upsert({
     id: `winner-report-${savedWinner.id}`,
     report_type: "Winner",

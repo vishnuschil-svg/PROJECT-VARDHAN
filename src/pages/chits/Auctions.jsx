@@ -139,14 +139,14 @@ function Auctions() {
     });
   };
 
-  const completeManualAuction = () => {
+  const completeManualAuction = async () => {
     const validationError = validateAuctionForm();
     if (validationError) {
       setFormError(validationError);
       return;
     }
 
-    const result = confirmAuctionWinner({
+    const result = await confirmAuctionWinner({
       activeTenantContext,
       group: selectedGroup,
       members: tenantMembers,
@@ -195,11 +195,11 @@ function Auctions() {
       setDrawProgress(Math.min(100, Math.round((elapsed / AUCTION_DRAW_DURATION_MS) * 100)));
     }, 120);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       clearInterval(drawTimerRef.current);
       clearInterval(progressTimerRef.current);
 
-      const result = confirmAuctionWinner({
+      const result = await confirmAuctionWinner({
         activeTenantContext,
         group: selectedGroup,
         members: tenantMembers,

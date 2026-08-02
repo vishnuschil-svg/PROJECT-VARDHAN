@@ -19,7 +19,7 @@ import {
 } from "../../config/chitMemberData";
 import { CHIT_PRODUCT_NAME } from "../../config/erpModules";
 import { useAuth } from "../../hooks/useAuth";
-import { listTenantGroups, listTenantMembers, saveTenantMember } from "../../services/chitDataService";
+import { listTenantGroupsPersistent, listTenantMembersPersistent, saveTenantMemberPersistent } from "../../services/chitDataService";
 import { useTenantCollections } from "../../services/chitCollectionsStore";
 import { buildMemberLedger } from "../../config/chitMemberLedger";
 import "./Members.css";
@@ -57,8 +57,28 @@ function Members() {
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
-    setGroups(listTenantGroups(activeTenantContext));
-    setMembers(listTenantMembers(activeTenantContext));
+    let cancelled = false;
+
+    async function loadMembersPage() {
+      try {
+        const [nextGroups, nextMembers] = await Promise.all([
+          listTenantGroupsPersistent(activeTenantContext),
+          listTenantMembersPersistent(activeTenantContext),
+        ]);
+        if (cancelled) return;
+        setGroups(nextGroups);
+        setMembers(nextMembers);
+      } catch {
+        if (cancelled) return;
+        setGroups([]);
+        setMembers([]);
+      }
+    }
+
+    loadMembersPage();
+    return () => {
+      cancelled = true;
+    };
   }, [activeTenantContext]);
 
   const tenantGroups = useMemo(() => groups, [groups]);
@@ -134,7 +154,7 @@ function Members() {
     return "";
   };
 
-  const saveMember = () => {
+  const saveMember = async () => {
     const validationError = validateMember();
     if (validationError) {
       setFormError(validationError);
@@ -147,20 +167,24 @@ function Members() {
       account_number_masked: maskAccountNumber(formData.account_number_masked),
       tenant_id: activeTenantContext?.tenant_id,
       data_scope: activeTenantContext?.data_scope,
+      group_id: formData.chit_group_id || formData.group_id,
     };
 
-    saveTenantMember(
-      modalMode === "edit"
-        ? payload
-        : {
-            id: `member-${Date.now()}`,
-            ...payload,
-          },
-      activeTenantContext
-    );
-    setMembers(listTenantMembers(activeTenantContext));
-
-    closeFormModal();
+    try {
+      await saveTenantMemberPersistent(
+        modalMode === "edit"
+          ? payload
+          : {
+              ...payload,
+              id: undefined,
+            },
+        activeTenantContext
+      );
+      setMembers(await listTenantMembersPersistent(activeTenantContext));
+      closeFormModal();
+    } catch (error) {
+      setFormError(error.message || "Member could not be saved.");
+    }
   };
 
   const columns = [

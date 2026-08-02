@@ -1,9 +1,13 @@
 import { SupabaseRepository } from "../../lib/supabase/SupabaseRepository.js";
+import {
+  fromProductionCollection,
+  toProductionCollection,
+} from "../../services/productionChitPersistence.js";
 
 export const CollectionsRepository = new SupabaseRepository({
   tableName: "chit_collections",
   searchableFields: [
-    "receipt_number",
+    "receipt_no",
     "member_id",
     "group_id",
     "collection_month",
@@ -11,13 +15,7 @@ export const CollectionsRepository = new SupabaseRepository({
     "collected_by",
     "notes",
   ],
-  defaultSort: { column: "payment_date", ascending: false },
-  normalizeInput: (collection) => ({
-    ...collection,
-    group_id: collection.group_id || collection.chit_group_id || collection.groupId,
-    installment_amount: Number(collection.installment_amount || collection.installmentAmount || 0),
-    paid_amount: Number(collection.paid_amount || collection.paidAmount || 0),
-    pending_amount: Number(collection.pending_amount || collection.pendingAmount || 0),
-    payment_method: collection.payment_method || collection.paymentMode,
-  }),
+  defaultSort: { column: "collection_date", ascending: false },
+  normalizeInput: (collection) => toProductionCollection(collection),
+  normalizeOutput: (collection) => fromProductionCollection(collection),
 });

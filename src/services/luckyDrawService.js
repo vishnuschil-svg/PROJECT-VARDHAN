@@ -22,7 +22,7 @@ export function buildLuckyDrawPreview({ activeTenantContext, group, members = []
   return { scheduleRow, ruleSet, eligibleMembers, validation, selection };
 }
 
-export function confirmLuckyDrawWinner({ activeTenantContext, group, members = [], monthNumber = 1, deterministicSeed = "", userId = "local-user" } = {}) {
+export async function confirmLuckyDrawWinner({ activeTenantContext, group, members = [], monthNumber = 1, deterministicSeed = "", userId = "local-user" } = {}) {
   const built = buildLuckyDrawPreview({ activeTenantContext, group, members, monthNumber, deterministicSeed });
   if (!built.validation.isValid) return { success: false, ...built, message: built.validation.errors[0] };
   const winner = LuckyDrawEngine.buildResult({ group, scheduleRow: built.scheduleRow, member: built.selection.winner, selection: built.selection, activeTenantContext, userId });
@@ -32,6 +32,6 @@ export function confirmLuckyDrawWinner({ activeTenantContext, group, members = [
     random_value: built.selection.randomValue,
     winner_index: built.selection.winnerIndex,
   }, activeTenantContext);
-  const confirmed = confirmWinnerResult({ winner, ruleSet: built.ruleSet, activeTenantContext, userId, memberName: built.selection.winner.member_name, groupName: group.chit_name });
+  const confirmed = await confirmWinnerResult({ winner, ruleSet: built.ruleSet, activeTenantContext, userId, memberName: built.selection.winner.member_name, groupName: group.chit_name });
   return { success: true, draw: savedDraw, ...confirmed, ...built, message: "Lucky draw winner confirmed and downstream records updated." };
 }

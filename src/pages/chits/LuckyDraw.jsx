@@ -73,12 +73,12 @@ function LuckyDraw() {
       setDrawProgress(Math.min(100, Math.round((elapsed / LUCKY_DRAW_DURATION_MS) * 100)));
     }, 120);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       clearInterval(drawTimerRef.current);
       clearInterval(progressTimerRef.current);
 
       const group = tenantGroups.find((item) => item.id === selection.winner?.chit_group_id) || tenantGroups[0];
-      const result = confirmLuckyDrawWinner({
+      const result = await confirmLuckyDrawWinner({
         activeTenantContext,
         group,
         members: tenantMembers,

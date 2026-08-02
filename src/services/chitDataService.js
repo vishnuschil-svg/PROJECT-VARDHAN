@@ -9,6 +9,18 @@ import {
 } from "../repositories/chits/index.js";
 import { createRepositoryProvider } from "../repositories/repositoryProvider.js";
 import { resolveRepositoryBackend, REPOSITORY_BACKENDS } from "../config/repositoryBackend.js";
+import {
+  createEntityId,
+  fromProductionCollection,
+  fromProductionFinanceEntry,
+  fromProductionMember,
+  fromProductionReceipt,
+  isUuid,
+  toProductionCollection,
+  toProductionFinanceEntry,
+  toProductionMember,
+  toProductionReceipt,
+} from "./productionChitPersistence.js";
 
 export const ChitDataService = {
   groups: GroupsRepository,
@@ -131,4 +143,124 @@ export function listVisibleMembers(activeTenantContext, allowAllTenants = false)
 
 export function saveTenantMember(member, activeTenantContext) {
   return ChitDataService.members.upsert(member, { activeTenantContext });
+}
+
+export async function listTenantMembersPersistent(activeTenantContext) {
+  if (resolveRepositoryBackend() === REPOSITORY_BACKENDS.LOCAL) {
+    return listTenantMembers(activeTenantContext);
+  }
+
+  const result = await createRepositoryProvider().MembersRepository.list({
+    activeTenantContext,
+    pageSize: Number.MAX_SAFE_INTEGER,
+  });
+  if (!result.success) throw new Error(result.message || "Chit members could not be loaded.");
+  return (result.data || []).map(fromProductionMember);
+}
+
+export async function saveTenantMemberPersistent(member, activeTenantContext) {
+  if (resolveRepositoryBackend() === REPOSITORY_BACKENDS.LOCAL) {
+    return saveTenantMember(member, activeTenantContext);
+  }
+
+  const repository = createRepositoryProvider().MembersRepository;
+  const payload = toProductionMember(member);
+  const result = isUuid(member?.id)
+    ? await repository.update(member.id, payload, { activeTenantContext })
+    : await repository.create(payload, { activeTenantContext });
+  if (!result.success) throw new Error(result.message || "Chit member could not be saved.");
+  return fromProductionMember(result.data);
+}
+
+export function listTenantCollections(activeTenantContext) {
+  return ChitDataService.collections.list({
+    activeTenantContext,
+    pageSize: Number.MAX_SAFE_INTEGER,
+  }).data;
+}
+
+export async function listTenantCollectionsPersistent(activeTenantContext) {
+  if (resolveRepositoryBackend() === REPOSITORY_BACKENDS.LOCAL) {
+    return listTenantCollections(activeTenantContext).map(fromProductionCollection);
+  }
+
+  const result = await createRepositoryProvider().CollectionsRepository.list({
+    activeTenantContext,
+    pageSize: Number.MAX_SAFE_INTEGER,
+  });
+  if (!result.success) throw new Error(result.message || "Collections could not be loaded.");
+  return (result.data || []).map(fromProductionCollection);
+}
+
+export async function listTenantReceiptsPersistent(activeTenantContext) {
+  if (resolveRepositoryBackend() === REPOSITORY_BACKENDS.LOCAL) {
+    return ChitDataService.receipts
+      .list({
+        activeTenantContext,
+        pageSize: Number.MAX_SAFE_INTEGER,
+      })
+      .data.map(fromProductionReceipt);
+  }
+
+  const result = await createRepositoryProvider().ReceiptsRepository.list({
+    activeTenantContext,
+    pageSize: Number.MAX_SAFE_INTEGER,
+  });
+  if (!result.success) throw new Error(result.message || "Receipts could not be loaded.");
+  return (result.data || []).map(fromProductionReceipt);
+}
+
+export async function saveCollectionRecordPersistent(collection, activeTenantContext) {
+  if (resolveRepositoryBackend() === REPOSITORY_BACKENDS.LOCAL) {
+    return fromProductionCollection(
+      ChitDataService.collections.upsert(collection, { activeTenantContext })
+    );
+  }
+
+  const repository = createRepositoryProvider().CollectionsRepository;
+  const payload = toProductionCollection({
+    ...collection,
+    id: isUuid(collection?.id) ? collection.id : createEntityId(),
+  });
+  const result = await repository.create(payload, { activeTenantContext });
+  if (!result.success) throw new Error(result.message || "Collection could not be saved.");
+  return fromProductionCollection(result.data);
+}
+
+export async function saveReceiptRecordPersistent(receipt, activeTenantContext) {
+  if (resolveRepositoryBackend() === REPOSITORY_BACKENDS.LOCAL) {
+    return fromProductionReceipt(
+      ChitDataService.receipts.upsert(receipt, { activeTenantContext })
+    );
+  }
+
+  const repository = createRepositoryProvider().ReceiptsRepository;
+  const payload = toProductionReceipt({
+    ...receipt,
+    id: isUuid(receipt?.id) ? receipt.id : createEntityId(),
+  });
+  const result = await repository.create(payload, { activeTenantContext });
+  if (!result.success) throw new Error(result.message || "Receipt could not be saved.");
+  return fromProductionReceipt(result.data);
+}
+
+export async function saveFinanceEntryPersistent(entry, activeTenantContext) {
+  if (resolveRepositoryBackend() === REPOSITORY_BACKENDS.LOCAL) {
+    return fromProductionFinanceEntry(
+      ChitDataService.finance.upsert(entry, { activeTenantContext })
+    );
+  }
+
+  const repository = createRepositoryProvider().FinanceRepository;
+  const payload = toProductionFinanceEntry({
+    ...entry,
+    id: isUuid(entry?.id) ? entry.id : createEntityId(),
+  });
+  const result = await repository.create(payload, { activeTenantContext });
+  if (!result.success) throw new Error(result.message || "Finance entry could not be saved.");
+  return fromProductionFinanceEntry(result.data);
+}
+
+export function isProductionRepositoryMode(env = import.meta.env) {
+  return resolveRepositoryBackend(env) === REPOSITORY_BACKENDS.SUPABASE;
 }

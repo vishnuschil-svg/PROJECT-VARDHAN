@@ -1,5 +1,5 @@
 import { Eye, FileText, MessageCircle, Plus, Printer, ReceiptText, Search, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ChitLayout from "../../components/chit/ChitLayout";
 import Table from "../../components/common/Table";
 import Button from "../../components/common/Button";
@@ -20,7 +20,11 @@ import {
 import { CHIT_PRODUCT_NAME } from "../../config/erpModules";
 import { useAuth } from "../../hooks/useAuth";
 import { useTenantCollections } from "../../services/chitCollectionsStore";
-import { listTenantGroups, listTenantMembers } from "../../services/chitDataService";
+import {
+  listTenantGroupsPersistent,
+  listTenantMembersPersistent,
+  listTenantReceiptsPersistent,
+} from "../../services/chitDataService";
 import {
   buildCollectionDraft,
   getCollectionPageModel,
@@ -54,21 +58,62 @@ function Collections() {
   const [errorDialog, setErrorDialog] = useState(null);
   const [successToast, setSuccessToast] = useState("");
   const [receiptPreview, setReceiptPreview] = useState(null);
+  const [tenantGroups, setTenantGroups] = useState([]);
+  const [tenantMembers, setTenantMembers] = useState([]);
+  const [tenantReceipts, setTenantReceipts] = useState([]);
+  const [loadError, setLoadError] = useState("");
 
-  const tenantGroups = useMemo(() => listTenantGroups(activeTenantContext), [activeTenantContext]);
-  const tenantMembers = useMemo(() => listTenantMembers(activeTenantContext), [activeTenantContext]);
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadReferenceData() {
+      try {
+        const [groups, members, receipts] = await Promise.all([
+          listTenantGroupsPersistent(activeTenantContext),
+          listTenantMembersPersistent(activeTenantContext),
+          listTenantReceiptsPersistent(activeTenantContext),
+        ]);
+        if (cancelled) return;
+        setTenantGroups(groups);
+        setTenantMembers(members);
+        setTenantReceipts(receipts);
+        setLoadError("");
+      } catch (error) {
+        if (cancelled) return;
+        setTenantGroups([]);
+        setTenantMembers([]);
+        setTenantReceipts([]);
+        setLoadError(error.message || "Unable to load collection reference data.");
+      }
+    }
+
+    loadReferenceData();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTenantContext, collections.length]);
+
   const pageModel = useMemo(
-    () => getCollectionPageModel({ activeTenantContext, groups: tenantGroups, members: tenantMembers }),
-    [activeTenantContext, collections.length, tenantGroups, tenantMembers]
+    () =>
+      getCollectionPageModel({
+        activeTenantContext,
+        groups: tenantGroups,
+        members: tenantMembers,
+        collections,
+      }),
+    [activeTenantContext, collections, tenantGroups, tenantMembers]
   );
   const draft = useMemo(
-    () => buildCollectionDraft({
-      formData,
-      members: tenantMembers,
-      groups: tenantGroups,
-      activeTenantContext,
-    }),
-    [activeTenantContext, formData, tenantGroups, tenantMembers, collections.length]
+    () =>
+      buildCollectionDraft({
+        formData,
+        members: tenantMembers,
+        groups: tenantGroups,
+        activeTenantContext,
+        collections,
+        receipts: tenantReceipts,
+      }),
+    [activeTenantContext, formData, tenantGroups, tenantMembers, collections, tenantReceipts]
   );
   const filteredMembers = useMemo(
     () => filterMembers(tenantMembers, memberSearch),
@@ -134,16 +179,18 @@ function Collections() {
     setIsConfirmOpen(true);
   };
 
-  const confirmSave = () => {
+  const confirmSave = async () => {
     setIsSaving(true);
 
     try {
-      const result = recordCollectionPayment({
+      const result = await recordCollectionPayment({
         formData,
         members: tenantMembers,
         groups: tenantGroups,
         activeTenantContext,
         companyName: company?.company_name || "VARDHAN Own Chit Business",
+        collections,
+        receipts: tenantReceipts,
       });
 
       if (!result.success) {
@@ -328,6 +375,7 @@ function Collections() {
     >
       <div className="collections-page">
         {successToast && <div className="collection-toast">{successToast}</div>}
+        {loadError && <div className="collection-toast collection-toast-error">{loadError}</div>}
 
         <div className="collections-tenant-banner">
           <div>

@@ -33,7 +33,7 @@ export function buildAuctionPreview({ activeTenantContext, group, members = [], 
   return { scheduleRow, ruleSet, eligibleMembers, member, preview, validation };
 }
 
-export function confirmAuctionWinner({ activeTenantContext, group, members = [], monthNumber = 1, bidAmount = 0, bidPercentage = 0, winnerId = "", userId = "local-user" } = {}) {
+export async function confirmAuctionWinner({ activeTenantContext, group, members = [], monthNumber = 1, bidAmount = 0, bidPercentage = 0, winnerId = "", userId = "local-user" } = {}) {
   const built = buildAuctionPreview({ activeTenantContext, group, members, monthNumber, bidAmount, bidPercentage, winnerId });
   if (!built.validation.isValid) return { success: false, ...built, message: built.validation.errors[0] };
   const winner = AuctionEngine.buildWinnerResult({ group, scheduleRow: built.scheduleRow, ruleSet: built.ruleSet, member: built.member, preview: built.preview, activeTenantContext, userId });
@@ -53,6 +53,6 @@ export function confirmAuctionWinner({ activeTenantContext, group, members = [],
     organizer_profit: built.preview.organizerProfit,
     status: "CONFIRMED",
   }, activeTenantContext);
-  const confirmed = confirmWinnerResult({ winner, ruleSet: built.ruleSet, activeTenantContext, userId, memberName: built.member.member_name, groupName: group.chit_name });
+  const confirmed = await confirmWinnerResult({ winner, ruleSet: built.ruleSet, activeTenantContext, userId, memberName: built.member.member_name, groupName: group.chit_name });
   return { success: true, auction, ...confirmed, ...built, message: "Auction winner confirmed and downstream records updated." };
 }
