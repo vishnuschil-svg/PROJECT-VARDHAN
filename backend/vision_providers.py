@@ -174,7 +174,7 @@ def _sanitize_provider_error(raw_body: str) -> dict[str, Any]:
 @dataclass(frozen=True)
 class GeminiVisionProvider:
     api_key: str
-    model: str = "gemini-2.5-flash"
+    model: str = "gemini-3.6-flash"
     timeout_seconds: float = 30
     max_retries: int = 2
     transport: JsonTransport = UrllibJsonTransport()
@@ -438,7 +438,7 @@ class GeminiVisionProvider:
 def create_vision_provider() -> VisionExtractionProvider:
     return GeminiVisionProvider(
         api_key=os.getenv("GEMINI_API_KEY", ""),
-        model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+        model=os.getenv("GEMINI_MODEL", "gemini-3.6-flash"),
         timeout_seconds=max(1, float(os.getenv("OCR_TIMEOUT_SECONDS", "30"))),
         max_retries=max(0, int(os.getenv("OCR_MAX_RETRIES", "2"))),
     )
