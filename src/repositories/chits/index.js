@@ -9,6 +9,10 @@ export { LedgerRepository } from "../LedgerRepository.js";
 export { PayoutRepository } from "../PayoutRepository.js";
 export { WinnersRepository } from "./WinnersRepository.js";
 export { LuckyDrawsRepository } from "./LuckyDrawsRepository.js";
+export { DividendsRepository } from "./DividendsRepository.js";
+export { ExpensesRepository } from "./ExpensesRepository.js";
+export { MonthClosingRepository } from "./MonthClosingRepository.js";
+export { CompletionsRepository } from "./CompletionsRepository.js";
 export {
   ChitRepositoryContract,
   createPage,

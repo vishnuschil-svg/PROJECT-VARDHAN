@@ -401,6 +401,154 @@ export function fromProductionLedgerEntry(entry = {}) {
   };
 }
 
+export function toProductionDividend(row = {}) {
+  const payload = {
+    group_id: row.group_id || row.groupId || null,
+    member_id: isUuid(row.member_id || row.memberId) ? row.member_id || row.memberId : null,
+    auction_id: isUuid(row.auction_id || row.auctionId) ? row.auction_id || row.auctionId : null,
+    dividend_month: Number(row.dividend_month || row.dividendMonth || row.month || 0),
+    dividend_date: row.dividend_date || row.dividendDate || row.date || null,
+    dividend_amount: Number(row.dividend_amount || row.amount || 0),
+    distributed_amount: Number(row.distributed_amount ?? row.dividend_amount ?? row.amount ?? 0),
+    notes: row.notes || null,
+    reference_no: row.reference_no || row.referenceNo || null,
+    status: row.status || "POSTED",
+    metadata: {
+      ...(row.metadata || {}),
+      idempotency_key: row.idempotency_key || row.metadata?.idempotency_key,
+      winner_excluded: row.winner_excluded ?? row.metadata?.winner_excluded,
+      rounding: row.rounding || row.metadata?.rounding,
+    },
+  };
+  if (isUuid(row.id)) payload.id = row.id;
+  return payload;
+}
+
+export function fromProductionDividend(row = {}) {
+  return {
+    ...row,
+    groupId: row.groupId || row.group_id,
+    memberId: row.memberId || row.member_id,
+    auctionId: row.auctionId || row.auction_id,
+    dividendMonth: row.dividendMonth ?? row.dividend_month,
+    dividendDate: row.dividendDate || row.dividend_date,
+    amount: row.amount ?? row.dividend_amount,
+    referenceNo: row.referenceNo || row.reference_no,
+  };
+}
+
+export function toProductionExpense(row = {}) {
+  const payload = {
+    group_id: isUuid(row.group_id || row.groupId) ? row.group_id || row.groupId : null,
+    expense_date: row.expense_date || row.date || new Date().toISOString().slice(0, 10),
+    category: row.category || "MISCELLANEOUS",
+    description: row.description || row.notes || row.vendor || null,
+    amount: Number(row.amount || 0),
+    payment_method: row.payment_method || row.paymentMode || "Cash",
+    paid_to: row.paid_to || row.vendor || null,
+    receipt_url: row.receipt_url || row.attachmentMetadata?.url || null,
+    reference_no: row.reference_no || row.reference || row.referenceNo || null,
+    status: row.status || "POSTED",
+    metadata: {
+      ...(row.metadata || {}),
+      idempotency_key: row.idempotency_key || row.metadata?.idempotency_key,
+      attachment_metadata: row.attachmentMetadata || row.attachment_metadata || row.metadata?.attachment_metadata,
+      approved_by: row.approvedBy || row.approved_by || row.metadata?.approved_by,
+      batch_id: row.batchId || row.batch_id || row.metadata?.batch_id,
+    },
+  };
+  if (isUuid(row.id)) payload.id = row.id;
+  return payload;
+}
+
+export function fromProductionExpense(row = {}) {
+  return {
+    ...row,
+    groupId: row.groupId || row.group_id,
+    date: row.date || row.expense_date,
+    paymentMode: row.paymentMode || row.payment_method,
+    vendor: row.vendor || row.paid_to,
+    notes: row.notes || row.description,
+    reference: row.reference || row.reference_no,
+    attachmentMetadata: row.attachmentMetadata || row.metadata?.attachment_metadata || {},
+    approvedBy: row.approvedBy || row.approved_by || row.metadata?.approved_by || "",
+  };
+}
+
+export function toProductionMonthClosing(row = {}) {
+  const summary = row.summary || {
+    groupId: row.groupId || row.group_id,
+    monthNumber: row.monthNumber ?? row.closing_month,
+    ...(row.snapshot || {}),
+  };
+  const payload = {
+    group_id: row.group_id || row.groupId,
+    closing_month: Number(row.closing_month || row.monthNumber || summary.monthNumber || 0),
+    closing_year: Number(row.closing_year || row.closingYear || new Date().getFullYear()),
+    closed_at: row.closed_at || row.confirmedAt || null,
+    closed_by: isUuid(row.closed_by) ? row.closed_by : null,
+    summary,
+    notes: row.notes || null,
+    reopen_reason: row.reopen_reason || row.reopenReason || null,
+    reopened_at: row.reopened_at || row.reopenedAt || null,
+    reopened_by: row.reopened_by || row.reopenedBy || null,
+    status: row.status || "CLOSED",
+    metadata: {
+      ...(row.metadata || {}),
+      idempotency_key: row.idempotency_key || row.metadata?.idempotency_key,
+    },
+  };
+  if (isUuid(row.id)) payload.id = row.id;
+  return payload;
+}
+
+export function fromProductionMonthClosing(row = {}) {
+  const summary = row.summary || {};
+  return {
+    ...row,
+    ...summary,
+    groupId: row.groupId || row.group_id || summary.groupId,
+    monthNumber: row.monthNumber ?? row.closing_month ?? summary.monthNumber,
+    closingYear: row.closingYear ?? row.closing_year,
+    confirmedAt: row.confirmedAt || row.closed_at,
+    reopenReason: row.reopenReason || row.reopen_reason,
+    reopenedAt: row.reopenedAt || row.reopened_at,
+    reopenedBy: row.reopenedBy || row.reopened_by,
+    status: row.status,
+  };
+}
+
+export function toProductionCompletion(row = {}) {
+  const payload = {
+    group_id: row.group_id || row.groupId,
+    completed_at: row.completed_at || row.completedAt || null,
+    completed_by: row.completed_by || row.completedBy || null,
+    snapshot: row.snapshot || row,
+    notes: row.notes || null,
+    status: row.status || "COMPLETED",
+    metadata: {
+      ...(row.metadata || {}),
+      idempotency_key: row.idempotency_key || row.metadata?.idempotency_key,
+      export_ready: row.export_ready ?? row.metadata?.export_ready ?? true,
+    },
+  };
+  if (isUuid(row.id)) payload.id = row.id;
+  return payload;
+}
+
+export function fromProductionCompletion(row = {}) {
+  const snapshot = row.snapshot || {};
+  return {
+    ...row,
+    ...snapshot,
+    groupId: row.groupId || row.group_id || snapshot.groupId,
+    completedAt: row.completedAt || row.completed_at,
+    completedBy: row.completedBy || row.completed_by,
+    status: row.status,
+    exportReady: row.exportReady ?? row.metadata?.export_ready ?? true,
+  };
+}
+
 function normalizeFinanceStatus(status) {
   const value = String(status || "posted").trim().toLowerCase();
   if (value === "obligation") return "obligation";

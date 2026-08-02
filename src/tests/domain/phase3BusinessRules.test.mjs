@@ -129,11 +129,11 @@ describe("phase 3 final business rules", () => {
     assert.ok(health.metrics.some((metric) => metric.name === "Expense Control"));
   });
 
-  it("requires organizer confirmation for month close and chit completion", () => {
+  it("requires organizer confirmation for month close and chit completion", async () => {
     const preview = previewMonthClosing({ groupId: "g1", monthNumber: 1, source: {} });
-    const blocked = confirmMonthClosing({ groupId: "g1", monthNumber: 1, source: {} }, tenantA);
-    const closed = confirmMonthClosing({ groupId: "g1", monthNumber: 1, source: {}, organizerConfirmed: true }, tenantA);
-    const reopened = reopenMonth(closed.snapshot, { reason: "Audit correction", hasPermission: true }, tenantA);
+    const blocked = await confirmMonthClosing({ groupId: "g1", monthNumber: 1, source: {} }, tenantA);
+    const closed = await confirmMonthClosing({ groupId: "g1", monthNumber: 1, source: {}, organizerConfirmed: true }, tenantA);
+    const reopened = await reopenMonth(closed.snapshot, { reason: "Audit correction", hasPermission: true }, tenantA);
 
     assert.equal(preview.canClose, true);
     assert.equal(blocked.success, false);
@@ -146,7 +146,7 @@ describe("phase 3 final business rules", () => {
       payouts: [{ pendingAmount: 0 }],
       investorLedgers: [{ balance: 0 }],
     });
-    const completed = confirmChitCompletion({
+    const completed = await confirmChitCompletion({
       group: { id: "g1", total_months: 1 },
       monthClosings: [{ groupId: "g1", status: "CLOSED" }],
       payouts: [{ pendingAmount: 0 }],

@@ -16,11 +16,11 @@
 | --- | --- |
 | Frontend | Vite React SPA on Vercel |
 | API | Vercel rewrite `/api/*` â†’ `api/index.py` â†’ FastAPI `backend/main.py` |
-| Auth / DB | Supabase Auth + Postgres (migrations `000`â€“`006`) |
+| Auth / DB | Supabase Auth + Postgres (migrations `000`â€“`009`) |
 | OCR | Authenticated `POST /api/v1/ocr/extract` (Gemini); unauthenticated â†’ 401 |
 | Rate limit | Redis-backed in production (`backend/rate_limit.py`) |
 | Repository gate | `src/config/repositoryBackend.js` forces Supabase in production |
-| Provider wiring | `repositoryProvider.js` exposes Groups, Members, Collections, Receipts, Finance, Auction, Payout, Ledger, Winners, LuckyDraws |
+| Provider wiring | `repositoryProvider.js` exposes Groups, Members, Collections, Receipts, Finance, Auction, Payout, Ledger, Winners, LuckyDraws, Dividends, Expenses, MonthClosing, Completions |
 
 **Critical gap (preâ€“Batch 1):** Most money and lifecycle services imported `repositories/chits/*` or `scopedStorageRepository` directly, so production still persisted many records to browser `localStorage` even though the gate forbids configuring a local backend.
 
@@ -46,16 +46,16 @@
 | 14 | Lucky-draw workflow | COMPLETE* (Batch 2) | Durable `lucky_draws` + randomness metadata + RPC confirm |
 | 15 | Winner locking / history | COMPLETE* (Batch 2) | `chit_winners` + uniqueness + immutability trigger + authorized cancel |
 | 16 | Payout workflow | COMPLETE* (Batch 2) | Durable payouts + payment RPC idempotency + winner linkage |
-| 17 | Dividends | LOCAL-ONLY / PARTIAL | UI + local patterns; `chit_dividends` table exists |
-| 18 | Expenses | LOCAL-ONLY | `ExpenseRepository` scopedStorage + local Finance writes; `expenses` table exists |
+| 17 | Dividends | COMPLETE* (Batch 3) | Durable `chit_dividends` + batch RPC + ledger/finance side-effects |
+| 18 | Expenses | COMPLETE* (Batch 3) | Durable `expenses` + RPC + finance/ledger + auth gate |
 | 19 | Investors | LOCAL-ONLY / NOT IMPLEMENTED (DB) | `InvestorRepository` scopedStorage; no `investors` table in migrations |
-| 20 | Finance and accounts | COMPLETE* (money path Batch 1â€“2) | Collection/winner/payout finance via persistent helpers/RPCs; other finance UI may still mix |
+| 20 | Finance and accounts | COMPLETE* (money path Batch 1â€“3) | Collection/winner/payout/dividend/expense finance via persistent helpers/RPCs; other finance UI may still mix |
 | 21 | Payment modes | LOCAL-ONLY | `PaymentSettingsRepository` scopedStorage; table `payment_settings` exists |
 | 22 | Batches | LOCAL-ONLY | `BatchRepository` scopedStorage |
 | 23 | Notifications / communication jobs | LOCAL-ONLY / PARTIAL | Local notification store; Communication Center documents provider gaps |
 | 24 | Reports / exports | LOCAL-ONLY / PARTIAL | Local `ReportsRepository`; validators exist; no durable export pipeline verified |
-| 25 | Month closing | LOCAL-ONLY | `MonthClosingRepository` scopedStorage; `month_closing` table exists |
-| 26 | Chit completion | LOCAL-ONLY | `ChitCompletionRepository` scopedStorage |
+| 25 | Month closing | COMPLETE* (Batch 3) | Durable `month_closing` + immutable snapshot + audited reopen RPC |
+| 26 | Chit completion | COMPLETE* (Batch 3) | Durable `chit_completions` + group `closed` status frees active slots |
 | 27 | Business Health dashboard | PARTIAL | Aggregates from mixed local sources; not production-durable |
 | 28 | Audit trail / activity history | LOCAL-ONLY | `ActivityRepository` localStorage |
 | 29 | Settings | PARTIAL | Mix of local settings / supabase `chit_settings` |
@@ -298,18 +298,51 @@ MITRA NIDHI CHITI PRO / VARDHAN CHIT MANAGEMENT PRO may be declared production-c
 
 **Exact schema objects:** `chit_winners`, indexes `uq_chit_winners_*`, `uq_chit_auctions_group_month_confirmed`, `uq_lucky_draws_group_month_confirmed`, `uq_chit_payouts_*`, RPCs `confirm_chit_winner_event`, `record_chit_payout_payment`, `cancel_chit_winner_event`, trigger `enforce_chit_winner_immutability`.
 
-**Still open (next batches):** month closing, chit completion, dividends/expenses, role matrix durability, reports/activity, monitoring/E2E sign-off.
+**Still open (next batches):** role matrix durability, reports/activity, monitoring/E2E sign-off.
 
 ---
 
-## 19. Counts (after Batch 2)
+## 18c. Closure Batch 3 — status
+
+**Branch:** `closure/vardhan-chit-production` (local only; not pushed)
+**Commit message target:** `fix(chits): persist dividend expense closing and completion workflows`
+**Baseline preserved:** Batch 1 `9640e82`, Batch 2 `781bc62`
+
+**Root problems fixed:**
+
+1. Dividends were derived UI-only / non-durable; no batch posting, rounding remainder, or ledger/finance side-effects.
+2. Expenses wrote only to scopedStorage + local finance; no role gate on the durable path.
+3. Month closing lived in localStorage without immutable snapshot, duplicate-close guard, or audited reopen.
+4. Chit completion lived in localStorage; no `chit_completions` table; completed groups did not reliably free active subscription slots via durable `closed` status.
+
+**Implemented:**
+
+1. Migration `009_chit_closing_completion_durability.sql`: `chit_completions`, dividend/expense `reference_no`, reopen audit columns, uniqueness indexes, immutability triggers, RPCs `post_chit_dividend_batch`, `post_chit_expense_event`, `confirm_month_closing_event`, `reopen_month_closing_event`, `confirm_chit_completion_event` (role checks + idempotency + transactional side-effects).
+2. Schema mappers for dividend, expense, month closing, completion.
+3. `closingLifecyclePersistence.js` persistent list/post helpers with local deterministic fallback.
+4. Services: `dividendService`, `expenseService`, `monthClosingService`, `chitCompletionService` rewritten to async durable paths.
+5. Provider + local/supabase repositories for Dividends, Expenses, MonthClosing, Completions.
+6. Dividends page loads durable rows; Batches loads durable expenses (no redesign).
+7. `DividendEngine.allocateMonthDividends` floor-rupee rounding with remainder to first eligible; winner exclusion.
+8. Focused tests: `src/tests/services/closingDividendExpensePersistence.test.mjs`.
+
+**Exact schema objects:** table `chit_completions`; indexes `uq_chit_dividends_member_month_active`, `uq_chit_dividends_reference`, `uq_expenses_reference`, `uq_chit_completions_group_active`, `uq_month_closing_idempotency`; triggers `enforce_month_closing_immutability`, `enforce_chit_completion_immutability`; RPCs listed above.
+
+**Still open (next batches):** durable role/permission matrix (client still soft-gates some actions; RPCs enforce owner/admin/operator), reports/activity durability, payment settings, investors, monitoring/E2E launch sign-off.
+
+---
+
+## 19. Counts (after Batch 3)
 
 | Priority | Count |
 | --- | --- |
-| P0 | 2 (month close / chit completion durability; durable client role matrix beyond RPC checks) |
-| P1 | 8 |
+| P0 | 1 (durable authoritative role/permission matrix beyond RPC role checks) |
+| P1 | 6 |
 | P2 | 6 |
-| Controlled beta | **NO-GO** until Batch 3 closes month completion + P0 role gaps are accepted or fixed |
+| Controlled beta | **CONDITIONAL GO** for internal controlled beta once Batch 3 migration is applied on the target Supabase project and Batch 1–3 smoke is verified there |
+| Public launch | **NO-GO** |
 
-**Launch status:** NOT COMPLETE. Controlled beta remains **NO-GO**.
+**Launch status:** NOT COMPLETE. Public launch remains **NO-GO**. Controlled beta may proceed only after migration apply + scoped smoke on dividends/expenses/close/completion.
 **Do not claim VARDHAN CHIT MANAGEMENT PRO is launch-ready.**
+
+**Next closure batch:** Batch 4 — durable permissions/roles, payment settings, batches, and settings enforcement.

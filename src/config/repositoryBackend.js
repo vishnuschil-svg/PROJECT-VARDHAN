@@ -8,8 +8,9 @@ export class RepositoryConfigurationError extends Error {
 }
 
 export function resolveRepositoryBackend(env = import.meta.env) {
-  const mode = String(env.VITE_APP_MODE || env.MODE || "development").toLowerCase();
-  const configured = String(env.VITE_REPOSITORY_BACKEND || "").toLowerCase();
+  const safeEnv = env || {};
+  const mode = String(safeEnv.VITE_APP_MODE || safeEnv.MODE || "development").toLowerCase();
+  const configured = String(safeEnv.VITE_REPOSITORY_BACKEND || "").toLowerCase();
   const production = mode === "production" || mode === "prod";
   const backend = configured || (production ? REPOSITORY_BACKENDS.SUPABASE : REPOSITORY_BACKENDS.LOCAL);
 
@@ -19,7 +20,7 @@ export function resolveRepositoryBackend(env = import.meta.env) {
   if (production && backend !== REPOSITORY_BACKENDS.SUPABASE) {
     throw new RepositoryConfigurationError("Production mode requires the Supabase repository backend; localStorage fallback is disabled.");
   }
-  if (backend === REPOSITORY_BACKENDS.SUPABASE && (!env.VITE_SUPABASE_URL || !env.VITE_SUPABASE_ANON_KEY)) {
+  if (backend === REPOSITORY_BACKENDS.SUPABASE && (!safeEnv.VITE_SUPABASE_URL || !safeEnv.VITE_SUPABASE_ANON_KEY)) {
     throw new RepositoryConfigurationError("Supabase repository mode requires VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.");
   }
   return backend;

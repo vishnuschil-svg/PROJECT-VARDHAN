@@ -13,6 +13,10 @@ const names = [
   "LedgerRepository",
   "WinnersRepository",
   "LuckyDrawsRepository",
+  "DividendsRepository",
+  "ExpensesRepository",
+  "MonthClosingRepository",
+  "CompletionsRepository",
 ];
 
 export function createRepositoryProvider(env = import.meta.env) {

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ChitLayout from "../../components/chit/ChitLayout";
 import Button from "../../components/common/Button";
 import Modal from "../../components/common/Modal";
@@ -26,8 +26,23 @@ function Batches() {
   const { activeTenantContext, profile } = useAuth();
   const groups = useMemo(() => listTenantGroups(activeTenantContext), [activeTenantContext]);
   const collections = useTenantCollections(activeTenantContext);
-  const expenses = useMemo(() => listExpenses(activeTenantContext), [activeTenantContext]);
+  const [expenses, setExpenses] = useState([]);
   const [version, setVersion] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const rows = await listExpenses(activeTenantContext);
+        if (!cancelled) setExpenses(rows || []);
+      } catch {
+        if (!cancelled) setExpenses([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTenantContext, version]);
   const batches = useMemo(() => listBatches(activeTenantContext), [activeTenantContext, version]);
   const [draft, setDraft] = useState(EMPTY_BATCH);
   const [isOpen, setIsOpen] = useState(false);
