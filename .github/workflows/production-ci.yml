@@ -88,6 +88,5 @@ jobs:
           fi
       - name: Vercel authentication check
         run: npx vercel whoami
-      - run: npx vercel pull --yes --environment=production
-      - run: npx vercel build --prod
-      - run: npx vercel deploy --prebuilt --prod
+      - name: Deploy to Vercel production
+        run: npx vercel deploy --prod --yes
