@@ -230,13 +230,12 @@
 
 .chit-layout .modal-overlay {
   background:
-    radial-gradient(circle at top, rgba(37, 99, 235, 0.2), transparent 35%),
     rgba(7, 17, 31, 0.68);
   backdrop-filter: blur(8px);
 }
 
 .chit-layout .modal-content {
-  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  background: var(--bg, #fff);
   border: 1px solid rgba(212, 175, 55, 0.28);
   border-radius: 20px;
   box-shadow: var(--chit-shadow-strong);

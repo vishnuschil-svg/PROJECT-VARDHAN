@@ -14,8 +14,7 @@
   border: 1px solid rgba(212, 175, 55, 0.28);
   border-radius: 24px;
   background:
-    radial-gradient(circle at 86% 12%, rgba(212, 175, 55, 0.24), transparent 30%),
-    linear-gradient(135deg, #07111f, #0b1f3d 54%, #12346d);
+    var(--maroon, #7A1F3D);
   box-shadow: var(--chit-shadow-strong);
   color: #ffffff;
 }
@@ -96,7 +95,7 @@
   padding: 14px;
   border: 1px solid var(--chit-border);
   border-radius: 18px;
-  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  background: var(--bg, #fff);
   box-shadow: var(--chit-shadow);
 }
 
@@ -190,14 +189,14 @@
 .finance-reports-card {
   border: 1px solid var(--chit-border);
   border-radius: 20px;
-  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  background: var(--bg, #fff);
   box-shadow: var(--chit-shadow);
 }
 
 .finance-kpi {
   min-height: 132px;
   padding: 16px;
-  border-top: 3px solid #2563eb;
+  border-top: 3px solid #7A1F3D;
 }
 
 .finance-kpi.tone-good {
@@ -220,7 +219,7 @@
   height: 40px;
   border-radius: 14px;
   color: #ffffff;
-  background: linear-gradient(135deg, #0b1f3d, #2563eb);
+  background: linear-gradient(135deg, #0b1f3d, #7A1F3D);
   box-shadow: 0 12px 26px rgba(37, 99, 235, 0.2);
 }
 
@@ -299,7 +298,7 @@
   border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 14px;
   background: #f8fafc;
-  border-top: 3px solid #2563eb;
+  border-top: 3px solid #7A1F3D;
 }
 
 .finance-mini-stat.tone-good,
@@ -339,7 +338,7 @@
   margin-bottom: 12px;
   border-radius: 14px;
   color: #ffffff;
-  background: linear-gradient(135deg, #0b1f3d, #2563eb);
+  background: linear-gradient(135deg, #0b1f3d, #7A1F3D);
 }
 
 .finance-taxonomy-card.tone-good > div:first-child {
@@ -392,7 +391,7 @@
   height: 34px;
   border-radius: 12px;
   color: #ffffff;
-  background: #2563eb;
+  background: #7A1F3D;
 }
 
 .finance-report-row strong {

@@ -11,8 +11,7 @@
   padding: 24px;
   color: #ffffff;
   background:
-    radial-gradient(circle at 86% 12%, rgba(243, 201, 105, 0.26), transparent 32%),
-    linear-gradient(135deg, #07111f, #102044 54%, #1d4ed8);
+        var(--maroon, #7A1F3D);
   border: 1px solid rgba(212, 175, 55, 0.28);
   border-radius: 22px;
   box-shadow: var(--vds-shadow-lg, 0 22px 54px rgba(7, 17, 31, 0.14));
@@ -71,8 +70,7 @@
   place-items: center;
   padding: 34px;
   background:
-    radial-gradient(circle at center, rgba(212, 175, 55, 0.14), transparent 34%),
-    linear-gradient(180deg, #ffffff, #f8fbff);
+    var(--bg, #fff);
   border: 1px solid rgba(148, 163, 184, 0.22);
   border-radius: 24px;
   box-shadow: var(--vds-shadow-md, 0 14px 34px rgba(7, 17, 31, 0.1));
@@ -86,7 +84,7 @@
   display: grid;
   place-items: center;
   color: #f3c969;
-  background: linear-gradient(135deg, #07111f, #1d4ed8);
+  background: var(--maroon, #7A1F3D);
   border: 5px solid rgba(212, 175, 55, 0.44);
   border-radius: 999px;
   box-shadow: 0 24px 70px rgba(29, 78, 216, 0.28);
@@ -161,7 +159,7 @@
 .poster-preview,
 .draw-table-section {
   padding: 22px;
-  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  background: var(--bg, #fff);
   border: 1px solid rgba(148, 163, 184, 0.22);
   border-radius: 18px;
   box-shadow: var(--vds-shadow-md, 0 14px 34px rgba(7, 17, 31, 0.1));
@@ -202,8 +200,7 @@
   justify-content: space-between;
   gap: 18px;
   background:
-    radial-gradient(circle at right top, rgba(243, 201, 105, 0.24), transparent 36%),
-    linear-gradient(135deg, #07111f, #102044 58%, #1d4ed8);
+        var(--maroon, #7A1F3D);
 }
 
 .poster-preview span,

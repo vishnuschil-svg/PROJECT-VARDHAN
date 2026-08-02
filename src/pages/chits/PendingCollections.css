@@ -15,7 +15,7 @@
 .pending-empty-state {
   border: 1px solid var(--chit-border);
   border-radius: 18px;
-  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  background: var(--bg, #fff);
   box-shadow: var(--chit-shadow);
 }
 

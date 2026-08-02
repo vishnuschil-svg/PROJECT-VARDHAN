@@ -14,8 +14,7 @@
   border: 1px solid rgba(212, 175, 55, 0.28);
   border-radius: 24px;
   background:
-    radial-gradient(circle at 86% 10%, rgba(212, 175, 55, 0.24), transparent 30%),
-    linear-gradient(135deg, #07111f, #0b1f3d 54%, #12346d);
+    var(--maroon, #7A1F3D);
   box-shadow: var(--chit-shadow-strong);
   color: #ffffff;
 }
@@ -96,7 +95,7 @@
 .ledger-table-card {
   border: 1px solid var(--chit-border);
   border-radius: 20px;
-  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  background: var(--bg, #fff);
   box-shadow: var(--chit-shadow);
 }
 
@@ -207,8 +206,7 @@
   border: 1px solid rgba(212, 175, 55, 0.24);
   border-radius: 18px;
   background:
-    radial-gradient(circle at right top, rgba(212, 175, 55, 0.16), transparent 35%),
-    linear-gradient(135deg, #07111f, #102044);
+    var(--maroon, #7A1F3D);
   color: #ffffff;
 }
 
@@ -253,8 +251,8 @@
   padding: 16px;
   border: 1px solid rgba(148, 163, 184, 0.22);
   border-radius: 16px;
-  background: linear-gradient(180deg, #ffffff, #f8fbff);
-  border-top: 3px solid #2563eb;
+  background: var(--bg, #fff);
+  border-top: 3px solid #7A1F3D;
 }
 
 .ledger-card.tone-good {
@@ -387,7 +385,7 @@
   height: 34px;
   border-radius: 12px;
   color: #ffffff;
-  background: #2563eb;
+  background: #7A1F3D;
 }
 
 .ledger-timeline-item.tone-good > span {

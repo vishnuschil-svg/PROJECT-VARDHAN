@@ -48,7 +48,7 @@
 .receipts-table-card {
   border: 1px solid var(--chit-border);
   border-radius: 18px;
-  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  background: var(--bg, #fff);
   box-shadow: var(--chit-shadow);
 }
 
@@ -109,7 +109,6 @@
   padding: 16px;
   border-radius: 18px;
   background:
-    radial-gradient(circle at 18% 8%, rgba(212, 175, 55, 0.16), transparent 32%),
     linear-gradient(180deg, #f8fbff, #eef3fb);
 }
 

@@ -14,8 +14,7 @@
   border: 1px solid rgba(212, 175, 55, 0.28);
   border-radius: 24px;
   background:
-    radial-gradient(circle at 86% 12%, rgba(212, 175, 55, 0.24), transparent 30%),
-    linear-gradient(135deg, #07111f, #0b1f3d 54%, #12346d);
+    var(--maroon, #7A1F3D);
   box-shadow: var(--chit-shadow-strong);
   color: #ffffff;
 }
@@ -94,7 +93,7 @@
 .report-table-card {
   border: 1px solid var(--chit-border);
   border-radius: 20px;
-  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  background: var(--bg, #fff);
   box-shadow: var(--chit-shadow);
 }
 
