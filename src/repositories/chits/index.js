@@ -7,6 +7,8 @@ export { ReceiptsRepository } from "./ReceiptsRepository.js";
 export { ReportsRepository } from "./ReportsRepository.js";
 export { LedgerRepository } from "../LedgerRepository.js";
 export { PayoutRepository } from "../PayoutRepository.js";
+export { WinnersRepository } from "./WinnersRepository.js";
+export { LuckyDrawsRepository } from "./LuckyDrawsRepository.js";
 export {
   ChitRepositoryContract,
   createPage,

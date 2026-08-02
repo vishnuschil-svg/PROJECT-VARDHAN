@@ -1,35 +1,79 @@
 import { PayoutEngine } from "../domain/chit/services/PayoutEngine.js";
 import { PayoutRepository } from "../repositories/PayoutRepository.js";
-import { saveFinanceEntryPersistent } from "./chitDataService.js";
-import { createEntityId, isUuid } from "./productionChitPersistence.js";
+import {
+  listPayoutsPersistent,
+  recordPayoutPaymentPersistent,
+} from "./winnerLifecyclePersistence.js";
+import {
+  createEntityId,
+  fromProductionPayout,
+  isUuid,
+  toProductionPayout,
+} from "./productionChitPersistence.js";
+import { resolveRepositoryBackend, REPOSITORY_BACKENDS } from "../config/repositoryBackend.js";
+import { createRepositoryProvider } from "../repositories/repositoryProvider.js";
+import { assertOperatorRole } from "./winnerLifecyclePersistence.js";
 
-export function createPayoutPlan(input, activeTenantContext) {
-  const plan = PayoutEngine.createPlan(input);
-  return PayoutRepository.save(plan, activeTenantContext);
+export async function createPayoutPlan(input, activeTenantContext, { permissions = {}, profile = {}, role = "" } = {}) {
+  if (!assertOperatorRole(permissions, profile, role)) {
+    throw new Error("Unauthorized role for payout plan creation.");
+  }
+
+  const plan = PayoutEngine.createPlan({
+    ...input,
+    id: isUuid(input?.id) ? input.id : createEntityId(),
+  });
+
+  if (resolveRepositoryBackend() === REPOSITORY_BACKENDS.LOCAL) {
+    return fromProductionPayout(PayoutRepository.save(plan, activeTenantContext));
+  }
+
+  const payload = toProductionPayout({
+    ...plan,
+    reference_no: plan.reference_no || `payout-plan:${plan.winnerResultId || plan.winnerId || plan.id}`,
+    idempotency_key: `payout-create:${plan.winnerResultId || plan.winnerId || plan.id}`,
+  });
+
+  const existing = await listPayoutsPersistent(activeTenantContext);
+  const duplicate = existing.find(
+    (row) =>
+      (row.reference_no && row.reference_no === payload.reference_no) ||
+      (payload.winner_id && (row.winner_id || row.winnerId) === payload.winner_id &&
+        String(row.status || "").toUpperCase() !== "CANCELLED")
+  );
+  if (duplicate) {
+    return fromProductionPayout(duplicate);
+  }
+
+  const result = await createRepositoryProvider().PayoutRepository.create(payload, {
+    activeTenantContext,
+  });
+  if (!result.success) {
+    throw new Error(result.message || "Payout plan could not be saved.");
+  }
+  return fromProductionPayout(result.data);
 }
 
-export async function recordPayoutPayment(plan, amount, paymentMode, activeTenantContext) {
-  const updated = PayoutRepository.save(PayoutEngine.applyPayment(plan, amount), activeTenantContext);
-  const isBank = !["CASH"].includes(String(paymentMode || "").toUpperCase());
-  await saveFinanceEntryPersistent({
-    id: createEntityId(),
-    type: "payout",
-    entry_type: "payout",
-    category: "Winner Payout",
-    amount: Number(amount || 0),
-    cash_out: isBank ? 0 : Number(amount || 0),
-    bank_out: isBank ? Number(amount || 0) : 0,
-    payment_mode: paymentMode,
-    status: "Posted",
-    date: new Date().toISOString().slice(0, 10),
-    entry_date: new Date().toISOString().slice(0, 10),
-    group_id: isUuid(updated.group_id) ? updated.group_id : null,
-    member_id: isUuid(updated.member_id) ? updated.member_id : null,
-    metadata: { payout_plan_id: updated.id },
-  }, activeTenantContext);
-  return updated;
+export async function recordPayoutPayment(
+  plan,
+  amount,
+  paymentMode,
+  activeTenantContext,
+  options = {}
+) {
+  if (!assertOperatorRole(options.permissions || {}, options.profile || {}, options.role || "")) {
+    throw new Error("Unauthorized role for payout payment.");
+  }
+  const result = await recordPayoutPaymentPersistent(
+    plan,
+    amount,
+    paymentMode,
+    activeTenantContext,
+    options
+  );
+  return result.payout;
 }
 
-export function listPayoutPlans(activeTenantContext) {
-  return PayoutRepository.list(activeTenantContext);
+export async function listPayoutPlans(activeTenantContext) {
+  return listPayoutsPersistent(activeTenantContext);
 }

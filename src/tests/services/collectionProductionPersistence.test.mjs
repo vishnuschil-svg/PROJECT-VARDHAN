@@ -136,8 +136,8 @@ test("winner and payout services route finance through persistent helper", async
   const payoutSource = await import("node:fs/promises").then((fs) =>
     fs.readFile(new URL("../../services/payoutService.js", import.meta.url), "utf8")
   );
-  assert.match(winnerSource, /saveFinanceEntryPersistent/);
+  assert.match(winnerSource, /confirmWinnerEventPersistent/);
   assert.doesNotMatch(winnerSource, /from ["'].*chits\/FinanceRepository/);
-  assert.match(payoutSource, /saveFinanceEntryPersistent/);
+  assert.match(payoutSource, /recordPayoutPaymentPersistent/);
   assert.doesNotMatch(payoutSource, /from ["'].*chits\/FinanceRepository/);
 });

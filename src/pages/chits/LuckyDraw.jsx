@@ -46,8 +46,21 @@ function LuckyDraw() {
   );
 
   useEffect(() => {
-    setDrawHistory(listLuckyDrawResults(activeTenantContext).map((draw) => normalizeDrawForUi(draw, tenantGroups, tenantMembers)));
+    let cancelled = false;
+
+    listLuckyDrawResults(activeTenantContext)
+      .then((draws) => {
+        if (cancelled) return;
+        setDrawHistory(
+          draws.map((draw) => normalizeDrawForUi(draw, tenantGroups, tenantMembers))
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setDrawHistory([]);
+      });
+
     return () => {
+      cancelled = true;
       clearInterval(drawTimerRef.current);
       clearInterval(progressTimerRef.current);
     };

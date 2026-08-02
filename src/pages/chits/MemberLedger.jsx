@@ -8,13 +8,12 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ChitLayout from "../../components/chit/ChitLayout";
 import Badge from "../../components/common/Badge";
 import Button from "../../components/common/Button";
 import Table from "../../components/common/Table";
 import {
-  buildMemberLedger,
   buildPassbookPayload,
   buildPassbookWhatsAppMessage,
   createPassbookImageFile,
@@ -28,7 +27,13 @@ import {
 import { CHIT_PRODUCT_NAME, isPlatformOwner } from "../../config/erpModules";
 import { useAuth } from "../../hooks/useAuth";
 import { useTenantCollections } from "../../services/chitCollectionsStore";
-import { listVisibleGroups, listVisibleMembers } from "../../services/chitDataService";
+import {
+  listTenantGroupsPersistent,
+  listTenantMembersPersistent,
+} from "../../services/chitDataService";
+import { buildAuthoritativeMemberLedger, listLedgerEntries } from "../../services/ledgerService";
+import { listPayoutPlans } from "../../services/payoutService";
+import { listWinnerResults } from "../../services/winnerService";
 import "./MemberLedger.css";
 
 function MemberLedger() {
@@ -37,21 +42,60 @@ function MemberLedger() {
   const collections = useTenantCollections(activeTenantContext);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMemberId, setSelectedMemberId] = useState("");
+  const [members, setMembers] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [ledgerEntries, setLedgerEntries] = useState([]);
+  const [winners, setWinners] = useState([]);
+  const [payouts, setPayouts] = useState([]);
   const [filters, setFilters] = useState({
     date: "",
     financialYear: "",
     chitGroupId: "",
   });
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const [nextMembers, nextGroups, entries, winnerRows, payoutRows] = await Promise.all([
+          listTenantMembersPersistent(activeTenantContext),
+          listTenantGroupsPersistent(activeTenantContext),
+          listLedgerEntries(activeTenantContext),
+          listWinnerResults(activeTenantContext),
+          listPayoutPlans(activeTenantContext),
+        ]);
+        if (cancelled) return;
+        setMembers(nextMembers);
+        setGroups(nextGroups);
+        setLedgerEntries(entries);
+        setWinners(winnerRows);
+        setPayouts(payoutRows);
+      } catch {
+        if (cancelled) return;
+        setMembers([]);
+        setGroups([]);
+        setLedgerEntries([]);
+        setWinners([]);
+        setPayouts([]);
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTenantContext, collections.length]);
+
   const visibleRecords = useMemo(
     () =>
       getLedgerVisibleRecords({
-        members: listVisibleMembers(activeTenantContext, platformOwner),
-        groups: listVisibleGroups(activeTenantContext, platformOwner),
+        members,
+        groups,
         activeTenantContext,
         platformOwner,
       }),
-    [activeTenantContext, platformOwner]
+    [activeTenantContext, groups, members, platformOwner]
   );
 
   const searchableMembers = useMemo(() => {
@@ -76,8 +120,16 @@ function MemberLedger() {
     (group) => group.id === selectedMember?.chit_group_id
   );
   const ledger = useMemo(
-    () => buildMemberLedger({ member: selectedMember, group: selectedGroup, collections }),
-    [collections, selectedGroup, selectedMember]
+    () =>
+      buildAuthoritativeMemberLedger({
+        member: selectedMember,
+        group: selectedGroup,
+        collections,
+        ledgerEntries,
+        winners,
+        payouts,
+      }),
+    [collections, ledgerEntries, payouts, selectedGroup, selectedMember, winners]
   );
   const financialYears = getFinancialYearOptions(ledger.transactions);
   const filteredTransactions = filterLedgerTransactions(ledger.transactions, filters);

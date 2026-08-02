@@ -14,6 +14,7 @@ import {
 } from "./chitDataService.js";
 import { createEntityId } from "./productionChitPersistence.js";
 import { notifyCollectionsChanged } from "./chitCollectionsStore.js";
+import { saveLedgerEntryPersistent } from "./winnerLifecyclePersistence.js";
 
 export function getCollectionPageModel({
   activeTenantContext,
@@ -154,6 +155,7 @@ export async function recordCollectionPayment({
 
   await persistReceipt({ collection, receipt, activeTenantContext, createdAt: now });
   await persistFinanceEntry({ collection, receipt, activeTenantContext, createdAt: now });
+  await persistLedgerEntry({ collection, receipt, activeTenantContext });
   persistReportEntry({ collection, receipt, activeTenantContext, createdAt: now });
   persistActivity({ collection, receipt, activeTenantContext, createdAt: now });
   persistNotification({ collection, receipt, activeTenantContext, createdAt: now });
@@ -228,6 +230,24 @@ async function persistFinanceEntry({ collection, receipt, activeTenantContext, c
   }
 
   return CollectionsRepository.saveFinanceEntry(payload, activeTenantContext);
+}
+
+async function persistLedgerEntry({ collection, receipt, activeTenantContext }) {
+  return saveLedgerEntryPersistent(
+    {
+      id: isProductionRepositoryMode() ? createEntityId() : `ledger-${collection.id}`,
+      group_id: collection.group_id || collection.chit_group_id,
+      member_id: collection.member_id,
+      collection_id: collection.id,
+      entry_type: "collection",
+      entry_date: collection.payment_date || collection.collection_date,
+      amount: collection.paid_amount,
+      description: `${receipt.member_name || "member"} collection ${receipt.receipt_number || ""}`.trim(),
+      reference_no: `collection:${collection.id}`,
+      status: "posted",
+    },
+    activeTenantContext
+  );
 }
 
 function persistReportEntry({ collection, receipt, activeTenantContext, createdAt }) {

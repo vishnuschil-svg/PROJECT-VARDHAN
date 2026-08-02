@@ -6,3 +6,5 @@ export { FinanceRepository } from "./FinanceRepository.js";
 export { AuctionRepository } from "./AuctionRepository.js";
 export { PayoutRepository } from "./PayoutRepository.js";
 export { LedgerRepository } from "./LedgerRepository.js";
+export { WinnersRepository } from "./WinnersRepository.js";
+export { LuckyDrawsRepository } from "./LuckyDrawsRepository.js";

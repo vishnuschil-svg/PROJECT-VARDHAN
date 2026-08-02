@@ -98,9 +98,28 @@ function Auctions() {
   const reports = buildAuctionReports(auctions);
 
   useEffect(() => {
-    const workspace = getAuctionWorkspace({ activeTenantContext, groups: tenantGroups, members: tenantMembers });
-    setAuctions(workspace.auctions.map((auction) => normalizeAuctionForUi(auction, tenantGroups, tenantMembers)));
+    let cancelled = false;
+
+    async function loadWorkspace() {
+      const workspace = await getAuctionWorkspace({
+        activeTenantContext,
+        groups: tenantGroups,
+        members: tenantMembers,
+      });
+      if (cancelled) return;
+      setAuctions(
+        workspace.auctions.map((auction) =>
+          normalizeAuctionForUi(auction, tenantGroups, tenantMembers)
+        )
+      );
+    }
+
+    loadWorkspace().catch(() => {
+      if (!cancelled) setAuctions([]);
+    });
+
     return () => {
+      cancelled = true;
       clearInterval(drawTimerRef.current);
       clearInterval(progressTimerRef.current);
     };
