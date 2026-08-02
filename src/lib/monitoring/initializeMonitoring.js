@@ -6,7 +6,7 @@ export function initializeApplicationMonitoring({ repositoryBackend, appMode, su
   const health = getHealthChecker();
   const logger = getLogger();
   const metrics = getMetricsCollector();
-  const production = ["production", "prod"].includes(String(appMode || "").toLowerCase());
+  const production = ["production", "prod", "staging", "trial"].includes(String(appMode || "").toLowerCase());
 
   health.registerCheck("application_configuration", async () => ({
     appMode: appMode || "development",
@@ -19,11 +19,12 @@ export function initializeApplicationMonitoring({ repositoryBackend, appMode, su
   }, { critical: production, description: "Authentication provider configuration is present." });
 
   health.registerCheck("storage_configuration", async () => {
-    if (!supabaseConfigured) throw new Error("Private storage is not configured");
+    if (production && !supabaseConfigured) throw new Error("Private storage is not configured");
+    if (!supabaseConfigured) return { provider: "unconfigured", connectivityVerified: false };
     return { provider: "supabase", connectivityVerified: false };
   }, { critical: production, description: "Storage configuration is present; connectivity requires staging verification." });
 
-  metrics.incrementCounter("application_starts_total", 1, { mode: production ? "production" : "local" });
+  metrics.incrementCounter("application_starts_total", 1, { mode: production ? "durable" : "local" });
   logger.info("Application monitoring initialized", { app_mode: appMode, repository_backend: repositoryBackend });
   return { health, logger, metrics };
 }

@@ -247,7 +247,7 @@ def main() -> int:
 
     # Re-fetch allowing list
     request = urllib.request.Request(
-        f"{supabase_url.rstrip('/')}/rest/v1/workspace_memberships?select=workspace_id,tenant_id,role,status&status=eq.active&limit=5",
+        f"{supabase_url.rstrip('/')}/rest/v1/workspace_memberships?select=workspace_id,tenant_id,role,status,data_scope&status=eq.active&limit=5",
         headers=headers,
         method="GET",
     )
@@ -278,6 +278,7 @@ def main() -> int:
         membership = membership_rows[0]
     workspace_id = membership.get("workspace_id")
     tenant_id = membership.get("tenant_id")
+    data_scope = membership.get("data_scope") or "demo_sandbox"
     role = str(membership.get("role") or "")
     step(
         "workspace_membership",
@@ -321,6 +322,7 @@ def main() -> int:
         "id": group_id,
         "tenant_id": tenant_id,
         "workspace_id": workspace_id,
+        "data_scope": data_scope,
         "chit_name": "OwnData Trial Gate",
         "chit_code": f"ODT-{str(uuid.uuid4())[:8].upper()}",
         "chit_value": 50000,
@@ -333,6 +335,7 @@ def main() -> int:
         "collection_frequency": "monthly",
         "chit_mode": "auction",
         "installment_pattern": "FIXED_MONTHLY",
+        "created_by": user_id,
     }
     # Discover actual columns via insert; if schema differs, capture error code
     status, created = _rest_insert(supabase_url, "chit_groups", group_payload, headers)
@@ -341,6 +344,7 @@ def main() -> int:
         slim = {
             "id": group_id,
             "tenant_id": tenant_id,
+            "data_scope": data_scope,
             "chit_name": group_payload["chit_name"],
             "chit_code": group_payload["chit_code"],
             "chit_value": 50000,
@@ -349,6 +353,7 @@ def main() -> int:
             "total_months": 5,
             "start_date": "2026-08-01",
             "status": "active",
+            "created_by": user_id,
         }
         status, created = _rest_insert(supabase_url, "chit_groups", slim, headers)
     step(
@@ -385,21 +390,31 @@ def main() -> int:
 
     # Members
     member_ids = []
+    last_member_err = None
     for index in range(1, 6):
         member_id = str(uuid.uuid4())
         member_payload = {
             "id": member_id,
+            "tenant_id": tenant_id,
+            "workspace_id": workspace_id,
+            "data_scope": data_scope,
             "group_id": group_id,
             "member_name": f"Member {index}",
-            "member_number": str(index),
+            "member_number": f"{uuid.uuid4().hex[:4]}-{index}",
             "mobile_number": f"900000000{index}",
             "status": "active",
             "join_date": "2026-08-01",
+            "created_by": user_id,
         }
-        status, _ = _rest_insert(supabase_url, "chit_members", member_payload, headers)
+        status, member_err = _rest_insert(supabase_url, "chit_members", member_payload, headers)
+        if status not in {200, 201}:
+            slim_mem = {k: v for k, v in member_payload.items() if k != "workspace_id"}
+            status, member_err = _rest_insert(supabase_url, "chit_members", slim_mem, headers)
         if status in {200, 201}:
             member_ids.append(member_id)
-    step("create_members", len(member_ids) == 5, {"created": len(member_ids)})
+        else:
+            last_member_err = member_err
+    step("create_members", len(member_ids) == 5, {"created": len(member_ids), "error": _safe_err(last_member_err)})
 
     if len(member_ids) != 5:
         return _finish(evidence, 1)
@@ -409,6 +424,8 @@ def main() -> int:
     receipt_no = f"ODT-R-{uuid.uuid4().hex[:10].upper()}"
     collection_payload = {
         "id": collection_id,
+        "tenant_id": tenant_id,
+        "data_scope": data_scope,
         "group_id": group_id,
         "member_id": member_ids[0],
         "collection_month": 1,
@@ -419,12 +436,15 @@ def main() -> int:
         "payment_method": "Cash",
         "receipt_no": receipt_no,
         "status": "paid",
+        "created_by": user_id,
     }
-    status, _ = _rest_insert(supabase_url, "chit_collections", collection_payload, headers)
-    step("create_collection", status in {200, 201}, {"http": status, "collectionId": mask_id(collection_id), "error": _safe_err(_)})
+    status, coll_err = _rest_insert(supabase_url, "chit_collections", collection_payload, headers)
+    step("create_collection", status in {200, 201}, {"http": status, "collectionId": mask_id(collection_id), "error": _safe_err(coll_err)})
 
     receipt_payload = {
         "id": str(uuid.uuid4()),
+        "tenant_id": tenant_id,
+        "data_scope": data_scope,
         "group_id": group_id,
         "member_id": member_ids[0],
         "collection_id": collection_id,
@@ -433,12 +453,13 @@ def main() -> int:
         "payment_method": "Cash",
         "receipt_date": "2026-08-02",
         "status": "issued",
+        "created_by": user_id,
     }
-    status, _ = _rest_insert(supabase_url, "chit_receipts", receipt_payload, headers)
-    # table name may differ
+    status, receipt_err = _rest_insert(supabase_url, "chit_receipts", receipt_payload, headers)
     if status not in {200, 201}:
-        status, _ = _rest_insert(supabase_url, "receipts", receipt_payload, headers)
-    step("create_receipt", status in {200, 201}, {"http": status, "receiptNoSuffix": receipt_no[-6:], "error": _safe_err(_)})
+        slim_rcpt = {k: v for k, v in receipt_payload.items() if k != "receipt_date"}
+        status, receipt_err = _rest_insert(supabase_url, "chit_receipts", slim_rcpt, headers)
+    step("create_receipt", status in {200, 201}, {"http": status, "receiptNoSuffix": receipt_no[-6:], "error": _safe_err(receipt_err)})
 
     # Duplicate collection attempt (same receipt_no / month)
     dup_payload = {**collection_payload, "id": str(uuid.uuid4())}

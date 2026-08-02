@@ -1,0 +1,66 @@
+---
+description: Permanent VARDHAN ERP product, design, and architecture standard for all current and future modules
+alwaysApply: true
+---
+
+# Vardhan ERP — Universal Product Standard
+
+Ground truth (read before UI work):
+- `docs/design-system.md`
+- `docs/reference/vardhan-landing.html`
+- `docs/reference/vardhan-dashboard.html`
+- `docs/reference/vardhan-login.html`
+- `docs/VARDHAN_UNIVERSAL_ERP_PRODUCT_STANDARD.md`
+
+## Identity (locked)
+
+- Brand: **Vardhan** · Subtitle: **ERP PLATFORM**
+- Never use alternate global brands (e.g. “VARDHAN OS”)
+- Odoo-level clarity/modularity only — never copy Odoo logos, wording, illustrations, assets, or exact designs
+
+## Design tokens (locked)
+
+Use only: `--ink #1A1A1A`, `--ink-soft #5B5560`, `--bg #FFFFFF`, `--bg-soft #F7F4EF`, `--maroon #7A1F3D`, `--maroon-dark #5A1730`, `--amber #F0B94A`, `--amber-soft #FBEED9`, `--line rgba(26,26,26,0.09)`.
+
+Fonts: Sora (headings/metrics) · IBM Plex Sans (body/controls) · Caveat max one public/login callout.
+
+Icon tints only: `#F6E3E9` `#E1F2E7` `#FBEED9` `#EBE3F0` `#F8E1E6` `#DEEAF5`. 2px-stroke line icons — no emoji.
+
+## One shared authenticated shell
+
+Every ERP reuses one shell: app launcher, navigation, workspace switcher, breadcrumbs, global search, notifications, profile menu, responsive mobile nav. **Never** invent a new visual shell per ERP. Only menu content and permissions change by role/module.
+
+## Standardized views
+
+Reuse shared list, form/detail, kanban, calendar/timeline, search/filter/group, tables, dialogs, status labels, activity timelines, reports, and dashboards.
+
+Dashboards = real actionable data only. No fake KPIs, users, revenue, testimonials, or decorative AI insights.
+
+## VARDHAN Core reuse
+
+New ERPs must reuse Core for: auth, organizations, users/roles, subscriptions, payments, Partner OS, notifications, documents, reports, audit logs, AI support, support tickets.
+
+## New ERP process (required before code)
+
+1. Business workflow research  
+2. Competitor + Odoo pattern study (philosophy only)  
+3. Route map · roles/permissions · entity/data model · page/view map · acceptance tests  
+
+Create specs under `docs/products/<product-name>/`:
+`PRODUCT_VISION.md`, `WORKFLOW_MAP.md`, `ROLES_PERMISSIONS.md`, `DATA_MODEL.md`, `ROUTE_SCREEN_MAP.md`, `ACCEPTANCE_TESTS.md`
+
+## Functional safety
+
+Preserve Supabase auth/data, tenant isolation, repositories, permissions, validations, workflows, calculations, and integrations. Visual/UX changes must not rewrite business logic unless required and documented.
+
+## Forbidden UI
+
+Purple/violet legacy · glassmorphism · random gradients · emoji icons · excessive KPI cards · generic AI SaaS templates · cream+terracotta AI defaults · neon dark themes
+
+## Responsive + motion
+
+Verify every screen at **1440 / 1280 / 768 / 390**. Support `prefers-reduced-motion`.
+
+## Ops safety
+
+Do not push, deploy, or change secrets/environment variables unless the user explicitly requests it.

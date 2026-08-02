@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vardhan ERP — All your business on one platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1A1A1A; --ink-soft:#5B5560;
+    --bg:#FFFFFF; --bg-soft:#F7F4EF;
+    --maroon:#7A1F3D; --maroon-dark:#5A1730;
+    --amber:#F0B94A; --amber-soft:#FBEED9;
+    --line:rgba(26,26,26,0.09);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:'IBM Plex Sans', sans-serif; -webkit-font-smoothing:antialiased; overflow-x:hidden;}
+  h1,h2,h3{font-family:'Sora', sans-serif; margin:0; letter-spacing:-0.01em;}
+  p{margin:0;}
+  a{color:inherit; text-decoration:none;}
+  :focus-visible{outline:2px solid var(--maroon); outline-offset:3px;}
+  .eyebrow{font-size:13px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--maroon);}
+
+  header{position:sticky; top:0; z-index:60; background:rgba(255,255,255,0.92); backdrop-filter:blur(8px); border-bottom:1px solid var(--line);}
+  nav{display:flex; align-items:center; justify-content:space-between; padding:18px 40px; max-width:1240px; margin:0 auto;}
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand-mark{width:32px; height:32px; border-radius:8px; background:var(--maroon); display:flex; align-items:center; justify-content:center; color:#fff; font-family:'Sora',sans-serif; font-weight:800; font-size:17px;}
+  .brand-text b{font-family:'Sora', sans-serif; font-size:17px; font-weight:700; display:block;}
+  .brand-text span{font-size:9px; letter-spacing:0.13em; color:var(--ink-soft); font-weight:500;}
+  .nav-links{display:flex; align-items:center; gap:34px;}
+  .nav-links a{font-size:15px; font-weight:500; color:var(--ink);}
+  .nav-links a:hover{color:var(--maroon);}
+  .nav-cta{display:flex; align-items:center; gap:20px;}
+  .nav-cta a.signin{font-size:15px; font-weight:500; color:var(--ink);}
+  .btn{font-family:'IBM Plex Sans', sans-serif; font-weight:600; font-size:15px; padding:11px 22px; border-radius:8px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:transform .15s ease, background .15s ease;}
+  .btn-primary{background:var(--maroon); color:#fff;}
+  .btn-primary:hover{background:var(--maroon-dark); transform:translateY(-1px);}
+  .btn-gray{background:var(--bg-soft); color:var(--ink); border:1px solid var(--line);}
+  .btn-gray:hover{background:#EFEBE3;}
+
+  .hero{max-width:1000px; margin:0 auto; padding:90px 40px 44px; text-align:left;}
+  .hero h1{font-size:clamp(38px, 5.4vw, 66px); font-weight:800; line-height:1.05; color:var(--ink);}
+  .mark{position:relative; white-space:nowrap; padding:0 6px;}
+  .mark::before{content:""; position:absolute; left:-2px; right:-2px; bottom:6px; top:8%; background:var(--amber); transform:rotate(-1.2deg); z-index:-1; border-radius:3px;}
+  .hero .price{font-size:19px; color:var(--ink-soft); margin-top:20px; font-style:italic;}
+  .hero .price b{color:var(--ink); font-style:normal; font-weight:700;}
+  .hero-ctas{display:flex; gap:14px; margin-top:30px; align-items:center; flex-wrap:wrap;}
+  .handnote{position:relative; margin-top:44px; padding-left:170px; min-height:80px;}
+  .handnote svg{position:absolute; left:8px; top:-30px; width:130px; height:80px;}
+  .handnote .txt{font-family:'Caveat', cursive; font-size:26px; font-weight:600; color:var(--ink); line-height:1.15; transform:rotate(-1deg); display:inline-block;}
+  .handnote .txt b{color:var(--maroon);}
+
+  /* icon strip like real odoo */
+  .icon-strip{max-width:1180px; margin:20px auto 0; padding:0 40px 90px;}
+  .icon-row{display:flex; flex-wrap:wrap; justify-content:center; gap:34px 30px;}
+  .icon-item{display:flex; flex-direction:column; align-items:center; gap:8px; width:78px;}
+  .icon-sq{width:52px; height:52px; border-radius:13px; display:flex; align-items:center; justify-content:center; font-size:22px;}
+  .icon-item span{font-size:11.5px; color:var(--ink-soft); text-align:center; font-weight:500;}
+
+  .section{padding:80px 40px;}
+  .section-head{max-width:640px; margin:0 auto 44px;}
+  .section-head.center{text-align:center; margin-left:auto; margin-right:auto;}
+  .section-head h2{font-size:clamp(28px,3.2vw,38px); font-weight:800; line-height:1.15; margin-top:14px;}
+  .section-head p{margin-top:14px; font-size:16.5px; color:var(--ink-soft); line-height:1.6;}
+
+  /* quote card, odoo style */
+  .quote-card{
+    max-width:900px; margin:0 auto; background:var(--amber-soft); border-radius:20px;
+    padding:50px 56px; display:flex; align-items:center; gap:34px; flex-wrap:wrap;
+  }
+  .quote-card blockquote{font-family:'Sora',sans-serif; font-size:clamp(19px,2.2vw,25px); font-weight:600; line-height:1.4; color:var(--ink); margin:0; flex:1; min-width:260px;}
+  .quote-card .who{font-size:13.5px; color:var(--ink-soft); margin-top:14px; font-weight:600;}
+
+  /* modules detail rows */
+  .modules{background:var(--bg-soft);}
+  .mod-list{max-width:1180px; margin:0 auto;}
+  .mod-row{display:grid; grid-template-columns:64px 1fr auto; gap:22px; align-items:center; padding:26px 0; border-top:1px solid var(--line);}
+  .mod-row:last-child{border-bottom:1px solid var(--line);}
+  .mod-icon{width:56px; height:56px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:24px;}
+  .mod-row h3{font-size:19px; font-weight:700;}
+  .mod-row p{font-size:14.5px; color:var(--ink-soft); margin-top:5px; max-width:520px; line-height:1.5;}
+  .mod-cta{font-size:14px; font-weight:600; color:var(--maroon); white-space:nowrap;}
+
+  /* feature checklist grid - simple, odoo "enterprise done right" style */
+  .feat-grid{max-width:1180px; margin:0 auto; display:grid; grid-template-columns:repeat(3, 1fr); gap:40px 36px;}
+  .feat-item h4{font-size:16.5px; font-weight:700; margin:0 0 8px; display:flex; align-items:center; gap:10px;}
+  .feat-item .dot{width:8px; height:8px; border-radius:50%; background:var(--amber); flex:none;}
+  .feat-item p{font-size:14.5px; color:var(--ink-soft); line-height:1.6;}
+
+  /* stats + testimonial like real odoo (28 million users) */
+  .proof{max-width:1000px; margin:0 auto; text-align:center;}
+  .proof .big{font-family:'Sora',sans-serif; font-weight:800; font-size:clamp(30px,4vw,44px);}
+  .proof .sub{font-size:15.5px; color:var(--ink-soft); margin-top:8px;}
+  .proof-quote{margin-top:56px; max-width:680px; margin-left:auto; margin-right:auto;}
+  .proof-quote p{font-size:17px; line-height:1.6; color:var(--ink); font-style:italic;}
+  .proof-quote .who{margin-top:22px; display:flex; align-items:center; justify-content:center; gap:12px;}
+  .who-av{width:42px; height:42px; border-radius:50%; background:var(--amber-soft); display:flex; align-items:center; justify-content:center; font-family:'Sora',sans-serif; font-weight:700; color:var(--maroon-dark); font-size:14px;}
+  .who-txt{text-align:left;}
+  .who-txt b{display:block; font-size:13.5px; font-weight:700;}
+  .who-txt span{font-size:12px; color:var(--ink-soft);}
+
+  .cta-band{max-width:1180px; margin:0 auto; background:var(--maroon); color:#fff; border-radius:24px; padding:70px 50px; text-align:center;}
+  .cta-band h2{font-size:clamp(28px,3.6vw,42px); color:#fff; font-weight:800;}
+  .cta-band p{margin-top:14px; color:rgba(255,255,255,0.8); font-size:16px;}
+  .cta-band .hero-ctas{justify-content:center; margin-top:28px;}
+  .cta-band .btn-gray{background:#fff; color:var(--maroon); border:none;}
+  .cta-band .note{margin-top:16px; font-size:13px; color:rgba(255,255,255,0.6);}
+
+  footer{padding:70px 40px 40px; background:var(--bg-soft);}
+  .foot-top{max-width:1240px; margin:0 auto; display:grid; grid-template-columns:1.4fr repeat(4, 1fr); gap:32px; padding-bottom:44px; border-bottom:1px solid var(--line);}
+  .foot-brand p{font-size:13.5px; color:var(--ink-soft); line-height:1.6; margin-top:14px; max-width:260px;}
+  .foot-col h5{font-size:12.5px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:16px;}
+  .foot-col a{display:block; font-size:13.5px; color:var(--ink); margin-bottom:11px;}
+  .foot-col a:hover{color:var(--maroon);}
+  .foot-bottom{max-width:1240px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; padding-top:24px; flex-wrap:wrap; gap:12px;}
+  .foot-bottom p{font-size:12.5px; color:var(--ink-soft);}
+
+  @media (max-width: 900px){
+    .feat-grid{grid-template-columns:1fr 1fr;}
+    .mod-row{grid-template-columns:48px 1fr;}
+    .mod-cta{display:none;}
+    .foot-top{grid-template-columns:1fr 1fr;}
+    .handnote{padding-left:0; margin-top:70px;}
+    .handnote svg{display:none;}
+  }
+  @media (max-width: 600px){
+    nav{padding:14px 20px;}
+    .nav-links{display:none;}
+    .hero, .section, footer, .icon-strip{padding-left:20px; padding-right:20px;}
+    .feat-grid{grid-template-columns:1fr;}
+    .quote-card{padding:34px 26px; flex-direction:column; align-items:flex-start;}
+    .foot-top{grid-template-columns:1fr;}
+    .cta-band{padding:50px 26px; border-radius:16px;}
+  }
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} *{transition:none !important;} }
+</style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <div class="brand">
+      <div class="brand-mark">V</div>
+      <div class="brand-text"><b>Vardhan</b><span>ERP PLATFORM</span></div>
+    </div>
+    <div class="nav-links">
+      <a href="#apps">Products</a>
+      <a href="#modules">Industries</a>
+      <a href="#features">Pricing</a>
+      <a href="#footer">Support</a>
+    </div>
+    <div class="nav-cta">
+      <a class="signin" href="#">Sign in</a>
+      <a class="btn btn-primary" href="#">Start free</a>
+    </div>
+  </nav>
+</header>
+
+<section class="hero">
+  <h1>All your business on <span class="mark">one platform.</span></h1>
+  <p class="price">Simple, honest, yet affordable — <b>₹580 / month</b> for every module you run.</p>
+  <div class="hero-ctas">
+    <a class="btn btn-primary" href="#">Start now — it's free</a>
+    <a class="btn btn-gray" href="#">Meet an advisor</a>
+  </div>
+  <div class="handnote">
+    <svg viewBox="0 0 130 80" fill="none">
+      <path d="M110 8 C 70 8, 40 30, 22 62" stroke="#7A1F3D" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+      <path d="M22 62 L 30 50 M22 62 L 36 66" stroke="#7A1F3D" stroke-width="2.2" stroke-linecap="round"/>
+    </svg>
+    <span class="txt">2,845 businesses already run<br>their whole ledger on <b>Vardhan</b></span>
+  </div>
+</section>
+
+<div class="icon-strip" id="apps">
+  <div class="icon-row">
+    <div class="icon-item"><div class="icon-sq" style="background:#F6E3E9;">👥</div><span>Chit Mgmt</span></div>
+    <div class="icon-item"><div class="icon-sq" style="background:#E1F2E7;">🎓</div><span>School ERP</span></div>
+    <div class="icon-item"><div class="icon-sq" style="background:#FBEED9;">🏛️</div><span>College ERP</span></div>
+    <div class="icon-item"><div class="icon-sq" style="background:#EBE3F0;">🛏️</div><span>Hostel ERP</span></div>
+    <div class="icon-item"><div class="icon-sq" style="background:#F8E1E6;">❤️</div><span>Hospital ERP</span></div>
+    <div class="icon-item"><div class="icon-sq" style="background:#DEEAF5;">🛡️</div><span>Insurance CRM</span></div>
+    <div class="icon-item"><div class="icon-sq" style="background:#E7F0FB;">💳</div><span>Subscriptions</span></div>
+    <div class="icon-item"><div class="icon-sq" style="background:#F3E8FB;">🤖</div><span>AI Assistant</span></div>
+  </div>
+</div>
+
+<section class="section">
+  <div class="quote-card">
+    <div>
+      <blockquote>"If you simplify everything, you can do anything."</blockquote>
+      <div class="who">— common thread across every business we've onboarded</div>
+    </div>
+  </div>
+</section>
+
+<section class="section modules" id="modules">
+  <div class="section-head">
+    <span class="eyebrow">A closer look</span>
+    <h2>Each module, built for how that business runs</h2>
+  </div>
+  <div class="mod-list">
+    <div class="mod-row">
+      <div class="mod-icon" style="background:#F6E3E9;">👥</div>
+      <div><h3>Chit Management Pro</h3><p>Groups, auctions, member payouts and default tracking — the way a chit register has always worked, just faster.</p></div>
+      <a class="mod-cta" href="#">Explore →</a>
+    </div>
+    <div class="mod-row">
+      <div class="mod-icon" style="background:#E1F2E7;">🎓</div>
+      <div><h3>School ERP</h3><p>Admissions, fee collection, attendance and report cards in one academic calendar.</p></div>
+      <a class="mod-cta" href="#">Explore →</a>
+    </div>
+    <div class="mod-row">
+      <div class="mod-icon" style="background:#F8E1E6;">❤️</div>
+      <div><h3>Hospital ERP</h3><p>Patient records, appointments and billing, built around how a front desk actually moves.</p></div>
+      <a class="mod-cta" href="#">Explore →</a>
+    </div>
+    <div class="mod-row">
+      <div class="mod-icon" style="background:#DEEAF5;">🛡️</div>
+      <div><h3>Insurance CRM</h3><p>Leads, policies, claims and renewal reminders that go out before the policy lapses.</p></div>
+      <a class="mod-cta" href="#">Explore →</a>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="features">
+  <div class="section-head center">
+    <span class="eyebrow">Enterprise software, done right</span>
+    <h2>The parts every business shares</h2>
+  </div>
+  <div class="feat-grid">
+    <div class="feat-item"><h4><span class="dot"></span>Billing & collections</h4><p>Invoices, dunning and payment links that follow up so your team doesn't have to.</p></div>
+    <div class="feat-item"><h4><span class="dot"></span>WhatsApp reminders</h4><p>Renewal and due-date messages sent where your customers actually read them.</p></div>
+    <div class="feat-item"><h4><span class="dot"></span>Role-based access</h4><p>Front desk, accountant and owner each see exactly what their job needs.</p></div>
+    <div class="feat-item"><h4><span class="dot"></span>Audit trail</h4><p>Every edit is timestamped and attributed — useful the day someone asks "who changed this."</p></div>
+    <div class="feat-item"><h4><span class="dot"></span>Reports your CA reads</h4><p>Exports formatted the way an accountant expects, not a generic dashboard PDF.</p></div>
+    <div class="feat-item"><h4><span class="dot"></span>Data stays in India</h4><p>Hosted in-country, with daily backups you can restore yourself.</p></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="proof">
+    <div class="big">2,845+ happy businesses</div>
+    <div class="sub">who grow with Vardhan</div>
+    <div class="proof-quote">
+      <p>"The processing time for our chit disbursals dropped from two days to under an hour. We finally have time to advise members instead of just doing paperwork."</p>
+      <div class="who">
+        <div class="who-av">RK</div>
+        <div class="who-txt"><b>Ramesh Kumar</b><span>Director, Vardhan Solutions</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0;">
+  <div class="cta-band">
+    <span class="eyebrow" style="color:var(--amber-soft);">Get started</span>
+    <h2>Unleash your growth potential.</h2>
+    <p>Set up your first module today — most businesses are live before lunch.</p>
+    <div class="hero-ctas">
+      <a class="btn btn-gray" href="#">Start now — it's free</a>
+    </div>
+    <p class="note">No credit card required · Instant access</p>
+  </div>
+</section>
+
+<footer id="footer">
+  <div class="foot-top">
+    <div class="foot-brand">
+      <div class="brand"><div class="brand-mark">V</div><div class="brand-text"><b>Vardhan</b><span>ERP PLATFORM</span></div></div>
+      <p>Every kind of business, one ledger. Built and hosted in India.</p>
+    </div>
+    <div class="foot-col"><h5>Product</h5><a href="#">Chit Management</a><a href="#">School ERP</a><a href="#">Hospital ERP</a><a href="#">Insurance CRM</a></div>
+    <div class="foot-col"><h5>Company</h5><a href="#">About</a><a href="#">Careers</a><a href="#">Contact</a></div>
+    <div class="foot-col"><h5>Resources</h5><a href="#">Documentation</a><a href="#">Support</a><a href="#">Status</a></div>
+    <div class="foot-col"><h5>Legal</h5><a href="#">Privacy</a><a href="#">Terms</a></div>
+  </div>
+  <div class="foot-bottom">
+    <p>© 2026 Vardhan Solutions Pvt. Ltd. All rights reserved.</p>
+  </div>
+</footer>
+
+</body>
+</html>

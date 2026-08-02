@@ -13,11 +13,24 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { LocaleProvider } from "./contexts/LocaleContext";
 import DevBanner from "./components/common/DevBanner";
 import { runInternalTrialBusinessDataCleanup } from "./services/internalTrialCleanupService";
-import { resolveRepositoryBackend } from "./config/repositoryBackend.js";
+import { resolveRepositoryBackend, getRepositoryStartupSnapshot } from "./config/repositoryBackend.js";
 import { isSupabaseConfigured } from "./lib/supabase/SupabaseClient.js";
 import { initializeApplicationMonitoring } from "./lib/monitoring/initializeMonitoring.js";
 
 const repositoryBackend = resolveRepositoryBackend();
+const startup = getRepositoryStartupSnapshot();
+
+if (import.meta.env.DEV) {
+  // Development-only configuration banner — never logs secrets.
+  console.info(
+    "[VARDHAN startup]",
+    `appMode=${startup.appMode}`,
+    `repositoryBackend=${startup.repositoryBackend}`,
+    `apiBaseUrl=${startup.apiBaseUrl}`,
+    `supabaseConfigured=${startup.supabaseConfigured}`
+  );
+}
+
 initializeApplicationMonitoring({
   repositoryBackend,
   appMode: import.meta.env.VITE_APP_MODE || import.meta.env.MODE,

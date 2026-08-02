@@ -1,0 +1,19 @@
+# VARDHAN own-data trial frontend configuration (non-secret values only).
+# Copy these into .env.local / .env — do not put service-role keys in VITE_* vars.
+#
+# Supported VITE_REPOSITORY_BACKEND values (code-enforced):
+#   local | supabase
+#
+# Supported durable VITE_APP_MODE values that require supabase:
+#   staging | trial | production | prod
+#
+# Local/demo may use local repositories only when explicitly selected:
+#   VITE_APP_MODE=demo|development
+#   VITE_REPOSITORY_BACKEND=local
+
+VITE_APP_MODE=trial
+VITE_REPOSITORY_BACKEND=supabase
+VITE_PLATFORM_API_URL=/api
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+VITE_DEV_AUTH_BYPASS=false

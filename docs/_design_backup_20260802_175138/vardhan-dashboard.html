@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vardhan ERP — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1A1A1A;
+    --ink-soft:#6B6570;
+    --bg:#FFFFFF;
+    --bg-soft:#F7F4EF;
+    --maroon:#7A1F3D;
+    --maroon-dark:#5A1730;
+    --amber:#F0B94A;
+    --amber-soft:#FBEED9;
+    --green:#2F7A52;
+    --green-soft:#E4F3EA;
+    --red:#C24545;
+    --line:rgba(26,26,26,0.09);
+    --sidebar-w:252px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg-soft); color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif; -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4{font-family:'Sora', sans-serif; margin:0; letter-spacing:-0.01em;}
+  p{margin:0;}
+  a{color:inherit; text-decoration:none;}
+  :focus-visible{outline:2px solid var(--maroon); outline-offset:2px;}
+
+  .app{display:flex; min-height:100vh;}
+
+  /* ---------- SIDEBAR ---------- */
+  .sidebar{
+    width:var(--sidebar-w); flex:none; background:#fff; border-right:1px solid var(--line);
+    display:flex; flex-direction:column; padding:22px 16px; position:sticky; top:0; height:100vh;
+  }
+  .brand{display:flex; align-items:center; gap:10px; padding:0 8px 22px;}
+  .brand-mark{width:30px; height:30px; border-radius:8px; background:var(--maroon); display:flex; align-items:center; justify-content:center; color:#fff; font-family:'Sora',sans-serif; font-weight:800; font-size:16px;}
+  .brand-text b{font-family:'Sora',sans-serif; font-size:15.5px; font-weight:700; display:block;}
+  .brand-text span{font-size:9px; letter-spacing:0.1em; color:var(--ink-soft); font-weight:500;}
+
+  .workspace{
+    display:flex; align-items:center; gap:10px; padding:10px 10px; margin-bottom:18px;
+    border:1px solid var(--line); border-radius:10px; cursor:pointer; background:var(--bg-soft);
+  }
+  .ws-icon{width:30px; height:30px; border-radius:7px; background:var(--maroon); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12.5px; font-family:'Sora',sans-serif;}
+  .workspace .wt{display:flex; flex-direction:column; line-height:1.25;}
+  .workspace .wt b{font-size:13px; font-weight:600;}
+  .workspace .wt span{font-size:11px; color:var(--ink-soft);}
+
+  .navsec{font-size:10.5px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-soft); padding:14px 12px 6px;}
+  .nav-item{
+    display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px;
+    font-size:14px; font-weight:500; color:var(--ink); margin-bottom:2px; cursor:pointer;
+    transition:background .12s;
+  }
+  .nav-item .ic{width:18px; text-align:center; font-size:15px; opacity:.85;}
+  .nav-item:hover{background:var(--bg-soft);}
+  .nav-item.active{background:#F6E3E9; color:var(--maroon); font-weight:600;}
+
+  .sidebar-bottom{margin-top:auto;}
+  .upgrade{
+    background:linear-gradient(150deg, var(--maroon), var(--maroon-dark));
+    border-radius:14px; padding:18px; color:#fff; margin-top:12px;
+  }
+  .upgrade h4{font-size:14px; font-weight:700; margin-bottom:6px;}
+  .upgrade p{font-size:12px; color:rgba(255,255,255,0.78); line-height:1.5; margin-bottom:14px;}
+  .upgrade a{
+    display:block; text-align:center; background:var(--amber); color:var(--maroon-dark);
+    font-weight:700; font-size:13px; padding:9px; border-radius:8px;
+  }
+
+  /* ---------- MAIN ---------- */
+  .main{flex:1; min-width:0;}
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 32px; background:#fff; border-bottom:1px solid var(--line);
+    position:sticky; top:0; z-index:10;
+  }
+  .crumb{font-size:13.5px; color:var(--ink-soft); display:flex; align-items:center; gap:6px;}
+  .crumb b{color:var(--ink); font-weight:600;}
+  .top-actions{display:flex; align-items:center; gap:18px;}
+  .icon-btn{position:relative; width:36px; height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; background:var(--bg-soft); font-size:16px; cursor:pointer;}
+  .icon-btn .badge{
+    position:absolute; top:-4px; right:-4px; background:var(--maroon); color:#fff; font-size:10px;
+    font-weight:700; width:16px; height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  }
+  .avatar{width:36px; height:36px; border-radius:50%; background:var(--amber-soft); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; color:var(--maroon-dark); font-family:'Sora',sans-serif;}
+  .btn-primary{background:var(--maroon); color:#fff; font-weight:600; font-size:14px; padding:10px 18px; border-radius:8px; border:none; cursor:pointer;}
+  .btn-primary:hover{background:var(--maroon-dark);}
+
+  .content{padding:32px;}
+  .page-head{display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:26px; flex-wrap:wrap; gap:14px;}
+  .page-head h1{font-size:26px; font-weight:800;}
+  .page-head .mark{position:relative; padding:0 4px;}
+  .page-head .mark::before{content:""; position:absolute; left:-2px; right:-2px; bottom:4px; top:8%; background:var(--amber); transform:rotate(-1deg); z-index:-1; border-radius:2px;}
+  .page-head p{font-size:14.5px; color:var(--ink-soft); margin-top:6px;}
+
+  .layout{display:grid; grid-template-columns:1fr 320px; gap:24px; align-items:start;}
+
+  /* module cards */
+  .apps-grid{display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:28px;}
+  .app-card{
+    background:#fff; border:1px solid var(--line); border-radius:14px; padding:18px;
+    display:flex; flex-direction:column; gap:10px; cursor:pointer; transition:transform .15s, box-shadow .15s;
+  }
+  .app-card:hover{transform:translateY(-3px); box-shadow:0 12px 24px -14px rgba(26,26,26,0.2);}
+  .app-card .top{display:flex; justify-content:space-between; align-items:flex-start;}
+  .app-icon{width:42px; height:42px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:19px;}
+  .app-card h4{font-size:15px; font-weight:700;}
+  .app-card p{font-size:12.5px; color:var(--ink-soft); line-height:1.5;}
+  .app-card .stat{font-size:12px; color:var(--ink-soft); margin-top:2px;}
+  .app-card .stat b{color:var(--ink); font-family:'Sora',sans-serif; font-weight:700; font-size:15px;}
+
+  /* card generic */
+  .card{background:#fff; border:1px solid var(--line); border-radius:14px; padding:22px;}
+  .card-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;}
+  .card-head h3{font-size:16px; font-weight:700;}
+  .card-head .link{font-size:13px; color:var(--maroon); font-weight:600;}
+  .select{font-size:12.5px; color:var(--ink-soft); background:var(--bg-soft); padding:6px 10px; border-radius:7px; border:1px solid var(--line);}
+
+  .revenue-num{font-size:32px; font-weight:800; font-family:'Sora',sans-serif;}
+  .revenue-num .delta{font-size:13px; font-weight:700; color:var(--green); margin-left:8px;}
+
+  .activity-row{display:flex; align-items:center; gap:12px; padding:11px 0; border-top:1px solid var(--line);}
+  .activity-row:first-child{border-top:none;}
+  .act-icon{width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:14px; flex:none;}
+  .act-body{flex:1; min-width:0;}
+  .act-body .t{font-size:13.5px; font-weight:500;}
+  .act-body .s{font-size:11.5px; color:var(--ink-soft); margin-top:2px;}
+  .act-amt{font-size:13.5px; font-weight:700; font-family:'Sora',sans-serif; color:var(--green); white-space:nowrap;}
+
+  /* right column */
+  .side-stack{display:flex; flex-direction:column; gap:20px;}
+  .metric-row{display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-top:1px solid var(--line);}
+  .metric-row:first-child{border-top:none;}
+  .metric-l{display:flex; align-items:center; gap:10px;}
+  .metric-ic{width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px;}
+  .metric-l .n{font-size:13px; color:var(--ink-soft);}
+  .metric-r{text-align:right;}
+  .metric-r .v{font-size:15px; font-weight:700; font-family:'Sora',sans-serif;}
+  .metric-r .d{font-size:11px; font-weight:600; color:var(--green);}
+  .metric-r .d.down{color:var(--red);}
+
+  .agent-row{display:flex; align-items:center; gap:12px; padding:11px 0; border-top:1px solid var(--line);}
+  .agent-row:first-child{border-top:none;}
+  .agent-rank{width:20px; text-align:center; font-size:12px; font-weight:700; color:var(--ink-soft); font-family:'Sora',sans-serif;}
+  .agent-av{width:32px; height:32px; border-radius:50%; background:var(--amber-soft); color:var(--maroon-dark); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; font-family:'Sora',sans-serif;}
+  .agent-body{flex:1;}
+  .agent-body .n{font-size:13px; font-weight:600;}
+  .agent-body .r{font-size:11px; color:var(--green); font-weight:600;}
+  .agent-val{font-size:13px; font-weight:700; font-family:'Sora',sans-serif;}
+
+  svg.chart{width:100%; height:180px;}
+
+  @media (max-width: 1100px){
+    .layout{grid-template-columns:1fr;}
+    .apps-grid{grid-template-columns:repeat(2, 1fr);}
+  }
+  @media (max-width: 760px){
+    .sidebar{display:none;}
+    .content{padding:18px;}
+    .apps-grid{grid-template-columns:1fr 1fr;}
+    .topbar{padding:14px 18px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">V</div>
+      <div class="brand-text"><b>Vardhan</b><span>ERP PLATFORM</span></div>
+    </div>
+
+    <div class="workspace">
+      <div class="ws-icon">VS</div>
+      <div class="wt"><b>Vardhan Solutions</b><span>Main workspace</span></div>
+    </div>
+
+    <div class="navsec">Overview</div>
+    <div class="nav-item active"><span class="ic">▦</span> Dashboard</div>
+    <div class="nav-item"><span class="ic">◫</span> Workspaces</div>
+    <div class="nav-item"><span class="ic">◔</span> Analytics</div>
+    <div class="nav-item"><span class="ic">▤</span> Reports</div>
+
+    <div class="navsec">Business</div>
+    <div class="nav-item"><span class="ic">◈</span> Customers</div>
+    <div class="nav-item"><span class="ic">◆</span> Subscriptions</div>
+    <div class="nav-item"><span class="ic">◉</span> Agents</div>
+    <div class="nav-item"><span class="ic">⚙</span> Automation</div>
+    <div class="nav-item"><span class="ic">⇄</span> Integrations</div>
+
+    <div class="navsec">Admin</div>
+    <div class="nav-item"><span class="ic">☰</span> Settings</div>
+    <div class="nav-item"><span class="ic">◎</span> Users & Roles</div>
+    <div class="nav-item"><span class="ic">▧</span> Billing</div>
+    <div class="nav-item"><span class="ic">▥</span> Audit Logs</div>
+
+    <div class="sidebar-bottom">
+      <div class="upgrade">
+        <h4>Upgrade to Pro</h4>
+        <p>Unlock advanced automation and priority support.</p>
+        <a href="#">Upgrade now</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="crumb">Home <span>›</span> <b>Dashboard</b></div>
+      <div class="top-actions">
+        <div class="icon-btn">🔍</div>
+        <div class="icon-btn">🔔<span class="badge">12</span></div>
+        <div class="icon-btn">💬<span class="badge">5</span></div>
+        <div class="avatar">RK</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-head">
+        <div>
+          <h1>Run every business on <span class="mark">one platform.</span></h1>
+          <p>Vardhan ERP brings your operations, customers and insights together.</p>
+        </div>
+        <button class="btn-primary">+ New workspace item</button>
+      </div>
+
+      <div class="apps-grid">
+        <div class="app-card">
+          <div class="top"><div class="app-icon" style="background:#F6E3E9;">👥</div></div>
+          <h4>Chit Management Pro</h4>
+          <p>Groups, auctions, member payouts.</p>
+          <div class="stat">Active groups <b>128</b></div>
+        </div>
+        <div class="app-card">
+          <div class="top"><div class="app-icon" style="background:#E1F2E7;">🎓</div></div>
+          <h4>School ERP</h4>
+          <p>Academics, fees and attendance.</p>
+          <div class="stat">Active schools <b>35</b></div>
+        </div>
+        <div class="app-card">
+          <div class="top"><div class="app-icon" style="background:#F8E1E6;">❤️</div></div>
+          <h4>Hospital ERP</h4>
+          <p>Patients, appointments, billing.</p>
+          <div class="stat">Active hospitals <b>14</b></div>
+        </div>
+        <div class="app-card">
+          <div class="top"><div class="app-icon" style="background:#DEEAF5;">🛡️</div></div>
+          <h4>Insurance CRM</h4>
+          <p>Leads, policies, claims, renewals.</p>
+          <div class="stat">Active policies <b>2,763</b></div>
+        </div>
+      </div>
+
+      <div class="layout">
+        <div style="display:flex; flex-direction:column; gap:20px;">
+          <div class="card">
+            <div class="card-head">
+              <h3>Revenue overview</h3>
+              <div class="select">This month ▾</div>
+            </div>
+            <div class="revenue-num">₹24.58L <span class="delta">↑ 12.6%</span></div>
+            <p style="font-size:12.5px; color:var(--ink-soft); margin-top:4px;">vs Apr 1 – Apr 30</p>
+            <svg class="chart" viewBox="0 0 560 160" preserveAspectRatio="none">
+              <polyline points="0,120 50,105 100,115 150,80 200,95 250,60 300,75 350,45 400,58 450,30 500,42 560,20"
+                fill="none" stroke="#7A1F3D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <polygon points="0,120 50,105 100,115 150,80 200,95 250,60 300,75 350,45 400,58 450,30 500,42 560,20 560,160 0,160"
+                fill="#F0B94A" opacity="0.15"/>
+            </svg>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h3>Recent activity</h3>
+              <a class="link" href="#">View all</a>
+            </div>
+            <div class="activity-row">
+              <div class="act-icon" style="background:var(--amber-soft);">📄</div>
+              <div class="act-body"><div class="t">New subscription created for EduPlan Premium</div><div class="s">2 minutes ago</div></div>
+            </div>
+            <div class="activity-row">
+              <div class="act-icon" style="background:var(--green-soft);">₹</div>
+              <div class="act-body"><div class="t">Payment received from Sunrise School</div><div class="s">18 minutes ago</div></div>
+              <div class="act-amt">₹45,000</div>
+            </div>
+            <div class="activity-row">
+              <div class="act-icon" style="background:#DEEAF5;">🛡️</div>
+              <div class="act-body"><div class="t">Policy renewed for Robert D'souza</div><div class="s">1 hour ago</div></div>
+              <div class="act-amt">₹12,750</div>
+            </div>
+            <div class="activity-row">
+              <div class="act-icon" style="background:#F8E1E6;">❤️</div>
+              <div class="act-body"><div class="t">New hospital onboarded: City Care Hospital</div><div class="s">2 hours ago</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="side-stack">
+          <div class="card">
+            <div class="card-head"><h3>Key metrics</h3></div>
+            <div class="metric-row">
+              <div class="metric-l"><div class="metric-ic" style="background:var(--amber-soft);">👤</div><span class="n">Active customers</span></div>
+              <div class="metric-r"><div class="v">2,845</div><div class="d">↑ 8.4%</div></div>
+            </div>
+            <div class="metric-row">
+              <div class="metric-l"><div class="metric-ic" style="background:var(--green-soft);">₹</div><span class="n">MRR</span></div>
+              <div class="metric-r"><div class="v">₹24.58L</div><div class="d">↑ 12.6%</div></div>
+            </div>
+            <div class="metric-row">
+              <div class="metric-l"><div class="metric-ic" style="background:#F6E3E9;">◔</div><span class="n">Trial accounts</span></div>
+              <div class="metric-r"><div class="v">312</div><div class="d">↑ 5.7%</div></div>
+            </div>
+            <div class="metric-row">
+              <div class="metric-l"><div class="metric-ic" style="background:#DEEAF5;">◈</div><span class="n">Collection rate</span></div>
+              <div class="metric-r"><div class="v">96.3%</div><div class="d">↑ 2.1%</div></div>
+            </div>
+            <div class="metric-row">
+              <div class="metric-l"><div class="metric-ic" style="background:var(--amber-soft);">⟳</div><span class="n">Renewals this month</span></div>
+              <div class="metric-r"><div class="v">186</div><div class="d">↑ 15.3%</div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><h3>Top agents</h3></div>
+            <div class="agent-row"><div class="agent-rank">1</div><div class="agent-av">PS</div><div class="agent-body"><div class="n">Priya Sharma</div><div class="r">↑ 18%</div></div><div class="agent-val">₹8.52L</div></div>
+            <div class="agent-row"><div class="agent-rank">2</div><div class="agent-av">RV</div><div class="agent-body"><div class="n">Rahul Verma</div><div class="r">↑ 12%</div></div><div class="agent-val">₹6.31L</div></div>
+            <div class="agent-row"><div class="agent-rank">3</div><div class="agent-av">AP</div><div class="agent-body"><div class="n">Amit Patel</div><div class="r">↑ 9%</div></div><div class="agent-val">₹4.78L</div></div>
+            <div class="agent-row"><div class="agent-rank">4</div><div class="agent-av">NK</div><div class="agent-body"><div class="n">Neha Kapoor</div><div class="r">↑ 7%</div></div><div class="agent-val">₹3.21L</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>
