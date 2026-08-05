@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertTriangle, CheckCircle2, FileText, Image as ImageIcon, LoaderCircle,
   RefreshCw, Save, ScanText, Trash2, UploadCloud, WandSparkles, X,
@@ -68,7 +68,7 @@ function SmartChitCapture({
       })
       .catch((loadError) => { if (active) handleError(loadError); });
     return () => { active = false; };
-  }, [activeTenantContext, loadDraft, workspaceId]);
+  }, [activeTenantContext, handleError, loadDraft, workspaceId]);
 
   const chooseFile = (nextFile) => {
     if (busy) return;
@@ -126,13 +126,13 @@ function SmartChitCapture({
     }
   };
 
-  const handleError = (captureError) => {
+  const handleError = useCallback((captureError) => {
     setPhase("failed");
     setError(smartChitErrorMessage(captureError));
     if (captureError?.code === "SESSION_EXPIRED" || captureError?.status === 401) {
       onSessionExpired?.();
     }
-  };
+  }, [onSessionExpired]);
 
   const cancel = () => {
     abortRef.current?.abort();

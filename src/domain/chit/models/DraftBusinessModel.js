@@ -370,7 +370,7 @@ function mapRuleKeyToFinancialPrimitive(ruleKey) {
 /**
  * Build evidence strings for financial primitives.
  */
-function buildFinancialPrimitiveEvidence(financialPrimitives, schedule, detectedRules) {
+function buildFinancialPrimitiveEvidence(financialPrimitives, schedule, _detectedRules) {
   const evidence = {};
   Object.keys(financialPrimitives).forEach((key) => {
     const state = financialPrimitives[key].state;

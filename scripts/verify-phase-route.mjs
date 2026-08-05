@@ -11,7 +11,11 @@ const socket = new WebSocket(target.webSocketDebuggerUrl);
 const pending = new Map();
 const errors = [];
 let id = 0;
-await new Promise((resolve, reject) => { socket.onopen = resolve; socket.onerror = reject; });
+const handshake = new Promise((resolve, reject) => {
+  socket.onopen = resolve;
+  socket.onerror = reject;
+});
+await handshake;
 socket.onmessage = (event) => {
   const message = JSON.parse(event.data);
   if (message.method === "Runtime.exceptionThrown") errors.push(message.params.exceptionDetails.text);
@@ -24,6 +28,7 @@ socket.onmessage = (event) => {
 const send = (method, params = {}) => new Promise((resolve, reject) => { const next = ++id; pending.set(next, { resolve, reject }); socket.send(JSON.stringify({ id: next, method, params })); });
 const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 await send("Page.enable"); await send("Runtime.enable"); await send("Log.enable"); await send("Network.enable");
+await send("Page.setLifecycleEventsEnabled", { enabled: true });
 await send("Network.setCacheDisabled", { cacheDisabled: true });
 await send("Emulation.setDeviceMetricsOverride", { width: 1366, height: 900, deviceScaleFactor: 1, mobile: false });
 await send("Page.navigate", { url: app + route });

@@ -228,6 +228,50 @@ def normalize_provider_result(result: ProviderExtractionResult) -> ProviderExtra
             setattr(extraction, field_name, value.strip() or None)
 
     missing = set(result.missingFields)
+
+    # Reject weak member-count/duration confusion instead of persisting a confident-looking wrong tenure.
+    duration_result = extraction.fieldResults.get("durationMonths")
+    member_result = extraction.fieldResults.get("memberCount")
+    duration_score = float(
+        getattr(duration_result, "confidence", 0)
+        or result.confidence.fieldScores.get("durationMonths", 0)
+        or result.confidence.fieldScores.get("duration", 0)
+        or 0
+    )
+    duration_status = str(getattr(duration_result, "status", "") or "").upper()
+    duration_source = str(getattr(duration_result, "sourceText", "") or "").lower()
+    duration_looks_like_member_count = (
+        extraction.durationMonths is not None
+        and extraction.memberCount is not None
+        and extraction.durationMonths == extraction.memberCount
+        and not extraction.installmentSchedule
+        and (
+            "member" in duration_source
+            or "ticket" in duration_source
+            or duration_status in {"AMBIGUOUS", "INVALID"}
+            or (duration_score > 0 and duration_score < 0.8)
+        )
+    )
+    if duration_looks_like_member_count:
+        extraction.durationMonths = None
+        missing.add("durationMonths")
+
+    # A readable schedule is stronger evidence than a weak/ambiguous duration field.
+    if extraction.installmentSchedule:
+        schedule_months = [
+            row.monthNumber for row in extraction.installmentSchedule
+            if row.monthNumber is not None and row.monthNumber > 0
+        ]
+        schedule_duration = max(schedule_months, default=len(extraction.installmentSchedule))
+        weak_duration = (
+            extraction.durationMonths is None
+            or duration_status in {"AMBIGUOUS", "INVALID", "NOT_FOUND"}
+            or (duration_score > 0 and duration_score < 0.7)
+        )
+        if weak_duration and schedule_duration > 0:
+            extraction.durationMonths = schedule_duration
+            missing.discard("durationMonths")
+
     for field_name in MANDATORY_EXTRACTION_FIELDS:
         value = getattr(extraction, field_name)
         if value is None or value == "" or value == "UNKNOWN":

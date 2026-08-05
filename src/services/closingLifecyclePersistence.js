@@ -17,10 +17,8 @@ import {
   fromProductionExpense,
   fromProductionMonthClosing,
   isUuid,
-  toProductionCompletion,
   toProductionDividend,
   toProductionExpense,
-  toProductionMonthClosing,
 } from "./productionChitPersistence.js";
 
 function isLocalMode(env = import.meta.env) {

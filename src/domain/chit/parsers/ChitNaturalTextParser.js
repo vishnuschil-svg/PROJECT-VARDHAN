@@ -10,6 +10,11 @@ const FIELD_DEFINITIONS = Object.freeze([
     aliases: ["chit name", "group name", "scheme name", "చిట్ పేరు"],
   },
   {
+    key: "chitCode",
+    type: "text",
+    aliases: ["chit code", "group code", "scheme code"],
+  },
+  {
     key: "chitValue",
     type: "number",
     aliases: ["chit value", "total value", "chit amount", "మొత్తం", "చిట్ విలువ"],
@@ -33,6 +38,31 @@ const FIELD_DEFINITIONS = Object.freeze([
     key: "organizerName",
     type: "text",
     aliases: ["organizer", "foreman", "run by", "నిర్వాహకుడు"],
+  },
+  {
+    key: "startDate",
+    type: "date",
+    aliases: ["start date", "commencement date"],
+  },
+  {
+    key: "endDate",
+    type: "date",
+    aliases: ["end date", "closing date"],
+  },
+  {
+    key: "collectionFrequency",
+    type: "text",
+    aliases: ["collection frequency", "payment frequency"],
+  },
+  {
+    key: "chitMode",
+    type: "text",
+    aliases: ["chit mode", "winner mode"],
+  },
+  {
+    key: "installmentPatternLabel",
+    type: "text",
+    aliases: ["installment pattern", "payment pattern"],
   },
 ]);
 
@@ -98,8 +128,13 @@ export function extractTaggedValues(text = "") {
 
   return matches.map((current, index) => {
     const next = matches[index + 1];
+    const lineEnd = source.indexOf("\n", current.valueStart);
+    const valueEnd = Math.min(
+      next?.index ?? source.length,
+      lineEnd === -1 ? source.length : lineEnd
+    );
     const rawValue = source
-      .slice(current.valueStart, next?.index ?? source.length)
+      .slice(current.valueStart, valueEnd)
       .replace(/^[\s:;=\-–—]+/, "")
       .replace(/[\s.;,|]+$/, "")
       .trim();
@@ -122,9 +157,13 @@ export function parseChitNaturalText(text = "") {
     if (result[item.key] !== undefined || !item.rawValue) continue;
     const value = item.type === "text"
       ? cleanTextValue(item.rawValue)
-      : parseNumericValue(item.rawValue, item.type === "integer");
+      : item.type === "date"
+        ? parseDateValue(item.rawValue)
+        : parseNumericValue(item.rawValue, item.type === "integer");
     if (value !== null && value !== "") result[item.key] = value;
   }
+
+  delete result.installmentPatternLabel;
 
   result.installmentPattern = parseInstallmentPattern(text);
   result.detectedTerms = Object.fromEntries(
@@ -145,11 +184,24 @@ export function parseNumericValue(value, integer = false) {
   return integer ? Math.trunc(number) : number;
 }
 
+export function parseDateValue(value) {
+  const text = normalizeTeluguDigits(value).trim();
+  const iso = text.match(/\b(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})\b/);
+  if (iso) return `${iso[1]}-${pad2(iso[2])}-${pad2(iso[3])}`;
+  const dayFirst = text.match(/\b(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})\b/);
+  if (dayFirst) return `${dayFirst[3]}-${pad2(dayFirst[2])}-${pad2(dayFirst[1])}`;
+  return null;
+}
+
 function cleanTextValue(value) {
   return value
     .replace(/^(?:is|:|=)\s*/i, "")
-    .split(/\s*[.;|]\s*/)[0]
+    .split(/\r?\n|\s*[.;|]\s*/)[0]
     .trim();
+}
+
+function pad2(value) {
+  return String(value).padStart(2, "0");
 }
 
 function consumeSeparator(text, index) {

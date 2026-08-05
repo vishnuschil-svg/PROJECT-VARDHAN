@@ -121,15 +121,15 @@ export function confirmBusinessUnderstanding(draft) {
  * Persist a tenant-scoped review draft when the production repository is active.
  * Local development keeps the existing browser-only behavior.
  */
-export async function saveBusinessUnderstandingDraft(draft, tenantContext) {
+export async function saveBusinessUnderstandingDraft(draft, tenantContext, options = {}) {
   if (!usesProductionPersistence()) {
     return {
-      id: draft?.extractionMetadata?.sourceDocument?.documentId || `local-draft-${Date.now()}`,
+      id: options.extractionId || draft?.extractionMetadata?.sourceDocument?.documentId || `local-draft-${Date.now()}`,
       status: "PENDING_REVIEW",
       parsed_draft: draft,
     };
   }
-  return AIChitExtractionRepository.saveDraft(draft, tenantContext);
+  return AIChitExtractionRepository.saveDraft(draft, tenantContext, options);
 }
 
 export async function loadBusinessUnderstandingDraft(extractionId, tenantContext) {

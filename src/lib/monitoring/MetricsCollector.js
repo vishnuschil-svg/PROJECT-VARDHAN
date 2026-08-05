@@ -211,7 +211,7 @@ export class MetricsCollector {
     }
 
     // Histograms
-    for (const [key, values] of Object.entries(this.metrics.histograms)) {
+    for (const [key] of Object.entries(this.metrics.histograms)) {
       const name = key.split('{')[0];
       const tags = this.parseTags(key);
       const tagString = this.formatTags(tags);

@@ -1,5 +1,4 @@
 import { WorkspaceRepository } from "../../repositories/WorkspaceRepository.js";
-import { getTenantScope, requireTenantScope } from "./SupabaseRepository.js";
 
 /**
  * Tenant and Workspace Configuration Verifier

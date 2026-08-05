@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { parseChitNaturalText } from "../../domain/chit/parsers/ChitNaturalTextParser.js";
-import { normalizeOCRResponse, OCRProviderError } from "../../ai/providers/ExternalOCRProviderAdapter.js";
+import { createExternalOCRProviderAdapter, normalizeOCRResponse, OCRProviderError } from "../../ai/providers/ExternalOCRProviderAdapter.js";
 import { generateBusinessUnderstanding } from "../../services/universalBusinessRuleService.js";
 import { VALIDATION_STATUS } from "../../domain/chit/validation/ValidationService.js";
 
@@ -66,6 +66,47 @@ test("English and Telugu mixed natural text normalizes mandatory fields and patt
   assert.equal(telugu.installmentPattern, "FIXED_MONTHLY");
   assert.equal(parseChitNaturalText("Pattern: variable monthly").installmentPattern, "VARIABLE_MONTHLY");
   assert.equal(parseChitNaturalText("lifted/non-lifted payment").installmentPattern, "LIFTED_NON_LIFTED");
+});
+
+test("multiline manual trial text keeps labels isolated and derives the exact fixed schedule", async () => {
+  const manualText = [
+    "Chit Name: VARDHAN OWN DATA TRIAL 01",
+    "Chit Code: ODT-001",
+    "Chit Value: 50000",
+    "Monthly Amount: 10000",
+    "Total Members: 5",
+    "Total Months: 5",
+    "Start Date: 01-08-2026",
+    "End Date: 31-12-2026",
+    "Collection Frequency: Monthly",
+    "Chit Mode: Auction",
+    "Installment Pattern: Fixed Monthly",
+  ].join("\n");
+  const parsed = parseChitNaturalText(manualText);
+  assert.equal(parsed.chitName, "VARDHAN OWN DATA TRIAL 01");
+  assert.equal(parsed.chitCode, "ODT-001");
+  assert.equal(parsed.startDate, "2026-08-01");
+  assert.equal(parsed.endDate, "2026-12-31");
+  assert.equal(parsed.duration, 5);
+  assert.equal(parsed.monthlyPayment, 10000);
+  assert.equal(parsed.installmentPattern, "FIXED_MONTHLY");
+
+  const failedAdapter = {
+    extract: async () => {
+      throw new OCRProviderError("OCR_TIMEOUT", "timed out", { retryable: true });
+    },
+  };
+  const file = new File(["image"], "trial.png", { type: "image/png" });
+  const result = await generateBusinessUnderstanding(file, {
+    workspaceId: "workspace-1",
+    manualText,
+    ocrAdapter: failedAdapter,
+  });
+  assert.equal(result.draft.business.chitName.value, "VARDHAN OWN DATA TRIAL 01");
+  assert.equal(result.draft.business.duration.value, 5);
+  assert.equal(result.draft.business.startDate.value, "2026-08-01");
+  assert.equal(result.draft.schedule.length, 5);
+  assert.equal(result.draft.schedule[0].standardPayment, 10000);
 });
 
 test("mock JPG OCR populates mandatory Business Workspace draft fields and metadata", async () => {
@@ -157,6 +198,7 @@ test("provider errors are preserved and empty/invalid output is never success", 
   );
   assert.throws(
     () => normalizeOCRResponse(structuredResponse({
+      rawText: "",
       extraction: {
         chitName: null,
         chitValue: null,
@@ -174,4 +216,144 @@ test("provider errors are preserved and empty/invalid output is never success", 
     () => normalizeOCRResponse({ status: "SUCCESS" }),
     (error) => error.code === "OCR_SCHEMA_INVALID"
   );
+});
+
+
+test("raw-text OCR fallback is parsed deterministically into a usable draft", async () => {
+  const rawOnly = normalizeOCRResponse(structuredResponse({
+    rawText: [
+      "Chit Name: OCR Raw Trial",
+      "Chit Value: 50000",
+      "Total Months: 5",
+      "Total Members: 5",
+      "Monthly Amount: 10000",
+      "Installment Pattern: Fixed Monthly",
+    ].join("\n"),
+    extraction: {
+      chitName: null,
+      chitValue: null,
+      durationMonths: null,
+      memberCount: null,
+      monthlyInstallment: null,
+      installmentPattern: "UNKNOWN",
+      members: [],
+      installmentSchedule: [],
+      auctionHistory: [],
+      collections: [],
+      dividends: [],
+    },
+    confidence: {
+      overallScore: 0,
+      fieldScores: {},
+      mathValidated: false,
+      requiresHumanReview: true,
+    },
+    warnings: ["Plain text fallback was used."],
+  }));
+  const file = new File(["image"], "raw-text.png", { type: "image/png" });
+  const result = await generateBusinessUnderstanding(file, {
+    workspaceId: "workspace-1",
+    ocrAdapter: { extract: async () => rawOnly },
+  });
+  assert.equal(result.draft.business.chitName.value, "OCR Raw Trial");
+  assert.equal(result.draft.business.duration.value, 5);
+  assert.equal(result.draft.schedule.length, 5);
+  assert.equal(result.draft.schedule[0].standardPayment, 10000);
+});
+
+test("non-JSON gateway failures are reported as provider unavailable", async () => {
+  const adapter = createExternalOCRProviderAdapter({
+    endpoint: "/api/v1/ocr/extract",
+    getAccessToken: async () => "test-token",
+    fetchImpl: async () => ({
+      ok: false,
+      status: 502,
+      headers: { get: () => "text/html" },
+      json: async () => { throw new Error("not json"); },
+    }),
+  });
+  await assert.rejects(
+    () => adapter.extract(new File(["image"], "plan.png", { type: "image/png" }), { workspaceId: "workspace-1" }),
+    (error) => error.code === "OCR_PROVIDER_UNAVAILABLE" && error.retryable === true
+  );
+});
+
+test("partial OCR structure is repaired from explicit raw-text labels before draft validation", async () => {
+  const partial = normalizeOCRResponse(structuredResponse({
+    rawText: [
+      "Chit Name: VARDHAN 5 MONTH TEST",
+      "Chit Value: 50000",
+      "Total Months: 5",
+      "Total Members: 50",
+      "Monthly Amount: 10000",
+      "Installment Pattern: Fixed Monthly",
+    ].join("\n"),
+    extraction: {
+      chitName: null,
+      chitCode: null,
+      organizerName: null,
+      chitValue: 50000,
+      durationMonths: 50,
+      memberCount: 50,
+      monthlyInstallment: 10000,
+      installmentPattern: "UNKNOWN",
+      fieldResults: {
+        durationMonths: { value: 50, confidence: 0.42, status: "AMBIGUOUS", sourceText: "50 members" },
+        memberCount: { value: 50, confidence: 0.96, status: "FOUND", sourceText: "50 members" },
+      },
+      members: [],
+      installmentSchedule: [],
+      auctionHistory: [],
+      collections: [],
+      dividends: [],
+    },
+    confidence: {
+      overallScore: 0.62,
+      fieldScores: { durationMonths: 0.42, memberCount: 0.96 },
+      mathValidated: false,
+      requiresHumanReview: true,
+    },
+    missingFields: ["chitName", "installmentPattern"],
+  }));
+  const file = new File(["image"], "partial-ocr.png", { type: "image/png" });
+  const result = await generateBusinessUnderstanding(file, {
+    workspaceId: "workspace-1",
+    ocrAdapter: { extract: async () => partial },
+  });
+  assert.equal(result.draft.business.chitName.value, "VARDHAN 5 MONTH TEST");
+  assert.equal(result.draft.business.duration.value, 5);
+  assert.equal(result.draft.business.memberCount.value, 50);
+  assert.equal(result.draft.business.installmentPattern.value, "FIXED_MONTHLY");
+  assert.equal(result.draft.schedule.length, 5);
+  assert.equal(result.draft.schedule[0].standardPayment, 10000);
+});
+
+test("strong structured OCR values are not replaced by a conflicting raw-text parse", async () => {
+  const strong = normalizeOCRResponse(structuredResponse({
+    rawText: "Chit Name: Raw Label\nTotal Months: 5\nMembers: 5\nMonthly Amount: 10000\nFixed Monthly",
+    extraction: {
+      ...structuredResponse().extraction,
+      chitName: "Verified Provider Name",
+      durationMonths: 20,
+      memberCount: 20,
+      monthlyInstallment: 5000,
+      installmentPattern: "FIXED_MONTHLY",
+      fieldResults: {
+        chitName: { value: "Verified Provider Name", confidence: 0.98, status: "FOUND", sourceText: "Verified Provider Name" },
+        durationMonths: { value: 20, confidence: 0.97, status: "FOUND", sourceText: "20 months" },
+      },
+    },
+    confidence: {
+      ...structuredResponse().confidence,
+      fieldScores: { chitName: 0.98, durationMonths: 0.97, memberCount: 0.97 },
+    },
+  }));
+  const file = new File(["image"], "strong-ocr.png", { type: "image/png" });
+  const result = await generateBusinessUnderstanding(file, {
+    workspaceId: "workspace-1",
+    ocrAdapter: { extract: async () => strong },
+  });
+  assert.equal(result.draft.business.chitName.value, "Verified Provider Name");
+  assert.equal(result.draft.business.duration.value, 20);
+  assert.equal(result.draft.schedule.length, 20);
 });

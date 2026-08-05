@@ -43,7 +43,10 @@ function Batches() {
       cancelled = true;
     };
   }, [activeTenantContext, version]);
-  const batches = useMemo(() => listBatches(activeTenantContext), [activeTenantContext, version]);
+  const batches = useMemo(() => {
+    void version;
+    return listBatches(activeTenantContext);
+  }, [activeTenantContext, version]);
   const [draft, setDraft] = useState(EMPTY_BATCH);
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState("");

@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vardhan ERP — Platform Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink: '#1A1A1A',
+            'ink-soft': '#5B5560',
+            bg: '#FFFFFF',
+            'bg-soft': '#F7F4EF',
+            maroon: '#7A1F3D',
+            'maroon-dark': '#5A1730',
+            amber: '#F0B94A',
+            'amber-soft': '#FBEED9',
+            line: 'rgba(26,26,26,0.09)',
+          },
+          fontFamily: {
+            sans: ['"IBM Plex Sans"', 'system-ui', 'sans-serif'],
+            display: ['Sora', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    h1, h2, h3, .font-display { font-family: 'Sora', system-ui, sans-serif; }
+    .card { background: #FFFFFF; border: 1px solid rgba(26,26,26,0.09); border-radius: 1rem; box-shadow: 0 1px 2px rgba(26,26,26,0.04); }
+    .btn-primary { background: #7A1F3D; color: #fff; transition: all .15s; }
+    .btn-primary:hover { background: #5A1730; }
+    .btn-amber { background: #F0B94A; color: #1A1A1A; transition: all .15s; }
+    .btn-amber:hover { background: #e0a932; }
+    .input-field { border: 1px solid rgba(26,26,26,0.15); border-radius: .5rem; padding: .55rem .75rem; font-size: .875rem; width: 100%; outline: none; transition: border .15s; background: #fff; }
+    .input-field:focus { border-color: #7A1F3D; box-shadow: 0 0 0 3px rgba(122,31,61,0.12); }
+    .label { font-size: .75rem; font-weight: 600; color: #5B5560; letter-spacing: .02em; margin-bottom: .3rem; display: block; }
+    .pill { display: inline-flex; align-items: center; gap: .4rem; padding: .28rem .7rem; border-radius: 9999px; font-size: .75rem; font-weight: 600; }
+    .pre { background: #1A1A1A; color: #8be9a0; border-radius: .75rem; padding: 1rem; font-family: ui-monospace, 'Cascadia Code', monospace; font-size: .78rem; line-height: 1.55; white-space: pre-wrap; word-break: break-word; max-height: 260px; overflow-y: auto; }
+    .dot { width: 8px; height: 8px; border-radius: 9999px; display: inline-block; }
+    .dot-live { background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,.6); animation: pulse-live 1.8s infinite; }
+    @keyframes pulse-live { 0% { box-shadow: 0 0 0 0 rgba(34,197,94,.5);} 70% { box-shadow: 0 0 0 8px rgba(34,197,94,0);} 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0);} }
+    .dot-down { background: #ef4444; }
+    .spinner { border: 3px solid rgba(122,31,61,.2); border-top-color: #7A1F3D; border-radius: 50%; width: 18px; height: 18px; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .tab-btn.active { background: #7A1F3D; color: #fff; border-color: #7A1F3D; }
+    .stat-icon { width: 44px; height: 44px; border-radius: .75rem; display: flex; align-items: center; justify-content: center; }
+    .role-badge { display: inline-flex; align-items: center; gap: .35rem; padding: .2rem .6rem; border-radius: 9999px; font-size: .68rem; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
+  </style>
+</head>
+<body class="bg-[#F7F4EF] min-h-screen">
+
+  <!-- Top Bar -->
+  <header class="bg-[#7A1F3D] text-white">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-[#F0B94A] flex items-center justify-center font-display font-bold text-[#5A1730] text-lg">V</div>
+        <div>
+          <h1 class="font-display font-bold text-lg leading-tight">Vardhan</h1>
+          <p class="text-[11px] tracking-[0.18em] uppercase text-[#FBEED9]">ERP Platform · Dashboard</p>
+        </div>
+      </div>
+      <div id="healthMini" class="pill bg-white/10 border border-white/20 text-white">
+        <span class="dot dot-down" id="healthMiniDot"></span>
+        <span id="healthMiniText">Checking…</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 py-8">
+
+    <div class="mb-8">
+      <h2 class="font-display font-bold text-2xl text-[#1A1A1A]">Platform Control Dashboard</h2>
+      <p class="text-sm text-[#5B5560] mt-1">RBAC · Single Identity Auth · Tenancy Isolation · Health Monitoring</p>
+    </div>
+
+    <!-- Platform Status Card -->
+    <section class="card p-6 mb-6">
+      <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-3">
+          <div class="stat-icon bg-[#FBEED9]">
+            <svg class="w-5 h-5 text-[#7A1F3D]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+          </div>
+          <div>
+            <h3 class="font-display font-semibold text-lg text-[#1A1A1A]">Platform Status</h3>
+            <p class="text-xs text-[#5B5560]">Health check · live indicator</p>
+          </div>
+        </div>
+        <button id="refreshHealth" class="text-xs font-semibold text-[#7A1F3D] hover:text-[#5A1730] border border-[#7A1F3D]/20 rounded-lg px-3 py-1.5 transition">↻ Refresh</button>
+      </div>
+      <div id="healthData" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-[#F7F4EF] rounded-xl p-4">
+          <p class="text-xs text-[#5B5560] font-semibold uppercase tracking-wide">Status</p>
+          <p id="healthStatus" class="mt-1 font-display font-bold text-xl text-[#1A1A1A]">Loading…</p>
+        </div>
+        <div class="bg-[#F7F4EF] rounded-xl p-4">
+          <p class="text-xs text-[#5B5560] font-semibold uppercase tracking-wide">Platform</p>
+          <p id="healthPlatform" class="mt-1 font-semibold text-sm text-[#1A1A1A]">—</p>
+        </div>
+        <div class="bg-[#F7F4EF] rounded-xl p-4">
+          <p class="text-xs text-[#5B5560] font-semibold uppercase tracking-wide">Core Engines</p>
+          <p id="healthEngines" class="mt-1 text-sm font-medium text-[#1A1A1A]">—</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <!-- Tenant Details Card -->
+      <section class="card p-6">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="stat-icon bg-[#FBEED9]">
+            <svg class="w-5 h-5 text-[#7A1F3D]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+          </div>
+          <div>
+            <h3 class="font-display font-semibold text-lg text-[#1A1A1A]">Tenant Details</h3>
+            <p class="text-xs text-[#5B5560]">Demo School · demo-school-001</p>
+          </div>
+        </div>
+        <div id="tenantLoading" class="flex items-center gap-3 py-8 justify-center">
+          <div class="spinner"></div>
+          <p class="text-sm text-[#5B5560]">Fetching tenant profile…</p>
+        </div>
+        <div id="tenantError" class="hidden bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm mb-4"></div>
+        <div id="tenantData" class="hidden">
+          <div class="bg-[#F7F4EF] rounded-xl p-5 mb-4">
+            <div class="flex items-center justify-between mb-3">
+              <h4 id="tenantName" class="font-display font-bold text-xl text-[#1A1A1A]">—</h4>
+              <span id="tenantStatusPill" class="pill bg-green-100 text-green-700"><span class="dot dot-live"></span>ACTIVE</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p class="text-xs text-[#5B5560] font-semibold uppercase tracking-wide">Tenant ID</p>
+                <p id="tenantId" class="font-mono text-xs mt-1 text-[#1A1A1A]">—</p>
+              </div>
+              <div>
+                <p class="text-xs text-[#5B5560] font-semibold uppercase tracking-wide">Slug</p>
+                <p id="tenantSlug" class="font-medium mt-1 text-[#1A1A1A]">—</p>
+              </div>
+              <div>
+                <p class="text-xs text-[#5B5560] font-semibold uppercase tracking-wide">Members</p>
+                <p id="tenantMembers" class="font-display font-bold text-2xl mt-1 text-[#7A1F3D]">—</p>
+              </div>
+              <div>
+                <p class="text-xs text-[#5B5560] font-semibold uppercase tracking-wide">Created</p>
+                <p id="tenantCreated" class="text-xs mt-1 text-[#1A1A1A]">—</p>
+              </div>
+            </div>
+          </div>
+          <div class="bg-[#FFF] border border-[#F0B94A]/30 rounded-xl p-4">
+            <p class="text-xs font-semibold text-[#7A1F3D] uppercase tracking-wide mb-1">Row-Level Isolation</p>
+            <p id="tenantIsolation" class="text-sm text-[#5B5560]">—</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Auth Console Card -->
+      <section class="card p-6">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="stat-icon bg-[#FBEED9]">
+            <svg class="w-5 h-5 text-[#7A1F3D]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          </div>
+          <div>
+            <h3 class="font-display font-semibold text-lg text-[#1A1A1A]">Auth Console</h3>
+            <p class="text-xs text-[#5B5560]">Single Identity Registration & Login</p>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex gap-2 mb-5">
+          <button data-tab="register" class="tab-btn active flex-1 text-sm font-semibold py-2.5 rounded-xl border border-[#7A1F3D]/20 transition">Register</button>
+          <button data-tab="login" class="tab-btn flex-1 text-sm font-semibold py-2.5 rounded-xl border border-[#7A1F3D]/20 transition">Login</button>
+        </div>
+
+        <!-- Register Form -->
+        <form id="registerForm" class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label" for="regFullName">Full Name</label>
+              <input id="regFullName" class="input-field" placeholder="Jane Doe" required />
+            </div>
+            <div>
+              <label class="label" for="regEmail">Email</label>
+              <input id="regEmail" type="email" class="input-field" placeholder="jane@school.com" required />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label" for="regTenantName">Tenant Name</label>
+              <input id="regTenantName" class="input-field" placeholder="My School" required />
+            </div>
+            <div>
+              <label class="label" for="regSlug">Tenant Slug</label>
+              <input id="regSlug" class="input-field" placeholder="my-school" required />
+            </div>
+          </div>
+          <div>
+            <label class="label" for="regPassword">Password</label>
+            <input id="regPassword" type="password" class="input-field" placeholder="Min 8 characters" required minlength="8" />
+          </div>
+          <button type="submit" class="btn-primary w-full font-semibold py-2.5 rounded-xl text-sm">Create Account & Tenant</button>
+        </form>
+
+        <!-- Login Form -->
+        <form id="loginForm" class="space-y-3 hidden">
+          <div>
+            <label class="label" for="loginEmail">Email</label>
+            <input id="loginEmail" type="email" class="input-field" placeholder="jane@school.com" required />
+          </div>
+          <div>
+            <label class="label" for="loginPassword">Password</label>
+            <input id="loginPassword" type="password" class="input-field" placeholder="Your password" required />
+          </div>
+          <button type="submit" class="btn-primary w-full font-semibold py-2.5 rounded-xl text-sm">Sign In</button>
+        </form>
+
+        <!-- Response Preview -->
+        <div class="mt-5">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-xs font-semibold text-[#5B5560] uppercase tracking-wide">Response Preview</p>
+            <span id="respStatus" class="pill bg-[#F7F4EF] text-[#5B5560]">—</span>
+          </div>
+          <div class="pre" id="responsePreview">{ "response": "Submit a form to see the live API response…" }</div>
+        </div>
+      </section>
+    </div>
+
+    <!-- School Module Test -->
+    <section class="card p-6 mt-6">
+      <div class="flex items-center gap-3 mb-5">
+        <div class="stat-icon bg-[#FBEED9]">
+          <svg class="w-5 h-5 text-[#7A1F3D]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v6m-6-3.5V12l6 3.5m6-3.5v4.5"/></svg>
+        </div>
+        <div>
+          <h3 class="font-display font-semibold text-lg text-[#1A1A1A]">School Module</h3>
+          <p class="text-xs text-[#5B5560]">Secured endpoints · RBAC protected</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+        <button id="testHealth" class="btn-amber font-semibold py-2.5 rounded-xl text-sm">Test /health</button>
+        <button id="testTenant" class="btn-amber font-semibold py-2.5 rounded-xl text-sm">Test /tenant/profile</button>
+        <button id="testStudents" class="btn-primary font-semibold py-2.5 rounded-xl text-sm">Test /school/students</button>
+      </div>
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-xs font-semibold text-[#5B5560] uppercase tracking-wide">School Response</p>
+        <span id="schoolRespStatus" class="pill bg-[#F7F4EF] text-[#5B5560]">—</span>
+      </div>
+      <div class="pre" id="schoolResponse">{ "response": "Click a button to test the School module endpoints…" }</div>
+      <p class="text-xs text-[#5B5560] mt-3">Note: /school/students requires a valid JWT. Sign in via the Auth Console first, then click Test /school/students.</p>
+
+      <!-- Bulk Import -->
+      <div class="mt-6 border-t border-[#1A1A1A]/10 pt-5">
+        <p class="text-xs font-semibold text-[#7A1F3D] uppercase tracking-wide mb-1">Bulk Import Students</p>
+        <p class="text-xs text-[#5B5560] mb-3">Upload a CSV or Excel (.xlsx/.xls) file with columns: Student Name, Class, Parent Phone, Previous Year Balance</p>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <input id="importFile" type="file" accept=".csv,.xlsx,.xls" class="input-field sm:flex-1" />
+          <button id="testImport" class="btn-primary font-semibold py-2.5 px-5 rounded-xl text-sm whitespace-nowrap">Import Students</button>
+        </div>
+        <p class="text-xs text-[#5B5560] mt-2">Requires a valid JWT (sign in first) and SUPER_ADMIN or ADMIN role.</p>
+      </div>
+    </section>
+
+    <!-- RBAC Role Matrix -->
+    <section class="card p-6 mt-6">
+      <div class="flex items-center gap-3 mb-5">
+        <div class="stat-icon bg-[#FBEED9]">
+          <svg class="w-5 h-5 text-[#7A1F3D]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        </div>
+        <div>
+          <h3 class="font-display font-semibold text-lg text-[#1A1A1A]">RBAC Role Matrix</h3>
+          <p class="text-xs text-[#5B5560]">SUPER_ADMIN · ADMIN · TEACHER · STUDENT</p>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left text-xs text-[#5B5560] uppercase tracking-wide border-b border-[#1A1A1A]/10">
+              <th class="py-2 pr-4">Role</th>
+              <th class="py-2 pr-4">Level</th>
+              <th class="py-2">Permissions</th>
+            </tr>
+          </thead>
+          <tbody id="roleMatrix" class="text-[#1A1A1A]"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer class="mt-10 text-center text-xs text-[#5B5560]">
+      Vardhan · ERP PLATFORM — RBAC · Single Identity · Tenant Isolation · Running on Express + Prisma
+    </footer>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    let authToken = null;
+    let authTenantId = 'demo-school-001';
+
+    const ROLE_MATRIX = [
+      { role: 'SUPER_ADMIN', level: 4, perms: ['* (full access)'] },
+      { role: 'ADMIN', level: 3, perms: ['dashboard:read', 'tenant:read', 'users:manage', 'reports:read', 'settings:write'] },
+      { role: 'TEACHER', level: 2, perms: ['dashboard:read', 'courses:read', 'courses:write', 'students:read', 'attendance:write'] },
+      { role: 'STUDENT', level: 1, perms: ['dashboard:read', 'courses:read'] },
+    ];
+
+    const ROLE_COLORS = {
+      SUPER_ADMIN: 'bg-[#7A1F3D] text-white',
+      ADMIN: 'bg-[#F0B94A] text-[#1A1A1A]',
+      TEACHER: 'bg-[#E1F2E7] text-[#1A1A1A]',
+      STUDENT: 'bg-[#EBE3F0] text-[#1A1A1A]',
+    };
+
+    function renderRoleMatrix() {
+      $('roleMatrix').innerHTML = ROLE_MATRIX.map((r) => `
+        <tr class="border-b border-[#1A1A1A]/5">
+          <td class="py-3 pr-4"><span class="role-badge ${ROLE_COLORS[r.role]}">${r.role}</span></td>
+          <td class="py-3 pr-4 font-display font-bold text-[#7A1F3D]">${r.level}</td>
+          <td class="py-3 text-[#5B5560]">${r.perms.join(' · ')}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function api(path, options = {}) {
+      const res = await fetch(path, {
+        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+        ...options,
+      });
+      let body;
+      try { body = await res.json(); } catch { body = await res.text(); }
+      return { ok: res.ok, status: res.status, body };
+    }
+
+    function showResponse(status, body) {
+      $('respStatus').textContent = status ? `HTTP ${status} ${status >= 200 && status < 300 ? '✓' : '✗'}` : '—';
+      $('respStatus').className = 'pill ' + (status >= 200 && status < 300 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700');
+      $('responsePreview').textContent = JSON.stringify(body, null, 2);
+    }
+
+    function showSchoolResponse(status, body) {
+      $('schoolRespStatus').textContent = status ? `HTTP ${status} ${status >= 200 && status < 300 ? '✓' : '✗'}` : '—';
+      $('schoolRespStatus').className = 'pill ' + (status >= 200 && status < 300 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700');
+      $('schoolResponse').textContent = JSON.stringify(body, null, 2);
+    }
+
+    // Tabs
+    document.querySelectorAll('.tab-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        const tab = btn.dataset.tab;
+        $('registerForm').classList.toggle('hidden', tab !== 'register');
+        $('loginForm').classList.toggle('hidden', tab !== 'login');
+      });
+    });
+
+    // Health check
+    async function loadHealth() {
+      const { status, body } = await api('/health');
+      $('healthMiniDot').className = 'dot ' + (status >= 200 && status < 300 ? 'dot-live' : 'dot-down');
+      $('healthMiniText').textContent = status >= 200 && status < 300 ? 'ONLINE' : 'OFFLINE';
+      $('healthStatus').textContent = body.status || 'UNKNOWN';
+      $('healthPlatform').textContent = body.platform || '—';
+      $('healthEngines').textContent = (body.coreEngines || []).join(' · ') || '—';
+    }
+    $('refreshHealth').addEventListener('click', loadHealth);
+
+    // Tenant profile
+    async function loadTenant() {
+      $('tenantLoading').classList.remove('hidden');
+      $('tenantData').classList.add('hidden');
+      $('tenantError').classList.add('hidden');
+      const { status, body } = await api('/api/v1/tenant/profile?tenantId=demo-school-001');
+      $('tenantLoading').classList.add('hidden');
+      if (status !== 200 || body.status !== 'ACTIVE') {
+        $('tenantError').classList.remove('hidden');
+        $('tenantError').textContent = 'Failed to load tenant: ' + JSON.stringify(body);
+        return;
+      }
+      const t = body.tenant;
+      $('tenantName').textContent = t.name;
+      $('tenantId').textContent = t.id;
+      $('tenantSlug').textContent = t.slug;
+      $('tenantMembers').textContent = t.memberCount;
+      $('tenantCreated').textContent = new Date(t.createdAt).toLocaleDateString();
+      $('tenantIsolation').textContent = body.context.scopedRows + ' — RLS: ' + body.context.rowLevelAccess;
+      $('tenantStatusPill').className = 'pill bg-green-100 text-green-700';
+      $('tenantData').classList.remove('hidden');
+    }
+
+    // Register
+    $('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      showResponse(null, { loading: true });
+      const payload = {
+        fullName: $('regFullName').value.trim(),
+        email: $('regEmail').value.trim(),
+        tenantName: $('regTenantName').value.trim(),
+        tenantSlug: $('regSlug').value.trim(),
+        password: $('regPassword').value,
+      };
+      const { status, body } = await api('/api/v1/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      showResponse(status, body);
+    });
+
+    // Login
+    $('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      showResponse(null, { loading: true });
+      const payload = {
+        email: $('loginEmail').value.trim(),
+        password: $('loginPassword').value,
+      };
+      const { status, body } = await api('/api/v1/auth/login', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      showResponse(status, body);
+      if (status >= 200 && status < 300 && body.token) {
+        authToken = body.token;
+        authTenantId = (body.tenant && body.tenant.slug) || 'demo-school-001';
+      }
+    });
+
+    // School module test buttons
+    $('testHealth').addEventListener('click', async () => {
+      showSchoolResponse(null, { loading: true });
+      const { status, body } = await api('/health');
+      showSchoolResponse(status, body);
+    });
+
+    $('testTenant').addEventListener('click', async () => {
+      showSchoolResponse(null, { loading: true });
+      const { status, body } = await api('/api/v1/tenant/profile?tenantId=' + encodeURIComponent(authTenantId));
+      showSchoolResponse(status, body);
+    });
+
+    $('testStudents').addEventListener('click', async () => {
+      showSchoolResponse(null, { loading: true });
+      if (!authToken) {
+        showSchoolResponse(401, { error: 'No JWT token. Sign in via the Auth Console first.' });
+        return;
+      }
+      const { status, body } = await api('/api/v1/school/students?tenantId=' + encodeURIComponent(authTenantId), {
+        headers: { Authorization: 'Bearer ' + authToken },
+      });
+      showSchoolResponse(status, body);
+    });
+
+    // Bulk import students
+    $('testImport').addEventListener('click', async () => {
+      showSchoolResponse(null, { loading: true });
+      if (!authToken) {
+        showSchoolResponse(401, { error: 'No JWT token. Sign in via the Auth Console first.' });
+        return;
+      }
+      const fileInput = $('importFile');
+      if (!fileInput.files || fileInput.files.length === 0) {
+        showSchoolResponse(400, { error: 'Please select a CSV or Excel file to import.' });
+        return;
+      }
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+      const res = await fetch('/api/v1/school/import-students?tenantId=' + encodeURIComponent(authTenantId), {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + authToken },
+        body: formData,
+      });
+      let body;
+      try { body = await res.json(); } catch { body = await res.text(); }
+      showSchoolResponse(res.status, body);
+    });
+
+    // Init
+    renderRoleMatrix();
+    loadHealth();
+    loadTenant();
+    setInterval(loadHealth, 15000); // auto-refresh health every 15s
+  </script>
+</body>
+</html>

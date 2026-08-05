@@ -235,16 +235,17 @@ class GeminiVisionProvider:
                     "OCR_TIMEOUT", "Vision provider request timed out.", retryable=True
                 ) from exc
             except VisionProviderError as exc:
-                # Structured generation can be substantially slower than plain JSON.
-                # Do not spend the entire request budget retrying it; a timeout or an
-                # unsupported-schema response should fall through to the compatible
-                # plain-JSON strategy.
-                if strategy_name == "structured" and (
-                    exc.code == "OCR_TIMEOUT" or "HTTP 400" in exc.message
-                ):
+                # Fall through to the next compatible strategy when structured JSON
+                # is unsupported, times out, or the provider emits malformed JSON.
+                # The final text strategy preserves visible evidence for deterministic
+                # parsing in the browser instead of failing the entire upload.
+                can_fallback = strategy_name != "text" and (
+                    exc.code in {"OCR_TIMEOUT", "OCR_SCHEMA_INVALID"}
+                    or "HTTP 400" in exc.message
+                )
+                if can_fallback:
                     last_error = exc
                     continue
-                # For other errors, raise immediately
                 raise
 
         # If all strategies failed
@@ -467,6 +468,11 @@ def build_extraction_prompt(document_type: str, language_hint: str) -> str:
         "Use null or UNKNOWN for missing values and [] for absent tables. "
         "installmentPattern must be FIXED_MONTHLY, VARIABLE_MONTHLY, "
         "LIFTED_NON_LIFTED, CUSTOM_RULE, or UNKNOWN. "
+        "Do not confuse memberCount with durationMonths. A number beside members/tickets is memberCount, "
+        "and a number beside months/duration/tenure is durationMonths. If the evidence is ambiguous, return null. "
+        "When a month-wise table is visible, extract every readable row into installmentSchedule in row order. "
+        "Use the table month number/label as monthNumber/monthLabel and preserve unreadable cells as null. "
+        "If a schedule table is visible but cannot be fully read, return the readable rows and add a warning; do not return an empty schedule silently. "
         f"Document type: {document_type}. Language hint: {language_hint}."
     )
 

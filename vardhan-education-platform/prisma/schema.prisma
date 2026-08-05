@@ -1,0 +1,48 @@
+// Vardhan Education Platform — Prisma schema
+// Single Identity: one User can belong to many Tenants via TenantMembership.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships TenantMembership[]
+  users       User[]             @relation("UserTenants")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  fullName     String
+  role         String   @default("viewer")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  memberships TenantMembership[]
+  tenants     Tenant[]             @relation("UserTenants")
+}
+
+model TenantMembership {
+  id       String @id @default(uuid())
+  tenantId String
+  userId   String
+  role     String @default("viewer")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+}

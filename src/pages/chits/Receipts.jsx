@@ -25,7 +25,10 @@ function Receipts() {
   const [version, setVersion] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const pageModel = useMemo(
-    () => getReceiptPageModel(activeTenantContext),
+    () => {
+      void version;
+      return getReceiptPageModel(activeTenantContext);
+    },
     [activeTenantContext, version]
   );
 

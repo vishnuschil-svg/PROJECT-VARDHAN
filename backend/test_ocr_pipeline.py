@@ -93,6 +93,25 @@ class StructuredTimeoutThenSuccessTransport:
         return self.response
 
 
+class InvalidJsonThenTextTransport:
+    def __init__(self):
+        self.calls = 0
+        self.payloads = []
+
+    async def request(self, method, url, *, headers, payload, timeout_seconds):
+        self.calls += 1
+        self.payloads.append(payload)
+        text = "not valid json" if self.calls < 3 else (
+            "Chit Name: OCR Text Trial\n"
+            "Chit Value: 50000\n"
+            "Total Months: 5\n"
+            "Total Members: 5\n"
+            "Monthly Amount: 10000\n"
+            "Installment Pattern: Fixed Monthly"
+        )
+        return {"candidates": [{"content": {"parts": [{"text": text}]}}]}
+
+
 class OCRSchemaTests(unittest.TestCase):
     def test_strict_structured_output_and_math_normalization(self):
         result = ProviderExtractionResult.model_validate(provider_payload())
@@ -115,6 +134,25 @@ class OCRSchemaTests(unittest.TestCase):
     def test_empty_extraction_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "DOCUMENT_UNREADABLE"):
             normalize_provider_result(ProviderExtractionResult())
+
+    def test_ambiguous_duration_copied_from_member_count_is_removed(self):
+        payload = provider_payload(confidence=0.62)
+        payload["extraction"]["chitName"] = "Trial"
+        payload["extraction"]["durationMonths"] = 50
+        payload["extraction"]["memberCount"] = 50
+        payload["extraction"]["fieldResults"] = {
+            "durationMonths": {
+                "value": 50,
+                "confidence": 0.42,
+                "status": "AMBIGUOUS",
+                "sourceText": "50 members",
+            }
+        }
+        payload["confidence"]["fieldScores"] = {"durationMonths": 0.42, "memberCount": 0.96}
+        normalized = normalize_provider_result(ProviderExtractionResult.model_validate(payload))
+        self.assertIsNone(normalized.extraction.durationMonths)
+        self.assertIn("durationMonths", normalized.missingFields)
+        self.assertTrue(normalized.confidence.requiresHumanReview)
 
     def test_gemini_extras_and_quirks_are_tolerated_on_ingest(self):
         """Application schema validation must not fail solely on Gemini extras/enums."""
@@ -304,6 +342,25 @@ class GeminiProviderTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(2, transport.calls)
         self.assertIn("responseSchema", transport.payloads[0]["generationConfig"])
         self.assertNotIn("responseSchema", transport.payloads[1]["generationConfig"])
+
+    async def test_invalid_structured_json_falls_back_to_visible_text(self):
+        transport = InvalidJsonThenTextTransport()
+        provider = GeminiVisionProvider(
+            api_key="test-only-key",
+            transport=transport,
+        )
+
+        result = await provider.extractDocument(
+            content=b"x",
+            mime_type="image/png",
+            document_type="CHIT_REGISTER",
+            language_hint="ENGLISH",
+        )
+
+        self.assertEqual(3, transport.calls)
+        self.assertIn("Chit Name: OCR Text Trial", result.rawText)
+        self.assertTrue(result.confidence.requiresHumanReview)
+        self.assertEqual([], result.extraction.installmentSchedule)
 
     async def test_common_member_aliases_are_canonicalized_before_validation(self):
         payload = provider_payload()

@@ -177,7 +177,8 @@ export function normalizeOCRResponse(result) {
     "chitName", "chitValue", "durationMonths", "memberCount", "monthlyInstallment",
   ].some((key) => result.extraction[key] !== null && result.extraction[key] !== undefined && result.extraction[key] !== "")
     || (Array.isArray(result.extraction.installmentSchedule) && result.extraction.installmentSchedule.length > 0);
-  if (!hasExtractedValue) {
+  const hasRawText = typeof result.rawText === "string" && result.rawText.trim().length > 0;
+  if (!hasExtractedValue && !hasRawText) {
     throw new OCRProviderError(
       "DOCUMENT_UNREADABLE",
       "No usable chit details were extracted from the document."
@@ -222,20 +223,42 @@ export const ExternalOCRProviderAdapter = createExternalOCRProviderAdapter({
 
 async function readJsonSafely(response) {
   const contentType = response.headers?.get?.("content-type") || "";
+  const status = Number(response.status || 0);
   if (contentType && !contentType.toLowerCase().includes("json")) {
+    if (status === 504) {
+      throw new OCRProviderError(
+        "OCR_TIMEOUT",
+        "The OCR backend timed out. Retry after the backend is healthy.",
+        { status, retryable: true }
+      );
+    }
+    if (status >= 500 || status === 0) {
+      throw new OCRProviderError(
+        "OCR_PROVIDER_UNAVAILABLE",
+        "The OCR backend is unavailable. Start the VARDHAN full development server and retry.",
+        { status, retryable: true }
+      );
+    }
     throw new OCRProviderError(
       "OCR_SCHEMA_INVALID",
       "Document extraction service returned a non-JSON response.",
-      { status: response.status }
+      { status }
     );
   }
   try {
     return await response.json();
   } catch (error) {
+    if (status >= 500 || status === 0) {
+      throw new OCRProviderError(
+        "OCR_PROVIDER_UNAVAILABLE",
+        "The OCR backend returned an unreadable gateway response. Retry after the backend is healthy.",
+        { status, retryable: true, cause: error }
+      );
+    }
     throw new OCRProviderError(
       "OCR_SCHEMA_INVALID",
       "Document extraction service returned invalid JSON.",
-      { status: response.status, cause: error }
+      { status, cause: error }
     );
   }
 }

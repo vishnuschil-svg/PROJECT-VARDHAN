@@ -30,7 +30,7 @@ export default function ChitCompletionPage() {
       .then((rows) => {
         if (cancelled) return;
         setGroups(rows);
-        if (!groupId && rows[0]?.id) setGroupId(rows[0].id);
+        setGroupId((current) => current || rows[0]?.id || "");
       })
       .catch((err) => { if (!cancelled) setError(err.message); });
     return () => { cancelled = true; };

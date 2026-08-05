@@ -11,7 +11,7 @@ export class SMSProvider {
   /**
    * Send an SMS
    */
-  async sendSMS({ to, message, from }) {
+  async sendSMS({ _to, _message, _from }) {
     throw new Error("sendSMS must be implemented by subclass");
   }
 
@@ -37,7 +37,7 @@ export class SMSProvider {
   validatePhone(phone) {
     // Basic phone validation (international format)
     const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-    return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''));
+    return phoneRegex.test(phone.replace(/[\s\-()]/g, ''));
   }
 
   /**
@@ -59,7 +59,7 @@ export class TwilioSMSProvider extends SMSProvider {
     this.fromNumber = config.fromNumber || config.from;
   }
 
-  async sendSMS({ to, message, from }) {
+  async sendSMS({ _to, _message, _from }) {
     if (!this.isEnabled()) {
       throw new Error("Twilio provider is not enabled");
     }
@@ -89,7 +89,7 @@ export class SupabaseSMSProvider extends SMSProvider {
     this.supabaseKey = config.supabaseKey;
   }
 
-  async sendSMS({ to, message, from }) {
+  async sendSMS({ _to, _message, _from }) {
     if (!this.isEnabled()) {
       throw new Error("Supabase SMS provider is not enabled");
     }
@@ -112,7 +112,7 @@ export class AWSSNSSMSProvider extends SMSProvider {
     this.fromNumber = config.fromNumber || config.from;
   }
 
-  async sendSMS({ to, message, from }) {
+  async sendSMS({ _to, _message, _from }) {
     if (!this.isEnabled()) {
       throw new Error("AWS SNS provider is not enabled");
     }

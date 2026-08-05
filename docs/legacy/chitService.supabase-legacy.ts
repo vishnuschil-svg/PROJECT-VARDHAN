@@ -353,7 +353,7 @@ export const chitCollectionsService = {
       }
 
       // Add collection item
-      const { data: item, error: itemError } = await supabase
+      const { data: _item, error: itemError } = await supabase
         .from('chit_collection_items')
         .insert([
           {

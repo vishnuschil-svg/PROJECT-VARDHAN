@@ -46,7 +46,7 @@ export default function MonthClosingPage() {
         setCollections(nextCollections);
         setWinners(nextWinners || []);
         setClosings(nextClosings || []);
-        if (!groupId && nextGroups[0]?.id) setGroupId(nextGroups[0].id);
+        setGroupId((current) => current || nextGroups[0]?.id || "");
       } catch (err) {
         if (!cancelled) setError(err.message);
       }

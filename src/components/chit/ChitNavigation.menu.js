@@ -1,0 +1,15 @@
+export const CHIT_MENU = [
+  { label: "Dashboard", icon: "📊", path: "/chits" },
+  { label: "Chit Batches", icon: "👥", path: "/chits/groups" },
+  { label: "Members", icon: "👤", path: "/chits/members" },
+  { label: "Collections", icon: "💰", path: "/chits/collections" },
+  { label: "Pending Collections", icon: "⏳", path: "/chits/collections/pending" },
+  { label: "Auctions", icon: "🎯", path: "/chits/auctions" },
+  { label: "Payouts", icon: "💳", path: "/chits/payouts" },
+  { label: "Dividends", icon: "📈", path: "/chits/dividends" },
+  { label: "Payment Receipts", icon: "📄", path: "/chits/receipts" },
+  { label: "Reports", icon: "📋", path: "/chits/reports" },
+  { label: "Documents", icon: "📁", path: "/chits/documents" },
+  { label: "Reminders", icon: "🔔", path: "/chits/notifications" },
+  { label: "Settings", icon: "⚙️", path: "/chits/settings" },
+];

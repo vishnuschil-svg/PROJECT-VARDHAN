@@ -7,7 +7,7 @@ export function getReportsDashboardModel(activeTenantContext) {
 }
 
 export function getReportCatalog(activeTenantContext) {
-  const source = ReportsRepository.getReportSource(activeTenantContext);
+  void activeTenantContext;
   return ReportsEngine.getDefinitions().map((definition) => ({
     ...definition,
     route: "/chits/reports",

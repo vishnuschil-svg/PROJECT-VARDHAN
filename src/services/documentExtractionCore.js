@@ -89,11 +89,12 @@ export async function extractDocumentEvidence(file, {
         languageHint,
         signal,
       });
+      const normalizedProviderEvidence = normalizeProviderEvidence(result);
       return buildEvidence({
         rawText: result.rawText,
-        rows: result.extraction.installmentSchedule,
-        members: result.extraction.members,
-        structuredExtraction: result.extraction,
+        rows: normalizedProviderEvidence.rows,
+        members: normalizedProviderEvidence.members,
+        structuredExtraction: normalizedProviderEvidence.structuredExtraction,
         provider: result.provider,
         status: EXTRACTION_STATUS.SUCCESS,
         file,
@@ -108,10 +109,15 @@ export async function extractDocumentEvidence(file, {
           fieldScores: result.confidence.fieldScores,
           fieldResults: result.extraction.fieldResults || {},
           unrecognizedText: result.extraction.unrecognizedText || [],
-          requiresHumanReview: result.confidence.requiresHumanReview,
+          requiresHumanReview: result.confidence.requiresHumanReview || normalizedProviderEvidence.usedRawTextFallback,
           mathValidated: result.confidence.mathValidated,
           missingFields: result.missingFields,
-          warnings: result.warnings,
+          warnings: [
+            ...(result.warnings || []),
+            ...(normalizedProviderEvidence.usedRawTextFallback
+              ? ["Structured OCR was unavailable; visible provider text was parsed deterministically."]
+              : []),
+          ],
         },
       });
     } catch (error) {
@@ -128,6 +134,91 @@ export async function extractDocumentEvidence(file, {
   }
 
   return manualFallback(file, manualText, members);
+}
+
+
+function normalizeProviderEvidence(result) {
+  const providerExtraction = result?.extraction && typeof result.extraction === "object"
+    ? result.extraction
+    : {};
+  let rows = Array.isArray(providerExtraction.installmentSchedule)
+    ? providerExtraction.installmentSchedule
+    : [];
+  const members = Array.isArray(providerExtraction.members)
+    ? providerExtraction.members
+    : [];
+  const rawText = String(result?.rawText || "").trim();
+  const parsed = rawText ? parseChitNaturalText(rawText) : {};
+  const fieldScores = result?.confidence?.fieldScores || {};
+  const fieldResults = providerExtraction.fieldResults || {};
+
+  const fieldQuality = (key) => {
+    const resultItem = fieldResults?.[key] || {};
+    const score = Number(resultItem.confidence ?? fieldScores?.[key] ?? 0);
+    const status = String(resultItem.status || "").toUpperCase();
+    const hasEvidence = Boolean(String(resultItem.sourceText || "").trim());
+    return { score: Number.isFinite(score) ? score : 0, status, hasEvidence };
+  };
+  const missing = (value) => value === null || value === undefined || value === "" || value === "UNKNOWN";
+  const choose = (key, providerValue, parsedValue) => {
+    if (missing(providerValue)) return missing(parsedValue) ? null : parsedValue;
+    if (missing(parsedValue)) return providerValue;
+    const quality = fieldQuality(key);
+    if (["AMBIGUOUS", "INVALID", "NOT_FOUND"].includes(quality.status)) return parsedValue;
+    if (quality.score > 0 && quality.score < 0.7) return parsedValue;
+    return providerValue;
+  };
+
+  let durationMonths = choose("durationMonths", providerExtraction.durationMonths, parsed.duration);
+  const memberCount = choose("memberCount", providerExtraction.memberCount, parsed.memberCount);
+  const parsedDuration = Number(parsed.duration);
+  const providerDuration = Number(providerExtraction.durationMonths);
+  const providerMemberCount = Number(providerExtraction.memberCount);
+  const durationQuality = fieldQuality("durationMonths");
+  const explicitParsedDuration = Number.isInteger(parsedDuration) && parsedDuration > 0;
+  const suspiciousDuration = (
+    rows.length === 0
+    && explicitParsedDuration
+    && Number.isFinite(providerDuration)
+    && providerDuration !== parsedDuration
+    && (
+      providerDuration === providerMemberCount
+      || durationQuality.status === "AMBIGUOUS"
+      || durationQuality.status === "INVALID"
+      || (durationQuality.score > 0 && durationQuality.score < 0.8)
+      || !durationQuality.hasEvidence
+    )
+  );
+  if (suspiciousDuration) durationMonths = parsedDuration;
+
+  const structuredExtraction = {
+    ...providerExtraction,
+    chitName: choose("chitName", providerExtraction.chitName, parsed.chitName),
+    chitCode: choose("chitCode", providerExtraction.chitCode, parsed.chitCode),
+    organizerName: choose("organizerName", providerExtraction.organizerName, parsed.organizerName),
+    chitValue: choose("chitValue", providerExtraction.chitValue, parsed.chitValue),
+    durationMonths,
+    memberCount,
+    monthlyInstallment: choose("monthlyInstallment", providerExtraction.monthlyInstallment, parsed.monthlyPayment),
+    installmentPattern: providerExtraction.installmentPattern && providerExtraction.installmentPattern !== "UNKNOWN"
+      ? providerExtraction.installmentPattern
+      : parsed.installmentPattern,
+    startDate: choose("startDate", providerExtraction.startDate, parsed.startDate),
+    endDate: choose("endDate", providerExtraction.endDate, parsed.endDate),
+    members,
+    installmentSchedule: rows,
+  };
+
+  if (rows.length === 0) rows = deriveExplicitFixedSchedule(structuredExtraction);
+  structuredExtraction.installmentSchedule = rows;
+
+  const usedRawTextFallback = Boolean(rawText) && [
+    "chitName", "chitCode", "organizerName", "chitValue", "durationMonths",
+    "memberCount", "monthlyInstallment", "startDate", "endDate",
+  ].some((key) => structuredExtraction[key] !== providerExtraction[key])
+    || (rows.length > 0 && (!providerExtraction.installmentSchedule || providerExtraction.installmentSchedule.length === 0));
+
+  return { structuredExtraction, rows, members, usedRawTextFallback };
 }
 
 function manualFallback(file, manualText, members, providerError) {

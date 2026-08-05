@@ -1,3 +1,4 @@
+/* eslint-disable react/only-export-components */
 import { createContext, useCallback, useEffect, useState } from "react";
 import { PermissionService, SessionService, WorkspaceService } from "../services/auth";
 import { SupabaseAuthService } from "../services/auth/SupabaseAuthService";

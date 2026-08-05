@@ -17,7 +17,7 @@ export function evaluatePublicRoute({ user, redirectAuthenticated = false } = {}
   return { result: ROUTE_GUARD_RESULT.ALLOW };
 }
 
-export function evaluateProtectedRoute({ user, profile, role, loading } = {}) {
+export function evaluateProtectedRoute({ user, profile, _role, loading } = {}) {
   if (loading) {
     return { result: ROUTE_GUARD_RESULT.ALLOW, loading: true };
   }

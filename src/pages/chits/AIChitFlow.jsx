@@ -14,17 +14,26 @@ import {
   confirmBusinessUnderstanding,
   createChitFromBusinessUnderstanding,
   evaluateCreationReadiness,
+  loadBusinessUnderstandingDraft,
   saveBusinessUnderstandingDraft,
 } from "../../services/universalBusinessRuleService";
 import { listTenantGroups, listTenantGroupsPersistent } from "../../services/chitDataService";
 import { getFinanceDashboardSummary } from "../../services/financeService";
-import { VALUE_STATE, RULE_STATE } from "../../domain/chit/services/UniversalBusinessRuleEngine";
+import { VALUE_STATE } from "../../domain/chit/services/UniversalBusinessRuleEngine";
 import { validateDraft, VALIDATION_STATUS } from "../../domain/chit/validation/ValidationService";
 import { mapDraftToBusinessDSL } from "../../domain/chit/dsl/BusinessDSLMapper";
 import { BUSINESS_DSL_STATUS } from "../../domain/chit/dsl/BusinessDSLModel";
 import { simulateBusinessDSL, SIMULATION_STATUS } from "../../domain/chit/simulation/SimulationEngine";
 import { FIELD_STATUS } from "../../domain/chit/services/ChitDocumentUnderstandingEngine";
-import { AI_ANALYSIS_STAGES, canCreateFromAnalysis, confidenceStatus, flowStorageKey, resolveReviewItem, stepFromPath } from "../../config/aiChitFlow";
+import {
+  aiChitPath,
+  buildOwnerConfirmedFixedSchedule,
+  confidenceStatus,
+  draftIdFromSearch,
+  flowStorageKey,
+  isPersistedDraftId,
+  stepFromPath,
+} from "../../config/aiChitFlow";
 import "./AIChitFlow.css";
 
 const EDITABLE_BUSINESS_FIELDS = Object.freeze([
@@ -91,18 +100,88 @@ function AIChitFlow() {
   const { activeTenantContext, profile } = useAuth();
   const key = flowStorageKey(activeTenantContext);
   const step = stepFromPath(location.pathname);
+  const routeDraftId = draftIdFromSearch(location.search);
   const [state, setState] = useState(() => readState(key));
+  const [draftLoad, setDraftLoad] = useState({ status: "idle", error: "" });
   useEffect(() => setState(readState(key)), [key]);
   useEffect(() => {
     if (state.draft || state.created) sessionStorage.setItem(key, JSON.stringify(state));
+    else sessionStorage.removeItem(key);
   }, [key, state]);
   const update = (patch) => setState((current) => ({ ...current, ...patch }));
-  const go = (target) => navigate(`/chits/ai-chit${target ? `/${target}` : ""}`);
+  const replaceState = (nextState) => setState(nextState || {});
+  const resetFlow = () => {
+    sessionStorage.removeItem(key);
+    setState({});
+    setDraftLoad({ status: "idle", error: "" });
+  };
+  const go = (target, options = {}) => {
+    const preserveDraft = !["", "welcome", "upload"].includes(target);
+    const candidateId = options.draftId ?? state.savedExtractionId ?? routeDraftId;
+    const durableId = preserveDraft && isPersistedDraftId(candidateId) ? candidateId : "";
+    navigate(aiChitPath(target, durableId), { replace: Boolean(options.replace) });
+  };
   const requiresAnalysis = !["welcome", "upload"].includes(step);
+
+  const tenantId = activeTenantContext?.tenant_id || "";
+  const dataScope = activeTenantContext?.data_scope || "";
+  const workspaceId = activeTenantContext?.workspace_id || activeTenantContext?.workspaceId || "";
+
   useEffect(() => {
-    if (requiresAnalysis && !state.draft && !state.created)
+    if (!requiresAnalysis || !routeDraftId) {
+      setDraftLoad((current) => current.status === "loading" ? { status: "idle", error: "" } : current);
+      return undefined;
+    }
+    if (!isPersistedDraftId(routeDraftId)) {
+      setDraftLoad({ status: "error", error: "The draft link is invalid. Start a new upload." });
+      return undefined;
+    }
+    if (state.draft && state.savedExtractionId === routeDraftId) {
+      setDraftLoad({ status: "ready", error: "" });
+      return undefined;
+    }
+    if (!tenantId || !dataScope || !workspaceId) {
+      setDraftLoad({ status: "loading", error: "" });
+      return undefined;
+    }
+
+    let active = true;
+    setDraftLoad({ status: "loading", error: "" });
+    loadBusinessUnderstandingDraft(routeDraftId, {
+      tenant_id: tenantId,
+      data_scope: dataScope,
+      workspace_id: workspaceId,
+    })
+      .then((saved) => {
+        if (!active) return;
+        if (!saved?.parsed_draft) {
+          throw new Error("The saved chit draft was not found in this workspace.");
+        }
+        const loadedDraft = saved.parsed_draft;
+        setState((current) => ({
+          ...current,
+          draft: loadedDraft,
+          validation: validateDraft(loadedDraft),
+          normalizedJSON: null,
+          analysis: null,
+          created: null,
+          confirmed: Boolean(loadedDraft?.workspace?.ownerConfirmed),
+          savedExtractionId: saved.id,
+          draftSaveStatus: saved.status,
+        }));
+        setDraftLoad({ status: "ready", error: "" });
+      })
+      .catch((error) => {
+        if (!active) return;
+        setDraftLoad({ status: "error", error: error?.message || "Saved draft could not be loaded." });
+      });
+    return () => { active = false; };
+  }, [dataScope, requiresAnalysis, routeDraftId, state.draft, state.savedExtractionId, tenantId, workspaceId]);
+
+  useEffect(() => {
+    if (requiresAnalysis && !state.draft && !state.created && !routeDraftId && draftLoad.status !== "loading")
       navigate("/chits/ai-chit/upload", { replace: true });
-  }, [navigate, requiresAnalysis, state.draft, state.created]);
+  }, [draftLoad.status, navigate, requiresAnalysis, routeDraftId, state.draft, state.created]);
 
   const meta = STEP_META[step] || STEP_META.welcome;
 
@@ -112,8 +191,24 @@ function AIChitFlow() {
         <FlowHeader step={step} onBack={() => navigate(-1)} />
         <main className="ai-chit-main">
           {step === "welcome" && <Welcome go={go} context={activeTenantContext} profile={profile} />}
-          {step === "upload" && <UploadScreen state={state} update={update} go={go} context={activeTenantContext} />}
-          {(step === "analyzing" || step === "summary" || step === "details" || step === "schedule" || step === "rules" || step === "terms" || step === "review") && (
+          {step === "upload" && (
+            <UploadScreen
+              state={state}
+              replaceState={replaceState}
+              resetFlow={resetFlow}
+              go={go}
+              context={activeTenantContext}
+            />
+          )}
+          {requiresAnalysis && draftLoad.status === "loading" && (
+            <StepCard eyebrow="Saved draft" title="Loading your chit draft" subtitle="Restoring the tenant-scoped draft from Supabase before simulation." />
+          )}
+          {requiresAnalysis && draftLoad.status === "error" && (
+            <StepCard eyebrow="Saved draft" title="Draft could not be loaded" subtitle={draftLoad.error}>
+              <button type="button" className="primary" onClick={() => go("upload", { replace: true })}>Return to upload</button>
+            </StepCard>
+          )}
+          {(step === "analyzing" || step === "summary" || step === "details" || step === "schedule" || step === "rules" || step === "terms" || step === "review") && draftLoad.status !== "loading" && draftLoad.status !== "error" && (
             <BusinessWorkspace
               draft={state.draft}
               setDraft={(d) => update({ draft: d })}
@@ -170,7 +265,7 @@ function Welcome({ go, context, profile }) {
   );
 }
 
-function UploadScreen({ state, update, go, context }) {
+function UploadScreen({ state, replaceState, resetFlow, go, context }) {
   const fileRef = useRef();
   const cameraRef = useRef();
   const manualRef = useRef();
@@ -213,7 +308,9 @@ function UploadScreen({ state, update, go, context }) {
   })();
 
   const choose = (selected) => {
+    resetFlow();
     setFile(selected);
+    setName("");
     setError("");
     setErrorCode("");
     setRetryCount(0);
@@ -224,6 +321,7 @@ function UploadScreen({ state, update, go, context }) {
     event.target.value = "";
   };
   const removeFile = () => {
+    resetFlow();
     setFile(null);
     setPreviewUrl("");
     setError("");
@@ -247,6 +345,7 @@ function UploadScreen({ state, update, go, context }) {
     setErrorCode("");
     setPhase("uploading");
     setStageIndex(0);
+    resetFlow();
     try {
       await new Promise((resolve) => requestAnimationFrame(resolve));
       setPhase("extracting");
@@ -266,7 +365,8 @@ function UploadScreen({ state, update, go, context }) {
         : confidence >= 0.70
           ? "low_confidence"
           : "manual_confirmation_required";
-      update({
+      const saved = await saveBusinessUnderstandingDraft(draft, context);
+      replaceState({
         draft,
         validation,
         normalizedJSON,
@@ -278,9 +378,11 @@ function UploadScreen({ state, update, go, context }) {
         extractionConfidence: confidence,
         extractionWarnings: warnings,
         reviewState,
+        savedExtractionId: saved.id,
+        draftSaveStatus: saved.status,
       });
       setRetryCount(0);
-      go("review");
+      go("review", { draftId: saved.id });
     } catch (e) {
       const code = e?.code || "OCR_FAILED";
       setErrorCode(code);
@@ -422,7 +524,7 @@ function UploadScreen({ state, update, go, context }) {
  * Never reads directly from OCR or AI output.
  * "Create Chit Group" enabled ONLY when validation == VALID.
  */
-export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJSON, analysisLegacy, state, update, go, context, step }) {
+export function BusinessWorkspace({ draft, setDraft, setValidation, _normalizedJSON, analysisLegacy, state, update, go, context, step }) {
   const [activeSection, setActiveSection] = useState("schedule");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -578,6 +680,23 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
     }));
   };
 
+  const rebuildFixedSchedule = () => {
+    if (!draftMode) return;
+    setError("");
+    try {
+      const nextSchedule = buildOwnerConfirmedFixedSchedule({
+        duration: draftFieldValue("duration"),
+        grossInstallment: draftFieldValue("grossInstallment"),
+        installmentPattern: draftFieldValue("installmentPattern"),
+      });
+      replaceSchedule(nextSchedule);
+      setActiveSection("schedule");
+    } catch (scheduleError) {
+      setError(scheduleError?.message || "Schedule rebuild failed.");
+      setActiveSection("core");
+    }
+  };
+
   // Toggle rule confirmation
   const toggleRule = (ruleKey, confirmed) => {
     if (draftMode) {
@@ -601,7 +720,7 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
     }
   };
 
-  const setFieldAsOwnerDefined = (key, value) => {
+  const _setFieldAsOwnerDefined = (key, value) => {
     if (key === null || key === undefined) return;
     updateField(key, value);
   };
@@ -634,8 +753,11 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
     setSaving(true);
     setError("");
     try {
-      const saved = await saveBusinessUnderstandingDraft(draft, context);
+      const saved = await saveBusinessUnderstandingDraft(draft, context, {
+        extractionId: state.savedExtractionId,
+      });
       update({ savedExtractionId: saved.id, draftSaveStatus: saved.status });
+      go(step, { draftId: saved.id, replace: true });
     } catch (e) {
       setError(e.message || "Draft save failed. Retry after checking your connection.");
     } finally {
@@ -856,6 +978,9 @@ export function BusinessWorkspace({ draft, setDraft, setValidation, normalizedJS
             <div className="bw-schedule-actions">
               <button type="button" onClick={addMissingScheduleRow}>Add missing row</button>
               <button type="button" onClick={deleteDuplicateScheduleRows}>Delete duplicate row</button>
+              {draftMode && (schedule.length === 0 || Number(draftFieldValue("duration")) !== schedule.length) && (
+                <button type="button" onClick={rebuildFixedSchedule}>Rebuild fixed schedule from confirmed fields</button>
+              )}
             </div>
             {schedule.length === 0 && (
               <div className="bw-empty-state">No schedule data extracted from the document.</div>

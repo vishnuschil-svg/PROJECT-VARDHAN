@@ -328,7 +328,6 @@ function applyExplicitFixedScheduleCorrections(draft, review) {
   return {
     ...draft,
     schedule: Array.from({ length: duration }, (_, index) => ({
-      standardPayment: amount,
       nonLiftedPayment: null,
       liftedPayment: null,
       prizeAmount: null,

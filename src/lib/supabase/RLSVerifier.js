@@ -1,5 +1,5 @@
 import { SupabaseRepository } from "./SupabaseRepository.js";
-import { getTenantScope, requireTenantScope } from "./SupabaseRepository.js";
+import { requireTenantScope } from "./SupabaseRepository.js";
 
 /**
  * RLS (Row Level Security) Verifier
@@ -480,7 +480,7 @@ export class RLSVerifier {
         status: "pass",
         message: "Cross-tenant access properly denied",
       };
-    } catch (error) {
+    } catch {
       // Errors are acceptable for cross-tenant access attempts
       return {
         status: "pass",

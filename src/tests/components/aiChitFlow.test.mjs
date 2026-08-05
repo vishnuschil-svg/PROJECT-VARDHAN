@@ -1,7 +1,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { AI_ANALYSIS_STAGES, AI_CHIT_STEPS, canCreateFromAnalysis, confidenceStatus, flowStorageKey, resolveReviewItem, stepFromPath } from "../../config/aiChitFlow.js";
+import {
+  AI_ANALYSIS_STAGES,
+  AI_CHIT_STEPS,
+  aiChitPath,
+  buildOwnerConfirmedFixedSchedule,
+  canCreateFromAnalysis,
+  confidenceStatus,
+  draftIdFromSearch,
+  flowStorageKey,
+  isPersistedDraftId,
+  resolveReviewItem,
+  stepFromPath,
+} from "../../config/aiChitFlow.js";
 import { ChitDocumentUnderstandingEngine } from "../../domain/chit/services/ChitDocumentUnderstandingEngine.js";
 
 test("AI chit journey has the approved ten-screen route order and refresh resolution", () => {
@@ -33,9 +45,21 @@ test("confidence, missing rows, rule decisions, terms and final confirmation are
   assert.equal(canCreateFromAnalysis({missingInformation:["duration"]},true), false);
 });
 
-test("flow persistence key is tenant and data-scope isolated", () => {
+test("flow persistence key is tenant, data-scope, and workspace isolated", () => {
   assert.notEqual(flowStorageKey({tenant_id:"a",data_scope:"real_tenant"}), flowStorageKey({tenant_id:"b",data_scope:"real_tenant"}));
   assert.notEqual(flowStorageKey({tenant_id:"a",data_scope:"real_tenant"}), flowStorageKey({tenant_id:"a",data_scope:"demo_sandbox"}));
+  assert.notEqual(
+    flowStorageKey({tenant_id:"a",data_scope:"real_tenant",workspace_id:"workspace-1"}),
+    flowStorageKey({tenant_id:"a",data_scope:"real_tenant",workspace_id:"workspace-2"})
+  );
+});
+
+test("durable draft URLs preserve only valid persisted draft IDs", () => {
+  const id = "7c359ab9-f530-4ef3-a8fb-8c97d6ce2c88";
+  assert.equal(isPersistedDraftId(id), true);
+  assert.equal(isPersistedDraftId("local-draft-1"), false);
+  assert.equal(aiChitPath("review", id), `/chits/ai-chit/review?draft=${id}`);
+  assert.equal(draftIdFromSearch(`?draft=${id}`), id);
 });
 
 test("dedicated page contains tabs, schedule editing, provider honesty, mobile navigation and success dashboard", async () => {
@@ -57,6 +81,10 @@ test("AI chit flow uses the shared ChitLayout shell", async () => {
   assert.match(source, /<ChitLayout/);
   assert.match(source, /MAX_OCR_RETRIES/);
   assert.match(source, /ai-ocr-status/);
+  assert.match(source, /loadBusinessUnderstandingDraft/);
+  assert.match(source, /saveBusinessUnderstandingDraft\(draft, context\)/);
+  assert.match(source, /go\("review", \{ draftId: saved\.id \}\)/);
+  assert.match(source, /sessionStorage\.removeItem\(key\)/);
 });
 
 test("active entry points route to dedicated flow and groups no longer auto-open studio modal", async () => {
@@ -65,4 +93,15 @@ test("active entry points route to dedicated flow and groups no longer auto-open
   const router = await readFile(new URL("../../routes/AppRouter.jsx", import.meta.url), "utf8");
   assert.match(groups,/navigate\("\/chits\/ai-chit/); assert.doesNotMatch(groups,/defaultOpen|ChitStudioLauncher|searchParams/);
   assert.match(dashboard,/"Create Chit","\/chits\/ai-chit"/); assert.match(router,/path="\/chits\/ai-chit\/\*"/);
+});
+
+
+test("owner-confirmed fixed schedule repair uses only explicit duration and installment", () => {
+  const rows = buildOwnerConfirmedFixedSchedule({ duration: 5, grossInstallment: 10000, installmentPattern: "FIXED_MONTHLY" });
+  assert.equal(rows.length, 5);
+  assert.equal(rows[0].standardPayment, 10000);
+  assert.equal(rows[4].monthNumber, 5);
+  assert.equal(rows[0].nonLiftedPayment, null);
+  assert.throws(() => buildOwnerConfirmedFixedSchedule({ duration: 5, grossInstallment: 10000, installmentPattern: "UNKNOWN" }), /Fixed Monthly/);
+  assert.throws(() => buildOwnerConfirmedFixedSchedule({ duration: 0, grossInstallment: 10000, installmentPattern: "FIXED_MONTHLY" }), /valid duration/);
 });

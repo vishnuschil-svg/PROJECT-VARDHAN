@@ -22,7 +22,21 @@ export function stepFromPath(pathname) {
 }
 
 export function flowStorageKey(context = {}) {
-  return `vardhan.ai-chit-flow.v1.${context.tenant_id || "none"}.${context.data_scope || "none"}`;
+  const workspaceId = context.workspace_id || context.workspaceId || "none";
+  return `vardhan.ai-chit-flow.v2.${context.tenant_id || "none"}.${context.data_scope || "none"}.${workspaceId}`;
+}
+
+export function draftIdFromSearch(search = "") {
+  return new URLSearchParams(String(search || "")).get("draft") || "";
+}
+
+export function isPersistedDraftId(value = "") {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value));
+}
+
+export function aiChitPath(step = "", draftId = "") {
+  const base = `/chits/ai-chit${step ? `/${step}` : ""}`;
+  return draftId ? `${base}?draft=${encodeURIComponent(draftId)}` : base;
 }
 
 export function confidenceStatus(confidence = 0, status = "") {
@@ -37,4 +51,35 @@ export function canCreateFromAnalysis(analysis, confirmed) {
 
 export function resolveReviewItem(item, decision) {
   return { ...item, status: decision, confirmed: decision === "Confirmed", custom: decision === "Custom" };
+}
+
+export function buildOwnerConfirmedFixedSchedule({ duration, grossInstallment, installmentPattern } = {}) {
+  const months = Number(duration);
+  const amount = Number(grossInstallment);
+  if (installmentPattern !== "FIXED_MONTHLY") {
+    throw new Error("Select Fixed Monthly before rebuilding the schedule.");
+  }
+  if (!Number.isInteger(months) || months <= 0 || months > 1200) {
+    throw new Error("Enter a valid duration before rebuilding the schedule.");
+  }
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error("Enter a valid monthly installment before rebuilding the schedule.");
+  }
+  return Array.from({ length: months }, (_, index) => ({
+    monthNumber: index + 1,
+    standardPayment: amount,
+    nonLiftedPayment: null,
+    liftedPayment: null,
+    prizeAmount: null,
+    bidAmount: null,
+    commissionValue: null,
+    deposit: null,
+    dividendPerMember: null,
+    penalty: null,
+    otherDeductions: null,
+    netAmount: null,
+    confidence: 1,
+    evidence: "Owner-confirmed fixed monthly duration and installment",
+    isOwnerEdited: true,
+  }));
 }

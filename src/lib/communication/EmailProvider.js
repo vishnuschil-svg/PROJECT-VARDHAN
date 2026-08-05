@@ -11,7 +11,7 @@ export class EmailProvider {
   /**
    * Send an email
    */
-  async sendEmail({ to, subject, html, text, from, attachments = [] }) {
+  async sendEmail({ _to, _subject, _html, _text, _from, _attachments = [] }) {
     throw new Error("sendEmail must be implemented by subclass");
   }
 
@@ -58,7 +58,7 @@ export class SupabaseEmailProvider extends EmailProvider {
     this.supabaseKey = config.supabaseKey;
   }
 
-  async sendEmail({ to, subject, html, text, from, attachments = [] }) {
+  async sendEmail({ _to, _subject, _html, _text, _from, _attachments = [] }) {
     if (!this.isEnabled()) {
       throw new Error("Supabase email provider is not enabled");
     }
@@ -79,7 +79,7 @@ export class SendGridEmailProvider extends EmailProvider {
     this.fromEmail = config.fromEmail || config.from;
   }
 
-  async sendEmail({ to, subject, html, text, from, attachments = [] }) {
+  async sendEmail({ _to, _subject, _html, _text, _from, _attachments = [] }) {
     if (!this.isEnabled()) {
       throw new Error("SendGrid provider is not enabled");
     }
@@ -106,7 +106,7 @@ export class SMTPEmailProvider extends EmailProvider {
     this.auth = config.auth || {};
   }
 
-  async sendEmail({ to, subject, html, text, from, attachments = [] }) {
+  async sendEmail({ _to, _subject, _html, _text, _from, _attachments = [] }) {
     if (!this.isEnabled()) {
       throw new Error("SMTP provider is not enabled");
     }

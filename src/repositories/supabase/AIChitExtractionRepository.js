@@ -1,28 +1,29 @@
 import { getSupabaseClient } from "../../lib/supabase/SupabaseClient.js";
-import { requireTenantScope } from "../../lib/supabase/SupabaseRepository.js";
-
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+import { resolveAIChitWorkspaceScope, isUuid } from "./AIChitWorkspaceScope.js";
 
 export const AIChitExtractionRepository = Object.freeze({
-  async saveDraft(draft, activeTenantContext, { status = "PENDING_REVIEW" } = {}) {
+  async saveDraft(draft, activeTenantContext, { status = "PENDING_REVIEW", extractionId = "" } = {}) {
     const client = requireClient();
-    const scope = requireTenantScope(activeTenantContext);
-    const workspaceId = activeTenantContext?.workspace_id;
-    if (!workspaceId) throw new Error("A business workspace is required to save the extraction draft.");
-
-    const { data: userData, error: userError } = await client.auth.getUser();
-    if (userError || !userData?.user?.id) {
-      throw new Error("Your session expired. Sign in again before saving the draft.");
-    }
+    const userId = await requireUserId(client, "save");
+    const scope = await resolveAIChitWorkspaceScope({
+      client,
+      activeTenantContext,
+      userId,
+      requireWrite: true,
+    });
 
     const source = draft?.extractionMetadata?.sourceDocument || {};
-    const documentId = UUID_PATTERN.test(source.documentId || "") ? source.documentId : undefined;
+    const persistedId = isUuid(extractionId)
+      ? extractionId
+      : isUuid(source.documentId)
+        ? source.documentId
+        : undefined;
     const payload = {
-      ...(documentId ? { id: documentId } : {}),
+      ...(persistedId ? { id: persistedId } : {}),
       tenant_id: scope.tenant_id,
       data_scope: scope.data_scope,
-      workspace_id: workspaceId,
-      created_by: userData.user.id,
+      workspace_id: scope.workspace_id,
+      created_by: userId,
       status,
       file_name: source.originalFileName || source.name || null,
       file_mime_type: source.mimeType || source.type || null,
@@ -38,7 +39,7 @@ export const AIChitExtractionRepository = Object.freeze({
       updated_at: new Date().toISOString(),
     };
 
-    const query = documentId
+    const query = persistedId
       ? client.from("ai_chit_extractions").upsert(payload, { onConflict: "id" })
       : client.from("ai_chit_extractions").insert(payload);
     const { data, error } = await query.select("*").single();
@@ -47,19 +48,22 @@ export const AIChitExtractionRepository = Object.freeze({
   },
 
   async getDraft(extractionId, activeTenantContext) {
-    if (!UUID_PATTERN.test(extractionId || "")) return null;
+    if (!isUuid(extractionId)) return null;
     const client = requireClient();
-    const scope = requireTenantScope(activeTenantContext);
-    const workspaceId = activeTenantContext?.workspace_id;
-    if (!workspaceId) throw new Error("A business workspace is required to load the extraction draft.");
     const userId = await requireUserId(client, "load");
+    const scope = await resolveAIChitWorkspaceScope({
+      client,
+      activeTenantContext,
+      userId,
+      requireWrite: false,
+    });
     const { data, error } = await client
       .from("ai_chit_extractions")
       .select("*")
       .eq("id", extractionId)
       .eq("tenant_id", scope.tenant_id)
       .eq("data_scope", scope.data_scope)
-      .eq("workspace_id", workspaceId)
+      .eq("workspace_id", scope.workspace_id)
       .eq("created_by", userId)
       .eq("status", "PENDING_REVIEW")
       .maybeSingle();
@@ -68,15 +72,18 @@ export const AIChitExtractionRepository = Object.freeze({
   },
 
   async deleteDraft(extractionId, activeTenantContext) {
-    if (!UUID_PATTERN.test(extractionId || "")) throw new Error("A valid draft ID is required for deletion.");
+    if (!isUuid(extractionId)) throw new Error("A valid draft ID is required for deletion.");
     const client = requireClient();
-    const workspaceId = activeTenantContext?.workspace_id;
-    if (!workspaceId) throw new Error("A business workspace is required to delete the extraction draft.");
-    requireTenantScope(activeTenantContext);
-    await requireUserId(client, "delete");
+    const userId = await requireUserId(client, "delete");
+    const scope = await resolveAIChitWorkspaceScope({
+      client,
+      activeTenantContext,
+      userId,
+      requireWrite: true,
+    });
     const { data, error } = await client.rpc("delete_pending_ai_chit_draft", {
       p_extraction_id: extractionId,
-      p_workspace_id: workspaceId,
+      p_workspace_id: scope.workspace_id,
     });
     if (error) throw persistenceError("Draft deletion failed", error);
     if (data !== true) throw new Error("The pending draft was not found in this workspace.");
@@ -84,7 +91,7 @@ export const AIChitExtractionRepository = Object.freeze({
   },
 
   async commitDraft(extractionId, draft) {
-    if (!UUID_PATTERN.test(extractionId || "")) {
+    if (!isUuid(extractionId)) {
       throw new Error("Save the verified draft before creating the chit group.");
     }
     const client = requireClient();

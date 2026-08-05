@@ -84,3 +84,12 @@ desktop.ini
 # Local durable ingestion queue + uploaded binaries
 backend/data/
 
+node_modules/
+dist/
+build/
+.env
+.env.*
+!.env.example
+*.log
+
+VARDHAN_ERP_v1.0_FINAL_MERGED_SOURCE.zip

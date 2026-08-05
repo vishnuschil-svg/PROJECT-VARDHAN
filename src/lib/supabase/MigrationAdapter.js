@@ -1,5 +1,5 @@
 import { SupabaseRepository } from "./SupabaseRepository.js";
-import { getTenantScope, requireTenantScope } from "./SupabaseRepository.js";
+import { requireTenantScope } from "./SupabaseRepository.js";
 
 /**
  * Migration Adapter for localStorage to Supabase
@@ -55,7 +55,7 @@ export class MigrationAdapter {
   /**
    * Migrate a single record with conflict resolution
    */
-  async migrateRecord(localRecord, scope, options = {}) {
+  async migrateRecord(localRecord, _scope, options = {}) {
     const { strategy = "supabase_wins", dryRun = false } = options;
 
     try {
@@ -90,7 +90,7 @@ export class MigrationAdapter {
   /**
    * Find existing record in Supabase by local identifier
    */
-  async findExistingRecord(localRecord, scope) {
+  async findExistingRecord(localRecord, _scope) {
     const identifier = this.getRecordIdentifier(localRecord);
 
     if (!identifier) {
