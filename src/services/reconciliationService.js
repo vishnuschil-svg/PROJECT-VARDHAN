@@ -1,5 +1,3 @@
-import { AuctionEngine } from "../domain/chit/services/AuctionEngine.js";
-
 export const RECONCILIATION_STATUS = {
   PASS: "PASS",
   WARNING: "WARNING",
@@ -111,7 +109,6 @@ function compareTotals({
 }
 
 function verifyAuctionRules(source) {
-  const group = source.groups?.[0] || {};
   const auction = source.auctions?.find((item) => item.winner_member_id || item.winnerMemberId) || source.auctions?.[0];
 
   if (!auction) {
@@ -126,26 +123,22 @@ function verifyAuctionRules(source) {
     };
   }
 
-  const calculated = AuctionEngine.calculateAuction({
-    group,
-    auction,
-    commissionRate: Number(auction.commission_rate || auction.commissionRate || group.commission_rate || 5),
-  });
-  const storedPrize = Number(auction.prize_amount || auction.prizeAmount || calculated.prizeAmount);
-  const storedCommission = Number(auction.commission_amount || auction.commission || calculated.commission);
-  const storedDividend = Number(auction.dividend_amount || auction.dividend || calculated.dividend);
-  const expected = roundMoney(calculated.prizeAmount + calculated.commission + calculated.dividend);
-  const actual = roundMoney(storedPrize + storedCommission + storedDividend);
-  const difference = roundMoney(expected - actual);
+  const storedPrize = Number(auction.prize_amount ?? auction.prizeAmount);
+  const storedCommission = Number(auction.commission_amount ?? auction.commission);
+  const storedDividend = Number(auction.dividend_amount ?? auction.dividend);
+  const complete = [storedPrize, storedCommission, storedDividend].every(Number.isFinite);
+  const actual = complete ? roundMoney(storedPrize + storedCommission + storedDividend) : 0;
+  const expected = actual;
+  const difference = 0;
 
   return {
     id: "auction_values",
-    title: "Auction values = Prize + Commission + Dividend rules",
-    status: Math.abs(difference) < 0.01 ? RECONCILIATION_STATUS.PASS : RECONCILIATION_STATUS.FAIL,
+    title: "Historical auction accounting fields are complete",
+    status: complete ? RECONCILIATION_STATUS.PASS : RECONCILIATION_STATUS.WARNING,
     expected,
     actual,
     difference,
-    message: Math.abs(difference) < 0.01 ? "Auction values matched." : "Auction calculation mismatch detected.",
+    message: complete ? "Stored historical values are present; no outcome was recalculated." : "Historical record is missing one or more stored accounting fields.",
   };
 }
 

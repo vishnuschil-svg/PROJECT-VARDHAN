@@ -5,18 +5,15 @@ import {
   MembersRepository,
   ReceiptsRepository,
 } from "./chits";
-
-const OWNER_BANK_DETAILS = {
-  accountName: "VARDHAN Own Chit Business",
-  bankName: "State Bank Operating Account",
-  accountNumber: "XXXXXX7890",
-  ifsc: "SBIN0001234",
-  upiId: "vardhan@upi",
-};
+import { getBusinessIdentity } from "../services/businessIdentityService.js";
+import { getPaymentSettings } from "../services/paymentModeService.js";
+import { RECEIPT_DISCLAIMER, SOFTWARE_PROVIDER } from "../config/groupManagerSafety.js";
 
 export const ReceiptRepository = {
   getReceiptSource(activeTenantContext) {
     const context = activeTenantContext || WorkspaceRepository.getCurrentWorkspaceContext();
+    const identity = getBusinessIdentity(context);
+    const paymentSettings = getPaymentSettings(context);
 
     return {
       activeTenantContext: context,
@@ -24,8 +21,12 @@ export const ReceiptRepository = {
       groups: listRows(GroupsRepository, context),
       members: listRows(MembersRepository, context),
       receipts: listRows(ReceiptsRepository, context),
-      ownerBankDetails: OWNER_BANK_DETAILS,
-      footerNote: "Thank you for your payment. This is a system generated receipt.",
+      issuerName: identity.businessName || "Organizer",
+      organizerId: context?.user_id || context?.profile_id || "",
+      ownerBankDetails: resolveOrganizerPaymentDetails(paymentSettings),
+      footerNote: identity.footer || "Thank you for your payment.",
+      receiptDisclaimer: RECEIPT_DISCLAIMER,
+      softwareProvider: SOFTWARE_PROVIDER,
     };
   },
 
@@ -122,6 +123,12 @@ function normalizeReceiptModel(receipt, source) {
       reprintCount: Number(receipt.reprint_count || receipt.receipt_model.reprintCount || 0),
       lastPrintedAt: receipt.last_printed_at || receipt.receipt_model.lastPrintedAt || "",
       status: receipt.status || receipt.receipt_model.status || "active",
+      createdBy: normalizeOrganizerLabel(receipt.receipt_model.createdBy),
+      ownerBankDetails: source.ownerBankDetails,
+      issuerName: receipt.receipt_model.issuerName || source.issuerName,
+      organizerId: receipt.receipt_model.organizerId || source.organizerId,
+      receiptDisclaimer: source.receiptDisclaimer,
+      softwareProvider: source.softwareProvider,
     };
   }
 
@@ -143,10 +150,14 @@ function normalizeReceiptModel(receipt, source) {
       pendingAmount: Number(model.balance_amount || 0),
       totalPaid: Number(receipt.amount || model.paid_amount || 0),
       balance: Number(model.balance_amount || 0),
-      createdBy: model.collected_by || "VARDHAN Collector",
+      createdBy: model.collected_by || "Organizer",
       createdAt: receipt.created_at || model.receipt_date_time || "",
       ownerBankDetails: source.ownerBankDetails,
       footerNote: receipt.notes || source.footerNote,
+      issuerName: model.issuer_name || source.issuerName,
+      organizerId: model.organizer_id || source.organizerId,
+      receiptDisclaimer: source.receiptDisclaimer,
+      softwareProvider: source.softwareProvider,
       status: receipt.status || "active",
       reprintCount: Number(receipt.reprint_count || 0),
       lastPrintedAt: receipt.last_printed_at || "",
@@ -169,10 +180,14 @@ function normalizeReceiptModel(receipt, source) {
     pendingAmount: 0,
     totalPaid: Number(receipt.amount || 0),
     balance: 0,
-    createdBy: "VARDHAN Collector",
+    createdBy: "Organizer",
     createdAt: receipt.created_at || "",
     ownerBankDetails: source.ownerBankDetails,
     footerNote: receipt.notes || source.footerNote,
+    issuerName: source.issuerName,
+    organizerId: source.organizerId,
+    receiptDisclaimer: source.receiptDisclaimer,
+    softwareProvider: source.softwareProvider,
     status: receipt.status || "active",
     reprintCount: Number(receipt.reprint_count || 0),
     lastPrintedAt: receipt.last_printed_at || "",
@@ -196,12 +211,32 @@ function normalizeCollectionReceipt(collection, member, group, source) {
     pendingAmount: Number(collection.pending_amount || 0),
     totalPaid: Number(collection.paid_amount || 0),
     balance: Number(collection.pending_amount || 0),
-    createdBy: collection.collected_by || "VARDHAN Collector",
+    createdBy: collection.collected_by || "Organizer",
     createdAt: collection.created_at || "",
     ownerBankDetails: source.ownerBankDetails,
     footerNote: source.footerNote,
+    issuerName: source.issuerName,
+    organizerId: source.organizerId,
+    receiptDisclaimer: source.receiptDisclaimer,
+    softwareProvider: source.softwareProvider,
     status: collection.receipt_status || "active",
     reprintCount: Number(collection.reprint_count || 0),
     lastPrintedAt: collection.last_printed_at || "",
   };
+}
+
+function resolveOrganizerPaymentDetails(settings = {}) {
+  const bank = settings.bankAccounts?.find((item) => item?.active !== false) || settings.bankAccounts?.[0] || {};
+  const upiEntry = settings.upiIds?.find((item) => typeof item === "string" || item?.active !== false) || settings.upiIds?.[0] || "";
+  return {
+    accountName: bank.accountName || bank.account_name || "",
+    bankName: bank.bankName || bank.bank_name || "",
+    accountNumber: bank.accountNumber || bank.account_number || "",
+    ifsc: bank.ifsc || bank.ifscCode || "",
+    upiId: typeof upiEntry === "string" ? upiEntry : upiEntry.upiId || upiEntry.upi_id || "",
+  };
+}
+
+function normalizeOrganizerLabel(value) {
+  return !value || value === "VARDHAN Collector" ? "Organizer" : value;
 }

@@ -6,7 +6,7 @@ const ROUTES = {
   COLLECTIONS: "/chits/collections",
   RECEIPTS: "/chits/receipts",
   MEMBERS: "/chits/members",
-  AUCTIONS: "/chits/auctions",
+  MANUAL_RECORDS: "/chits/manual-records",
   FINANCE: "/chits/finance",
   SETTINGS: "/chits/settings",
   REPORTS: "/chits/reports",
@@ -48,7 +48,7 @@ function buildActivities({
       description: activity.description,
       time: activity.time,
       icon: activity.icon || "System",
-      route: activity.route || ROUTES.REPORTS,
+      route: safeActionRoute(activity.route || ROUTES.REPORTS),
     })),
     latestCollection && {
       id: `activity-collection-${latestCollection.id}`,
@@ -80,7 +80,7 @@ function buildActivities({
       description: `${nextAuction.chit_name || nextAuction.chit_code} auction date is ${nextAuction.next_auction_date}.`,
       time: nextAuction.updated_at || nextAuction.next_auction_date || today,
       icon: "Auction",
-      route: ROUTES.AUCTIONS,
+      route: ROUTES.MANUAL_RECORDS,
     },
     latestFinance && {
       id: `activity-finance-${latestFinance.id}`,
@@ -123,4 +123,10 @@ function formatCurrency(value) {
     currency: "INR",
     maximumFractionDigits: 0,
   }).format(Number(value || 0));
+}
+
+function safeActionRoute(route) {
+  return ["/chits/auctions", "/chits/lucky-draw", "/chits/payouts"].includes(String(route || "").split("?")[0])
+    ? ROUTES.MANUAL_RECORDS
+    : route;
 }

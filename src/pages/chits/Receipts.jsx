@@ -39,7 +39,7 @@ function Receipts() {
     try {
       const result = generateReceipt({
         activeTenantContext,
-        createdBy: profile?.full_name || "VARDHAN Collector",
+        createdBy: profile?.full_name || "Organizer",
       });
 
       if (!result.validation.isValid) {

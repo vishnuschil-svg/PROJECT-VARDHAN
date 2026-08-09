@@ -17,8 +17,7 @@ export const NOTIFICATION_TYPES = {
 const ROUTES = {
   COLLECTIONS: "/chits/collections",
   PENDING: "/chits/collections/pending",
-  AUCTIONS: "/chits/auctions",
-  LUCKY_DRAW: "/chits/lucky-draw",
+  MANUAL_RECORDS: "/chits/manual-records",
   MEMBERS: "/chits/members",
   RECEIPTS: "/chits/receipts",
   REPORTS: "/chits/reports",
@@ -111,7 +110,7 @@ function buildNotifications({
       type: NOTIFICATION_TYPES.AUCTION_TODAY,
       priority: auctionToday ? "critical" : "medium",
       createdAt: today,
-      actionRoute: ROUTES.AUCTIONS,
+      actionRoute: ROUTES.MANUAL_RECORDS,
       readSet,
     }),
     latestMember && createNotification({
@@ -179,7 +178,7 @@ function createNotification({
     priority,
     createdAt,
     isRead: readSet.has(id),
-    actionRoute,
+    actionRoute: safeActionRoute(actionRoute),
   };
 }
 
@@ -193,4 +192,10 @@ function formatCurrency(value) {
     currency: "INR",
     maximumFractionDigits: 0,
   }).format(Number(value || 0));
+}
+
+function safeActionRoute(route) {
+  return ["/chits/auctions", "/chits/lucky-draw", "/chits/payouts"].includes(String(route || "").split("?")[0])
+    ? ROUTES.MANUAL_RECORDS
+    : route;
 }

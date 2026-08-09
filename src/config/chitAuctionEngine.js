@@ -1,4 +1,5 @@
 import { MEMBER_STATUS } from "./chitMemberData";
+import { assertRegisteredOperationEnabled } from "./groupManagerSafety.js";
 
 export const AUCTION_TYPES = {
   MANUAL: "manual",
@@ -35,6 +36,7 @@ export function calculateAuctionFinancials({
   bidAmount = 0,
   eligibleCount = 0,
 }) {
+  assertRegisteredOperationEnabled("AUTOMATED_AUCTION");
   const chitValue = Number(group?.chit_value || 0);
   const monthlyAmount = Number(group?.monthly_amount || 0);
   const totalMembers = Number(group?.total_members || eligibleCount || 1);
@@ -58,6 +60,7 @@ export function calculateAuctionFinancials({
 }
 
 export function selectAuctionLuckyWinner(eligibleMembers = []) {
+  assertRegisteredOperationEnabled("AUTOMATED_LUCKY_DRAW");
   if (!eligibleMembers.length) return null;
 
   const randomValue = getSecureRandomValue();

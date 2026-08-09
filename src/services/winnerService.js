@@ -9,6 +9,7 @@ import {
   listWinnersPersistent,
 } from "./winnerLifecyclePersistence.js";
 import { createEntityId } from "./productionChitPersistence.js";
+import { assertRegisteredOperationsAccess } from "../config/groupManagerSafety.js";
 
 export async function listWinnerResults(activeTenantContext) {
   return listWinnersPersistent(activeTenantContext);
@@ -27,6 +28,10 @@ export async function confirmWinnerResult({
   role = "",
   eventExtras = {},
 } = {}) {
+  assertRegisteredOperationsAccess(
+    { permissions, profile, role },
+    eventType === "LUCKY_DRAW" ? "AUTOMATED_LUCKY_DRAW" : "AUTOMATED_WINNER_SELECTION"
+  );
   if (!assertOperatorRole(permissions, profile, role)) {
     return {
       success: false,
@@ -101,7 +106,7 @@ export async function confirmWinnerResult({
       description: `${memberName} confirmed for ${groupName} Month ${confirmedWinner.monthNumber}.`,
       time: now,
       icon: "Auction",
-      route: eventType === "LUCKY_DRAW" ? "/chits/lucky-draw" : "/chits/auctions",
+      route: "/chits/manual-records",
     },
     activeTenantContext
   );
@@ -114,7 +119,7 @@ export async function confirmWinnerResult({
       priority: "high",
       createdAt: now,
       isRead: false,
-      actionRoute: eventType === "LUCKY_DRAW" ? "/chits/lucky-draw" : "/chits/auctions",
+      actionRoute: "/chits/manual-records",
     },
     activeTenantContext
   );
@@ -140,6 +145,7 @@ export async function cancelWinnerResult({
   profile = {},
   role = "",
 } = {}) {
+  assertRegisteredOperationsAccess({ permissions, profile, role }, "AUTOMATED_WINNER_SELECTION");
   const canCorrect =
     permissions?.isPlatformOwner ||
     ["owner", "admin", "platform_owner"].includes(String(role || profile?.role || "").toLowerCase()) ||
@@ -164,7 +170,7 @@ export async function cancelWinnerResult({
       description: `Winner ${winnerId} cancelled: ${reason}`,
       time: new Date().toISOString(),
       icon: "Auction",
-      route: "/chits/auctions",
+      route: "/chits/manual-records",
     },
     activeTenantContext
   );

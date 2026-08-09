@@ -7,6 +7,7 @@ export const ROUTE_GUARD_RESULT = {
   LOGIN: "login",
   DASHBOARD: "dashboard",
   UPGRADE: "upgrade",
+  ONBOARDING: "onboarding",
 };
 
 export function evaluatePublicRoute({ user, redirectAuthenticated = false } = {}) {
@@ -31,7 +32,7 @@ export function evaluateProtectedRoute({ user, profile, _role, loading } = {}) {
   }
 
   if (profile?.status !== "approved") {
-    return { result: ROUTE_GUARD_RESULT.LOGIN, redirectTo: "/login" };
+    return { result: ROUTE_GUARD_RESULT.ONBOARDING, redirectTo: "/onboarding" };
   }
 
   // If permissions are not explicitly computed yet, an authenticated user with approved profile

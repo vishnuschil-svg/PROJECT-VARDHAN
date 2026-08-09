@@ -11,7 +11,7 @@ export function createReceiptModel({
   member = {},
   group = {},
   source,
-  createdBy = "VARDHAN Collector",
+  createdBy = "Organizer",
 }) {
   const amountPaid = Number(collection.paid_amount || collection.amount || 0);
   const pendingAmount = Number(collection.pending_amount || 0);
@@ -41,6 +41,10 @@ export function createReceiptModel({
     createdAt: collection.created_at || new Date().toISOString(),
     ownerBankDetails: source.ownerBankDetails,
     footerNote: source.footerNote,
+    issuerName: source.issuerName || "Organizer",
+    organizerId: source.organizerId || "",
+    receiptDisclaimer: source.receiptDisclaimer || "",
+    softwareProvider: source.softwareProvider || "",
     status: collection.receipt_status || collection.status || "active",
     reprintCount: Number(collection.reprint_count || collection.reprintCount || 0),
     lastPrintedAt: collection.last_printed_at || collection.lastPrintedAt || "",

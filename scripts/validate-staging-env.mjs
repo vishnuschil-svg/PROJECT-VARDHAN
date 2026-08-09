@@ -9,6 +9,7 @@ const required = [
   "VITE_SUPABASE_ANON_KEY", "VITE_PLATFORM_API_URL", "DATABASE_URL", "SUPABASE_JWT_SECRET",
   "SUPABASE_JWT_AUDIENCE", "VARDHAN_ENV", "CORS_ORIGINS", "RATE_LIMIT_BACKEND", "REDIS_URL",
   "DRAW_ENCRYPTION_KEY", "LICENSE_SIGNING_SECRET", "BACKUP_ENCRYPTION_KEY",
+  "RAZORPAY_MODE", "RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET", "RAZORPAY_WEBHOOK_SECRET", "CRON_SECRET",
 ];
 const missing = required.filter((name) => !String(environment[name] || "").trim());
 const invalid = [];
@@ -18,16 +19,17 @@ expectOneOf("VITE_APP_MODE", ["staging"]);
 expectEqual("VITE_REPOSITORY_BACKEND", "supabase");
 expectEqual("VARDHAN_ENV", "staging");
 expectEqual("RATE_LIMIT_BACKEND", "redis");
+expectEqual("RAZORPAY_MODE", "test");
 expectUrl("VITE_SUPABASE_URL", ["https:"]);
 expectUrl("DATABASE_URL", ["postgres:", "postgresql:"]);
 expectUrl("REDIS_URL", ["rediss:"]);
 if (environment.VITE_PLATFORM_API_URL && environment.VITE_PLATFORM_API_URL !== "/api") expectUrl("VITE_PLATFORM_API_URL", ["https:"]);
 validateCors();
-for (const name of ["SUPABASE_JWT_SECRET", "DRAW_ENCRYPTION_KEY", "LICENSE_SIGNING_SECRET", "BACKUP_ENCRYPTION_KEY"]) expectMinimumLength(name, 32);
+for (const name of ["SUPABASE_JWT_SECRET", "DRAW_ENCRYPTION_KEY", "LICENSE_SIGNING_SECRET", "BACKUP_ENCRYPTION_KEY", "RAZORPAY_KEY_SECRET", "RAZORPAY_WEBHOOK_SECRET", "CRON_SECRET"]) expectMinimumLength(name, 32);
+if (environment.RAZORPAY_KEY_ID && !environment.RAZORPAY_KEY_ID.startsWith("rzp_test_")) invalid.push("RAZORPAY_KEY_ID must be a Razorpay TEST key starting with rzp_test_");
 expectCompleteGroup("WhatsApp", ["WHATSAPP_ACCESS_TOKEN", "WHATSAPP_PHONE_NUMBER_ID"]);
 expectCompleteGroup("SMS", ["SMS_GATEWAY_URL", "SMS_GATEWAY_API_KEY", "SMS_SENDER_ID"]);
 expectCompleteGroup("email", ["EMAIL_API_KEY", "EMAIL_FROM"]);
-expectCompleteGroup("Razorpay", ["RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET", "RAZORPAY_WEBHOOK_SECRET"]);
 
 const forbiddenFrontendNames = Object.keys(environment).filter((name) => /^VITE_.*(SECRET|TOKEN|PASSWORD|SERVICE_ROLE|PRIVATE_KEY)$/i.test(name) && environment[name]);
 for (const name of forbiddenFrontendNames) invalid.push(`${name} must not be exposed through a VITE_ variable`);

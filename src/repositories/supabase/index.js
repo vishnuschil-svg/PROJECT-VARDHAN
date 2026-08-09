@@ -12,3 +12,7 @@ export { DividendsRepository } from "./DividendsRepository.js";
 export { ExpensesRepository } from "./ExpensesRepository.js";
 export { MonthClosingRepository } from "./MonthClosingRepository.js";
 export { CompletionsRepository } from "./CompletionsRepository.js";
+export {
+  ManualBidRecordsRepository,
+  DistributionRecordsRepository,
+} from "./GroupManagerRepositories.js";

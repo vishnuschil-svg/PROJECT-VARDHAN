@@ -12,7 +12,7 @@
     "verify:production": "node scripts/verify-production-config.mjs",
     "audit:production": "node scripts/audit-production.mjs",
     "verify:staging-env": "node scripts/validate-staging-env.mjs",
-    "lint": "oxlint",
+    "lint": "oxlint src scripts vite.config.* --ignore-pattern node_modules --ignore-pattern dist --ignore-pattern coverage --ignore-pattern .vercel --ignore-pattern .git",
     "preview": "vite preview",
     "dev:full": "powershell -ExecutionPolicy Bypass -File ./scripts/start-vardhan-full.ps1",
     "dev:backend": "powershell -ExecutionPolicy Bypass -File ./scripts/start-vardhan-backend.ps1"
@@ -41,7 +41,6 @@
     "read-excel-file": "^9.3.5",
     "recharts": "^3.9.2",
     "tsx": "^4.23.5",
-    "typescript": "^7.0.2",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -55,6 +54,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "oxlint": "^1.71.0",
+    "typescript": "^7.0.2",
     "vite": "^8.1.1"
   },
   "description": "This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.",

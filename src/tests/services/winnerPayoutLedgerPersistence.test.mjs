@@ -17,6 +17,8 @@ import { AuctionValidator } from "../../domain/chit/validators/AuctionValidator.
 import { LuckyDrawValidator } from "../../domain/chit/validators/LuckyDrawValidator.js";
 import { PayoutEngine } from "../../domain/chit/services/PayoutEngine.js";
 
+const FEATURE_BANK_FLAGS = { REGISTERED_OPERATIONS_ENABLED: true, AUTOMATED_AUCTION_ENABLED: true, AUTOMATED_LUCKY_DRAW_ENABLED: true, AUTOMATED_WINNER_SELECTION_ENABLED: true };
+
 const groupId = "11111111-1111-4111-8111-111111111111";
 const memberId = "22222222-2222-4222-8222-222222222222";
 
@@ -109,7 +111,7 @@ test("payout mapper and engine support idempotent payment progression", () => {
     winnerId: createEntityId(),
     totalPayout: 1000,
     payoutMode: "FULL",
-  });
+  }, FEATURE_BANK_FLAGS);
   const paidOnce = PayoutEngine.applyPayment(plan, 400);
   const paidTwice = PayoutEngine.applyPayment(paidOnce, 600);
   assert.equal(paidOnce.status, "PARTIALLY_PAID");
@@ -299,25 +301,20 @@ test("transactional RPC payloads fail closed without auth and idempotency keys",
   assert.match(sql, /for update/);
 });
 
-test("winner correction denies unauthorized roles and requires reason", async () => {
+test("winner correction is feature-banked before role or reason evaluation", async () => {
   const { cancelWinnerResult } = await import("../../services/winnerService.js");
-  const denied = await cancelWinnerResult({
+  await assert.rejects(() => cancelWinnerResult({
     winnerId: createEntityId(),
     reason: "mistake",
     activeTenantContext: { tenant_id: "t1", data_scope: "real_tenant" },
     role: "viewer",
     permissions: {},
-  });
-  assert.equal(denied.success, false);
-  assert.match(denied.message, /Unauthorized/);
-
-  const missingReason = await cancelWinnerResult({
+  }), (error) => error.code === "REGISTERED_OPERATIONS_DISABLED");
+  await assert.rejects(() => cancelWinnerResult({
     winnerId: createEntityId(),
     reason: "",
     activeTenantContext: { tenant_id: "t1", data_scope: "real_tenant" },
     role: "owner",
     permissions: { isPlatformOwner: true },
-  });
-  assert.equal(missingReason.success, false);
-  assert.match(missingReason.message, /reason/i);
+  }), (error) => error.code === "REGISTERED_OPERATIONS_DISABLED");
 });

@@ -506,7 +506,7 @@ function ChitGroups() {
     {
       icon: "Target",
       label: "Record Bid",
-      onClick: (row) => navigate(`/chits/auctions?group=${encodeURIComponent(row.id)}`),
+      onClick: (row) => navigate(`/chits/manual-records?group=${encodeURIComponent(row.id)}`),
       variant: "default",
       disabled: (row) => isLocked(row) || String(row.chit_mode || "").toLowerCase() === "fixed",
     },

@@ -394,8 +394,8 @@ const content = {
     "Choose an application, configure the business workspace, confirm business rules and begin connected operations.",
   ],
   pricing: [
-    "Pricing",
-    "Final public prices have not been approved. Contact VARDHAN SOFTWARE SOLUTIONS for a current proposal.",
+    "Annual pricing",
+    "MITRA NIDHI CHITI PRO: Starter ₹1,499/year for 1 active chit, Growth ₹2,999/year for 3 active chits, or Business ₹4,999/year with unlimited active chits. Monthly billing is not offered.",
   ],
   demo: [
     "Book a demo",

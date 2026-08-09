@@ -6,7 +6,7 @@ import {
   PLATFORM_OWNER,
   STAFF,
   SUPER_ADMIN,
-} from "./erpModules";
+} from "./erpModules.js";
 
 export const MANAGER = "MANAGER";
 

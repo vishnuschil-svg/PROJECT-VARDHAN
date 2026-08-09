@@ -18,6 +18,9 @@ const PLAN_LABELS = {
   halfYearly: "Half-Yearly",
   yearly: "Yearly",
   lifetime: "Lifetime",
+  starterAnnual: "Starter · Annual",
+  growthAnnual: "Growth · Annual",
+  businessAnnual: "Business · Annual",
 };
 
 function ProductCatalogContent({ platformMode }) {

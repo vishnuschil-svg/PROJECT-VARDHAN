@@ -43,7 +43,7 @@ const EMPTY_COLLECTION = {
   dividend_adjustment: "0",
   payment_date: new Date().toISOString().slice(0, 10),
   payment_method: "Cash",
-  collected_by: "VARDHAN Collector",
+  collected_by: "Organizer",
   notes: "",
 };
 
@@ -139,7 +139,7 @@ function Collections() {
       member_id: firstMember?.id || "",
       chit_group_id: firstGroup?.id || "",
       paid_amount: firstGroup?.monthly_amount || "",
-      collected_by: profile?.full_name || "VARDHAN Collector",
+      collected_by: profile?.full_name || "Organizer",
     });
     setMemberSearch("");
     setErrorDialog(null);
@@ -188,7 +188,7 @@ function Collections() {
         members: tenantMembers,
         groups: tenantGroups,
         activeTenantContext,
-        companyName: company?.company_name || "VARDHAN Own Chit Business",
+        companyName: company?.company_name || "Organizer",
         collections,
         receipts: tenantReceipts,
       });
@@ -227,7 +227,7 @@ function Collections() {
       member,
       group,
       activeTenantContext,
-      companyName: company?.company_name || "VARDHAN Own Chit Business",
+      companyName: company?.company_name || "Organizer",
     });
 
     setReceiptPreview({

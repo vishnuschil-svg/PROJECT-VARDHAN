@@ -10,24 +10,18 @@ export const SupabaseAuthService = {
    * Login with Supabase or fallback to demo auth
    */
   async login({ email, password, provider = null } = {}) {
-    console.log("[SupabaseAuthService] login called with email:", email, "provider:", provider);
     const supabaseAuth = getSupabaseAuth();
-    console.log("[SupabaseAuthService] supabaseAuth.configured:", supabaseAuth.configured);
 
     // Try Supabase auth first if configured
     if (supabaseAuth.configured) {
       try {
         if (provider) {
           // OAuth login
-          console.log("[SupabaseAuthService] Attempting OAuth login with provider:", provider);
           const result = await supabaseAuth.signInWithOAuth({ provider });
-          console.log("[SupabaseAuthService] OAuth login result:", result);
           return await this.resolveSupabaseSession(result);
         } else {
           // Email/password login
-          console.log("[SupabaseAuthService] Attempting email/password login");
           const result = await supabaseAuth.signIn({ email, password });
-          console.log("[SupabaseAuthService] Email/password login result:", result);
           return await this.resolveSupabaseSession(result);
         }
       } catch (error) {
@@ -239,13 +233,11 @@ export const SupabaseAuthService = {
    * Format Supabase session to match existing auth structure
    */
   formatSupabaseSession({ user, session }) {
-    console.log("[SupabaseAuthService] formatSupabaseSession called, user:", user ? "User exists" : "No user", "session:", session ? "Session exists" : "No session");
     if (!user) {
-      console.log("[SupabaseAuthService] No user, returning empty session");
       return { user: null, profile: null, company: null, role: null, modules: null };
     }
 
-    const tenant_id = user.user_metadata?.tenant_id || user.app_metadata?.tenant_id || "own-chit-business";
+    const tenant_id = user.user_metadata?.tenant_id || user.app_metadata?.tenant_id || null;
     const tenantContext = {
       tenant_id,
       data_scope: user.user_metadata?.data_scope || user.app_metadata?.data_scope || "real_tenant",
@@ -264,9 +256,10 @@ export const SupabaseAuthService = {
         full_name: user.user_metadata?.full_name || user.email?.split("@")[0],
         email: user.email,
         is_platform_admin: user.user_metadata?.is_platform_admin || false,
-        status: "approved",
+        status: "onboarding",
+        onboarding_status: user.user_metadata?.onboarding_status || "profile_pending",
       },
-      company: {
+      company: tenant_id ? {
         id: tenantContext.tenant_id,
         workspace_id: tenantContext.workspace_id,
         workspaceId: tenantContext.workspace_id,
@@ -276,7 +269,7 @@ export const SupabaseAuthService = {
         tenant_type: user.user_metadata?.tenant_type || "real_tenant",
         data_scope: tenantContext.data_scope,
         status: "active",
-      },
+      } : null,
       role: {
         id: user.user_metadata?.role_id || "staff",
         key: user.user_metadata?.role_key || "STAFF",
@@ -287,9 +280,6 @@ export const SupabaseAuthService = {
       modules: user.user_metadata?.modules || { chit_management: true },
       session: session,
     };
-    console.log("[SupabaseAuthService] Formatted session user:", formatted.user ? "User exists" : "No user");
-    console.log("[SupabaseAuthService] Formatted profile:", formatted.profile ? "Profile exists" : "No profile");
-    console.log("[SupabaseAuthService] Formatted profile status:", formatted.profile?.status);
     return formatted;
   },
 
@@ -297,7 +287,13 @@ export const SupabaseAuthService = {
     const formatted = this.formatSupabaseSession({ user, session });
     if (!user?.id) return formatted;
     const supabaseAuth = getSupabaseAuth();
-    const preferredWorkspaceId = formatted.company?.workspace_id;
+    const { data: profile, error: profileError } = await supabaseAuth.client
+      .from("user_profiles")
+      .select("id,tenant_id,data_scope,workspace_id,full_name,email,mobile,business_name,onboarding_status,platform_role,is_platform_owner")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (profileError) throw new Error("Unable to resolve your customer profile.");
+    const preferredWorkspaceId = profile?.workspace_id;
     let query = supabaseAuth.client
       .from("workspace_memberships")
       .select("workspace_id,tenant_id,data_scope,role,status")
@@ -308,9 +304,26 @@ export const SupabaseAuthService = {
     if (preferredWorkspaceId) query = query.eq("workspace_id", preferredWorkspaceId);
     const { data, error } = await query.maybeSingle();
     if (error) throw new Error("Unable to resolve your active business workspace.");
-    if (!data?.workspace_id) return formatted;
+    if (!data?.workspace_id) return {
+      ...formatted,
+      profile: profile ? { ...formatted.profile, ...profile, status: "onboarding" } : formatted.profile,
+      company: profile ? {
+        id: profile.tenant_id,
+        customer_id: profile.tenant_id,
+        tenant_id: profile.tenant_id,
+        data_scope: profile.data_scope,
+        company_name: profile.business_name,
+        status: "onboarding",
+      } : null,
+      onboardingStatus: profile?.onboarding_status || "profile_pending",
+    };
     return {
       ...formatted,
+      profile: {
+        ...formatted.profile,
+        ...profile,
+        status: profile?.onboarding_status === "complete" ? "approved" : "onboarding",
+      },
       company: {
         ...formatted.company,
         id: data.tenant_id,
@@ -318,7 +331,7 @@ export const SupabaseAuthService = {
         workspaceId: data.workspace_id,
         customer_id: data.tenant_id,
         tenant_id: data.tenant_id,
-        tenant_type: data.data_scope === "demo_sandbox" ? "demo_customer" : formatted.company.tenant_type,
+        tenant_type: data.data_scope === "demo_sandbox" ? "demo_customer" : "real_tenant",
         data_scope: data.data_scope,
       },
       role: {
@@ -327,6 +340,7 @@ export const SupabaseAuthService = {
         code: String(data.role || "viewer").toUpperCase(),
         name: String(data.role || "viewer").replace(/^./, (letter) => letter.toUpperCase()),
       },
+      onboardingStatus: profile?.onboarding_status || "profile_ready",
     };
   },
 

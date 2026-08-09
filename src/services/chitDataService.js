@@ -79,7 +79,7 @@ export async function saveTenantGroupPersistent(group, activeTenantContext) {
   const result = group.id
     ? await repository.update(group.id, payload, { activeTenantContext })
     : await repository.create(payload, { activeTenantContext });
-  if (!result.success) throw new Error(result.message || "Chit group could not be saved.");
+  if (!result.success) throw new Error(toChitPlanError(result.message));
   return result.data;
 }
 
@@ -96,8 +96,14 @@ export async function updateTenantGroupPersistent(id, patch, activeTenantContext
     toProductionGroup(patch),
     { activeTenantContext }
   );
-  if (!result.success) throw new Error(result.message || "Chit group could not be updated.");
+  if (!result.success) throw new Error(toChitPlanError(result.message, "Chit group could not be updated."));
   return result.data;
+}
+
+export function toChitPlanError(message, fallback = "Chit group could not be saved.") {
+  return String(message || "").includes("PLAN_ACTIVE_CHIT_LIMIT_REACHED")
+    ? "Your annual plan's active chit limit has been reached. Complete or archive a chit, or upgrade your plan."
+    : message || fallback;
 }
 
 function toProductionGroup(group = {}) {

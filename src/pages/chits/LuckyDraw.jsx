@@ -20,7 +20,7 @@ import { confirmLuckyDrawWinner, listLuckyDrawResults } from "../../services/luc
 import "./LuckyDraw.css";
 
 function LuckyDraw() {
-  const { activeTenantContext } = useAuth();
+  const { activeTenantContext, permissions, profile, role } = useAuth();
   const [drawHistory, setDrawHistory] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -97,6 +97,9 @@ function LuckyDraw() {
         members: tenantMembers,
         monthNumber: 1,
         deterministicSeed: selection.randomValue,
+        permissions,
+        profile,
+        role,
       });
       const record = result.success
         ? normalizeDrawForUi(result.draw, tenantGroups, tenantMembers)

@@ -48,7 +48,7 @@ const EMPTY_AUCTION = {
 };
 
 function Auctions() {
-  const { activeTenantContext } = useAuth();
+  const { activeTenantContext, permissions, profile, role } = useAuth();
   const [auctions, setAuctions] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -172,6 +172,9 @@ function Auctions() {
       monthNumber: Number(String(formData.auction_month).split("-").pop() || formData.auction_month || 1),
       bidAmount: Number(formData.bid_amount || formData.starting_bid || 0),
       winnerId: formData.winner_id,
+      permissions,
+      profile,
+      role,
     });
     if (!result.success) {
       setFormError(result.message);
@@ -225,6 +228,9 @@ function Auctions() {
         monthNumber: Number(String(formData.auction_month).split("-").pop() || formData.auction_month || 1),
         bidAmount: Number(formData.bid_amount || formData.starting_bid || 0),
         winnerId: selection.winner.id,
+        permissions,
+        profile,
+        role,
       });
       if (!result.success) {
         setFormError(result.message);

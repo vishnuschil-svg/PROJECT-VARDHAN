@@ -1,16 +1,107 @@
-/artifacts/
-/.git/
-/.github/
-/.npm/
-/.agents/
-/.codex/
-/dist/
-/docs/
-/frontend/
-/supabase/
-/src/tests/
-**/__pycache__/
-*.zip
+# Environment and local credentials
+.env
+.env.*
+!.env.example
+!backend/.env.example
+*.local
+backend/.env
+backend/.env.test.local
+*.test.local
+*.token
+*.tokens
+
+# Dependencies and local runtime folders
+node_modules/
+.venv/
+venv/
+env/
+
+# Frontend build output stays available for the Vercel app
+# Keep dist/ for the app build output.
+dist-ssr/
+build/
+coverage/
+.vite/
+
+# Python bytecode and tool caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Browser automation profiles and session databases
+artifacts/
+backend/artifacts/
+**/Cookies
+**/Cookies-journal
+**/Login Data
+**/Login Data-journal
+**/Login Data For Account
+**/Login Data For Account-journal
+**/Web Data
+**/Web Data-journal
+**/Local State
+**/Session Storage/
+**/Crashpad/
+*.dmp
+
+# Logs and local runtime data
+logs/
 *.log
-SPRINT_*.md
-INTERNAL_TRIAL_DEFECT_REGISTER_*.md
+*.log.*
+*.pid
+*.sock
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Supabase CLI project metadata
+supabase/.temp/
+
+# Temporary files, backups, and local archives
+backup-*/
+*-backup/
+*.backup.*
+*.bak
+*.tmp
+*.temp
+~$*
+*.zip
+VARDHAN_AI_UPLOAD_AUDIT_BATCH*.zip
+
+# Deployment/editor/OS state
+.vercel/
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Local durable ingestion queue + uploaded binaries
+backend/data/
+backend/tests/
+backend/fixtures/
+
+# Large workspace folders that are not needed by the Python function
+apps/
+database/
+docs/
+platform-core/
+public/
+scripts/
+shared/
+src/
+**/*.md
+VARDHAN_ERP_v1.0_FINAL_MERGED_SOURCE.zip
+vardhan-education-platform/

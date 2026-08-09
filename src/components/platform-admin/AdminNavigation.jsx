@@ -15,6 +15,8 @@ const ADMIN_MENU = [
   { label: "Product Catalog", icon: "PC", path: "/admin/products" },
   { label: "Module Management", icon: "MD", path: "/admin/modules" },
   { label: "Subscription", icon: "SB", path: "/admin/subscription" },
+  { label: "Referrals", icon: "RF", path: "/admin/referrals" },
+  { label: "Marketing", icon: "MK", path: "/admin/marketing" },
   { label: "Licenses", icon: "LC", path: "/admin/licenses" },
   { label: "Support Tickets", icon: "SP", path: "/admin/support" },
   { label: "Notifications", icon: "NT", path: "/admin/notifications" },

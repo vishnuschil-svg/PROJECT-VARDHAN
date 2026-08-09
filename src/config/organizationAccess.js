@@ -32,7 +32,7 @@ export const ORGANIZATION_COMPANIES = [
     tenantId: OWN_BUSINESS?.tenantId,
     customerType: OWN_BUSINESS?.customerType,
     dataScope: CUSTOMER_DATA_SCOPES.OWN_BUSINESS,
-    companyName: "VARDHAN Own Chit Business",
+    companyName: "Organizer Business",
     companyCode: "VOCB",
     gstNumber: "36ABCDE1234F1Z5",
     pan: "ABCDE1234F",
@@ -96,7 +96,7 @@ export const ORGANIZATION_BRANCHES = [
   {
     id: "branch-own-main",
     companyId: "company-own-chit",
-    companyName: "VARDHAN Own Chit Business",
+    companyName: "Organizer Business",
     customerId: OWN_BUSINESS?.id,
     tenantId: OWN_BUSINESS?.tenantId,
     customerType: OWN_BUSINESS?.customerType,

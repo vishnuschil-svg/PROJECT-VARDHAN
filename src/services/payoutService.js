@@ -13,8 +13,10 @@ import {
 import { resolveRepositoryBackend, REPOSITORY_BACKENDS } from "../config/repositoryBackend.js";
 import { createRepositoryProvider } from "../repositories/repositoryProvider.js";
 import { assertOperatorRole } from "./winnerLifecyclePersistence.js";
+import { assertRegisteredOperationsAccess } from "../config/groupManagerSafety.js";
 
 export async function createPayoutPlan(input, activeTenantContext, { permissions = {}, profile = {}, role = "" } = {}) {
+  assertRegisteredOperationsAccess({ permissions, profile, role }, "REGISTERED_OPERATIONS");
   if (!assertOperatorRole(permissions, profile, role)) {
     throw new Error("Unauthorized role for payout plan creation.");
   }

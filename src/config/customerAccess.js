@@ -50,7 +50,7 @@ export const CUSTOMER_STATUS_VARIANTS = {
 export const CUSTOMER_ACCESS_SEED = [
   {
     id: "tenant-own-chit",
-    name: "VARDHAN Own Chit Business",
+    name: "Organizer Business",
     owner: "Vishnu Vardhan Reddy",
     email: "owner@vardhanerp.com",
     phone: "+91 9000000000",

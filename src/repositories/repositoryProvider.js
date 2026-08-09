@@ -17,6 +17,8 @@ const names = [
   "ExpensesRepository",
   "MonthClosingRepository",
   "CompletionsRepository",
+  "ManualBidRecordsRepository",
+  "DistributionRecordsRepository",
 ];
 
 export function createRepositoryProvider(env = import.meta.env) {

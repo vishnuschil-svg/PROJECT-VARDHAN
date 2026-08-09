@@ -8,6 +8,7 @@ import {
   listAuctionsPersistent,
   listLuckyDrawsPersistent,
 } from "./winnerLifecyclePersistence.js";
+import { assertRegisteredOperationEnabled, assertRegisteredOperationsAccess } from "../config/groupManagerSafety.js";
 
 export async function listLuckyDrawResults(activeTenantContext) {
   return listLuckyDrawsPersistent(activeTenantContext);
@@ -20,6 +21,7 @@ export async function buildLuckyDrawPreview({
   monthNumber = 1,
   deterministicSeed = "",
 } = {}) {
+  assertRegisteredOperationEnabled("AUTOMATED_LUCKY_DRAW");
   const scheduleRow =
     ChitScheduleRepository.listByGroup(group?.id, activeTenantContext).find(
       (row) => Number(row.monthNumber) === Number(monthNumber)
@@ -68,6 +70,7 @@ export async function confirmLuckyDrawWinner({
   profile = {},
   role = "",
 } = {}) {
+  assertRegisteredOperationsAccess({ permissions, profile, role }, "AUTOMATED_LUCKY_DRAW");
   const built = await buildLuckyDrawPreview({
     activeTenantContext,
     group,

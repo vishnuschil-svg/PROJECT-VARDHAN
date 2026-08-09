@@ -14,6 +14,7 @@ import {
 import { Link, useNavigate, useOutletContext } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { AccessProviderService } from "../../services/auth/AccessProviderService";
+import { resolvePostAuthRoute, toCustomerAuthMessage } from "../../services/auth/CustomerAuthContracts";
 
 const COPY = {
   "en-IN": {
@@ -117,6 +118,10 @@ function PremiumLogin() {
     setMessage(null);
     try {
       if (method === "otp") {
+        if (!capabilities.phoneOtp) {
+          setMessage({ tone: "error", text: copy.otpDisabled });
+          return;
+        }
         if (!otpRequested) {
           await AccessProviderService.requestOtp({ phone });
           setOtpRequested(true);
@@ -127,10 +132,15 @@ function PremiumLogin() {
         await finishAuthentication();
         return;
       }
-      await login(form);
-      navigate("/dashboard", { replace: true });
+      const session = await login(form);
+      navigate(resolvePostAuthRoute(session), { replace: true });
     } catch (error) {
-      setMessage({ tone: "error", text: error?.message || copy.fallbackError });
+      if (String(error?.message || "").toLowerCase().includes("email not confirmed")) {
+        window.sessionStorage.setItem("vardhan.pendingVerificationEmail", form.email.trim().toLowerCase());
+        navigate("/verify-email", { replace: true });
+        return;
+      }
+      setMessage({ tone: "error", text: toCustomerAuthMessage(error, copy.fallbackError) });
     } finally {
       setLoading(false);
     }
@@ -153,7 +163,7 @@ function PremiumLogin() {
 
       <div className="premium-auth-tabs" role="tablist" aria-label="Sign-in method">
         <button type="button" role="tab" aria-selected={method === "password"} className={method === "password" ? "active" : ""} onClick={() => selectMethod("password")}><KeyRound size={16} />{copy.passwordTab}</button>
-        <button type="button" role="tab" aria-selected={method === "otp"} className={method === "otp" ? "active" : ""} onClick={() => selectMethod("otp")}><Phone size={16} />{copy.otpTab}</button>
+        <button type="button" role="tab" aria-selected={method === "otp"} className={method === "otp" ? "active" : ""} onClick={() => selectMethod("otp")} disabled={!capabilities.phoneOtp} title={!capabilities.phoneOtp ? copy.otpDisabled : undefined}><Phone size={16} />{copy.otpTab}</button>
       </div>
 
       <form className="premium-login-form" onSubmit={handleSubmit}>
@@ -163,7 +173,7 @@ function PremiumLogin() {
           <>
             <label className="premium-auth-field">
               <span>{copy.email}</span>
-              <span className="premium-auth-input"><Mail size={18} /><input value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} type="email" placeholder={copy.emailPlaceholder} autoComplete="email" inputMode="email" required /></span>
+              <span className="premium-auth-input"><Mail size={18} /><input value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value.trim().toLowerCase() }))} type="email" placeholder={copy.emailPlaceholder} autoComplete="email" inputMode="email" required /></span>
             </label>
             <label className="premium-auth-field">
               <span>{copy.password}</span>

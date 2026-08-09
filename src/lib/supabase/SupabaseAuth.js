@@ -101,17 +101,12 @@ export class SupabaseAuth {
    * Get current session
    */
   async getSession() {
-    console.log("[SupabaseAuth] getSession called, configured:", this.configured);
     if (!this.configured) {
-      console.log("[SupabaseAuth] Not configured, returning null");
       return null;
     }
 
     const { data: { session }, error } = await this.client.auth.getSession();
-    console.log("[SupabaseAuth] getSession result:", session ? "Session exists" : "No session", "error:", error);
-
     if (error) {
-      console.error("[SupabaseAuth] Failed to get session:", error);
       return null;
     }
 

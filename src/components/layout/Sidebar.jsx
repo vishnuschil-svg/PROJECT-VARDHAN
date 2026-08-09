@@ -15,12 +15,15 @@ const PLATFORM_MENU = [
   { label: "Module Management", icon: "MD", path: "/admin/modules" },
   { label: "License Management", icon: "LC", path: "/admin/licenses" },
   { label: "Subscription", icon: "SB", path: "/admin/subscription" },
+  { label: "Referrals", icon: "RF", path: "/admin/referrals" },
+  { label: "Marketing", icon: "MK", path: "/admin/marketing" },
   { label: "Notifications", icon: "NT", path: "/admin/notifications" },
   { label: "Support", icon: "SP", path: "/admin/support" },
   { label: "Audit Logs", icon: "AL", path: "/admin/audit-logs" },
 ];
 
 const SYSTEM_MENU = [
+  { label: "Refer & Earn", icon: "RE", path: "/refer-and-earn" },
   { label: "Settings", icon: "ST", path: "/admin/settings" },
   { label: "Profile", icon: "PR", path: "/profile" },
   { label: "Logout", icon: "LO", path: "/logout" },

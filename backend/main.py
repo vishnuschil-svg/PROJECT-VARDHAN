@@ -58,6 +58,7 @@ from structured_logging import configure_production_logging
 from ocr_api import build_ocr_router
 from vision_providers import create_vision_provider
 from ingestion.api import build_ingestion_router
+from razorpay_payments import build_razorpay_router, require_razorpay_configuration
 
 
 def _load_env_file(path: Path) -> None:
@@ -793,6 +794,8 @@ async def workspace_context(
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.pool = None
+    if os.getenv("VARDHAN_ENV", "").strip().upper() == "PRODUCTION":
+        require_razorpay_configuration()
     if settings.database_url:
         app.state.pool = await asyncpg.create_pool(
             settings.database_url,
@@ -826,6 +829,7 @@ app.add_middleware(
 app.include_router(build_enterprise_router(workspace_context, database_pool))
 app.include_router(build_ocr_router(workspace_context), prefix="/api")
 app.include_router(build_ingestion_router(workspace_context), prefix="/api")
+app.include_router(build_razorpay_router(workspace_context, database_pool, authenticated_principal))
 
 
 @app.middleware("http")

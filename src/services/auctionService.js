@@ -6,6 +6,7 @@ import { ChitScheduleRepository } from "../repositories/ChitScheduleRepository.j
 import { listWinnerResults, confirmWinnerResult } from "./winnerService.js";
 import { listAuctionsPersistent } from "./winnerLifecyclePersistence.js";
 import { createEntityId } from "./productionChitPersistence.js";
+import { assertRegisteredOperationEnabled, assertRegisteredOperationsAccess } from "../config/groupManagerSafety.js";
 
 export async function getAuctionWorkspace({ activeTenantContext, groups = [], members = [] } = {}) {
   const [auctions, winners] = await Promise.all([
@@ -24,6 +25,7 @@ export async function buildAuctionPreview({
   bidPercentage = 0,
   winnerId = "",
 } = {}) {
+  assertRegisteredOperationEnabled("AUTOMATED_AUCTION");
   const scheduleRow =
     ChitScheduleRepository.listByGroup(group?.id, activeTenantContext).find(
       (row) => Number(row.monthNumber) === Number(monthNumber)
@@ -91,6 +93,7 @@ export async function confirmAuctionWinner({
   profile = {},
   role = "",
 } = {}) {
+  assertRegisteredOperationsAccess({ permissions, profile, role }, "AUTOMATED_AUCTION");
   const built = await buildAuctionPreview({
     activeTenantContext,
     group,

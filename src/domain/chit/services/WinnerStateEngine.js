@@ -1,12 +1,15 @@
 import { LIFT_EFFECTIVE_RULES } from "../entities/ChitRuleSet.js";
 import { WinnerResult, WINNER_STATUS } from "../entities/WinnerResult.js";
+import { assertRegisteredOperationEnabled } from "../../../config/groupManagerSafety.js";
 
 export const WinnerStateEngine = {
-  buildWinner(input = {}) {
+  buildWinner(input = {}, featureFlags) {
+    assertRegisteredOperationEnabled("AUTOMATED_WINNER_SELECTION", featureFlags);
     return new WinnerResult(input).toJSON();
   },
 
-  confirmWinner(winner, ruleSet = {}, userId = "local-user") {
+  confirmWinner(winner, ruleSet = {}, userId = "local-user", featureFlags) {
+    assertRegisteredOperationEnabled("AUTOMATED_WINNER_SELECTION", featureFlags);
     const confirmed = new WinnerResult(winner).confirm(userId);
     return {
       winner: confirmed,
@@ -25,7 +28,8 @@ export const WinnerStateEngine = {
     };
   },
 
-  cancelWinner(winner, { userId, reason } = {}) {
+  cancelWinner(winner, { userId, reason, featureFlags } = {}) {
+    assertRegisteredOperationEnabled("AUTOMATED_WINNER_SELECTION", featureFlags);
     return new WinnerResult(winner).cancel({ userId, reason });
   },
 

@@ -3,9 +3,11 @@ import { WINNER_MODES } from "../entities/WinnerResult.js";
 import { ChitCalculationEngine } from "./ChitCalculationEngine.js";
 import { RuleEngine } from "./RuleEngine.js";
 import { WinnerStateEngine } from "./WinnerStateEngine.js";
+import { assertRegisteredOperationEnabled } from "../../../config/groupManagerSafety.js";
 
 export const AuctionEngine = {
-  calculateAuction({ group = {}, auction = {}, commissionRate = 5 } = {}) {
+  calculateAuction({ group = {}, auction = {}, commissionRate = 5, featureFlags } = {}) {
+    assertRegisteredOperationEnabled("AUTOMATED_AUCTION", featureFlags);
     const chitValue = Number(group.chit_value || group.chitValue || 0);
     const bidAmount = Number(auction.bid_amount || auction.bidAmount || auction.lift_amount || 0);
     const commission = ChitCalculationEngine.calculateCommission(chitValue, commissionRate);
@@ -19,7 +21,8 @@ export const AuctionEngine = {
     return new AuctionResult({ prizeAmount, discount, dividend, commission }).toJSON();
   },
 
-  buildAuctionPreview({ group = {}, scheduleRow = {}, ruleSet = {}, bidAmount = 0, bidPercentage = 0 } = {}) {
+  buildAuctionPreview({ group = {}, scheduleRow = {}, ruleSet = {}, bidAmount = 0, bidPercentage = 0, featureFlags } = {}) {
+    assertRegisteredOperationEnabled("AUTOMATED_AUCTION", featureFlags);
     const chitValue = Number(group.chit_value || group.chitValue || 0);
     const resolvedBid = Number(bidAmount || 0) || Math.round((chitValue * Number(bidPercentage || 0)) / 100);
     const commission = RuleEngine.resolveCommission({ amount: chitValue, ruleSet, scheduleRow });
@@ -48,7 +51,8 @@ export const AuctionEngine = {
     };
   },
 
-  buildWinnerResult({ group = {}, scheduleRow = {}, member = {}, preview = {}, activeTenantContext = {}, userId = "local-user" } = {}) {
+  buildWinnerResult({ group = {}, scheduleRow = {}, member = {}, preview = {}, activeTenantContext = {}, userId = "local-user", featureFlags } = {}) {
+    assertRegisteredOperationEnabled("AUTOMATED_WINNER_SELECTION", featureFlags);
     return WinnerStateEngine.buildWinner({
       tenantId: activeTenantContext.tenant_id,
       workspaceId: activeTenantContext.workspace_id || activeTenantContext.workspaceId || "",
@@ -66,6 +70,6 @@ export const AuctionEngine = {
       status: "CONFIRMED",
       confirmedBy: userId,
       confirmedAt: new Date().toISOString(),
-    });
+    }, featureFlags);
   },
 };

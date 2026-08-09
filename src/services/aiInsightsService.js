@@ -16,7 +16,7 @@ const ROUTES = {
   PENDING: "/chits/collections/pending",
   MEMBERS: "/chits/members",
   FINANCE: "/chits/finance",
-  AUCTIONS: "/chits/auctions",
+  MANUAL_RECORDS: "/chits/manual-records",
   REPORTS: "/chits/reports",
   SETTINGS: "/chits/settings",
 };
@@ -158,7 +158,7 @@ function buildAuctionReminderInsight(metrics) {
       message: "No active auction date is visible in the current chit group records.",
       priority: "low",
       actionLabel: "Open auctions",
-      actionRoute: ROUTES.AUCTIONS,
+      actionRoute: ROUTES.MANUAL_RECORDS,
     };
   }
 
@@ -169,7 +169,7 @@ function buildAuctionReminderInsight(metrics) {
     message: `${metrics.nextAuction.chit_name || metrics.nextAuction.chit_code} is scheduled on ${metrics.nextAuction.next_auction_date}.`,
     priority: "medium",
     actionLabel: "Prepare auction",
-    actionRoute: ROUTES.AUCTIONS,
+    actionRoute: ROUTES.MANUAL_RECORDS,
   };
 }
 

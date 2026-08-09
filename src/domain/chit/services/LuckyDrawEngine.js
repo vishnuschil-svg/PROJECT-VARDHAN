@@ -1,8 +1,10 @@
 import { WINNER_MODES } from "../entities/WinnerResult.js";
 import { WinnerStateEngine } from "./WinnerStateEngine.js";
+import { assertRegisteredOperationEnabled } from "../../../config/groupManagerSafety.js";
 
 export const LuckyDrawEngine = {
-  selectWinner({ eligibleMembers = [], deterministicSeed = "" } = {}) {
+  selectWinner({ eligibleMembers = [], deterministicSeed = "", featureFlags } = {}) {
+    assertRegisteredOperationEnabled("AUTOMATED_LUCKY_DRAW", featureFlags);
     if (!eligibleMembers.length) return null;
     const index = deterministicSeed
       ? Math.abs(hash(deterministicSeed)) % eligibleMembers.length
@@ -14,7 +16,8 @@ export const LuckyDrawEngine = {
     };
   },
 
-  buildResult({ group = {}, scheduleRow = {}, member = {}, selection = {}, activeTenantContext = {}, userId = "local-user" } = {}) {
+  buildResult({ group = {}, scheduleRow = {}, member = {}, selection = {}, activeTenantContext = {}, userId = "local-user", featureFlags } = {}) {
+    assertRegisteredOperationEnabled("AUTOMATED_WINNER_SELECTION", featureFlags);
     return WinnerStateEngine.buildWinner({
       tenantId: activeTenantContext.tenant_id,
       workspaceId: activeTenantContext.workspace_id || activeTenantContext.workspaceId || "",
@@ -30,7 +33,7 @@ export const LuckyDrawEngine = {
       status: "CONFIRMED",
       confirmedBy: userId,
       confirmedAt: new Date().toISOString(),
-    });
+    }, featureFlags);
   },
 };
 

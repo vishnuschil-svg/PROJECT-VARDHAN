@@ -8,8 +8,14 @@ import {
   hasModuleAccess,
   isPlatformOwner,
   normalizeRoleName,
-} from "../../config/erpModules";
-import { MANAGER } from "../../config/roleAccess";
+} from "../../config/erpModules.js";
+import { MANAGER } from "../../config/roleAccess.js";
+import { GROUP_MANAGER_PERMISSIONS, REGISTERED_OPERATION_PERMISSIONS } from "../../config/groupManagerSafety.js";
+
+export const RESERVED_FEATURE_PERMISSIONS = REGISTERED_OPERATION_PERMISSIONS;
+
+const GROUP_MANAGER_WRITE_ROLES = new Set([PLATFORM_OWNER, SUPER_ADMIN, CUSTOMER_OWNER, ADMIN]);
+const GROUP_MANAGER_FEATURES = new Set(Object.values(GROUP_MANAGER_PERMISSIONS));
 
 export const AUTH_ROLES = {
   PLATFORM_OWNER,
@@ -89,10 +95,11 @@ export const PermissionService = {
   getRoleKey({ profile, role } = {}) {
     return normalizeRoleName(
       role?.key ||
-        role?.code ||
-        role?.id ||
-        role?.name ||
-        profile?.role ||
+      role?.code ||
+      role?.id ||
+      role?.name ||
+      (typeof role === "string" ? role : "") ||
+      profile?.role ||
         profile?.role_name ||
         ""
     );
@@ -110,6 +117,13 @@ export const PermissionService = {
       role: roleKey,
       isPlatformOwner: isPlatformOwner(profile, role),
       actions: actionPermissions,
+      features: Object.values(REGISTERED_OPERATION_PERMISSIONS).reduce((featureAccess, permission) => {
+        featureAccess[permission] = isPlatformOwner(profile, role);
+        return featureAccess;
+      }, Object.values(GROUP_MANAGER_PERMISSIONS).reduce((featureAccess, permission) => {
+        featureAccess[permission] = GROUP_MANAGER_WRITE_ROLES.has(roleKey);
+        return featureAccess;
+      }, {})),
       modules: modules || {},
       workspace: {
         id: activeWorkspace?.id || null,
@@ -142,10 +156,16 @@ export const PermissionService = {
       return true;
     }
 
-    const normalizedAction = String(action || "").toLowerCase();
-    const actionAllowed = normalizedAction
-      ? Boolean(permissions?.actions?.[normalizedAction])
-      : true;
+    const requestedAction = String(action || "");
+    const normalizedAction = requestedAction.toLowerCase();
+    const roleKey = this.getRoleKey({ profile, role });
+    const isGroupManagerFeature = GROUP_MANAGER_FEATURES.has(requestedAction);
+    const explicitFeature = permissions?.features?.[requestedAction] ?? permissions?.[requestedAction];
+    const actionAllowed = isGroupManagerFeature
+      ? (typeof explicitFeature === "boolean" ? explicitFeature : GROUP_MANAGER_WRITE_ROLES.has(roleKey))
+      : normalizedAction
+        ? Boolean(permissions?.actions?.[normalizedAction])
+        : true;
     const moduleAllowed = moduleId
       ? hasModuleAccess(moduleId, modules || permissions?.modules, profile, role)
       : true;

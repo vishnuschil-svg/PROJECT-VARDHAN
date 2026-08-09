@@ -4,6 +4,7 @@ import {
   formatReceiptDate,
   formatReceiptDateTime,
 } from "./ReceiptFormatter";
+import { RECEIPT_DISCLAIMER, SOFTWARE_PROVIDER } from "../config/groupManagerSafety.js";
 
 export const RECEIPT_TEMPLATES = {
   ROYAL: "ROYAL",
@@ -31,7 +32,7 @@ export function createReceiptTemplate(receipt, template = RECEIPT_TEMPLATES.ROYA
       <header>
         <div class="receipt-logo">MN</div>
         <div>
-          <span>MITRA NIDHI CHITI PRO</span>
+          <span>${escapeReceiptText(receipt.issuerName || "Organizer")}</span>
           <h1>Payment Receipt</h1>
           <p>${escapeReceiptText(receipt.tenantId)}</p>
         </div>
@@ -45,13 +46,13 @@ export function createReceiptTemplate(receipt, template = RECEIPT_TEMPLATES.ROYA
         `).join("")}
       </main>
       <aside>
-        <strong>Owner Bank Details</strong>
+        <strong>Organizer Payment Details</strong>
         <p>${escapeReceiptText(receipt.ownerBankDetails?.accountName || "")}</p>
         <p>${escapeReceiptText(receipt.ownerBankDetails?.bankName || "")}</p>
         <p>${escapeReceiptText(receipt.ownerBankDetails?.accountNumber || "")} / ${escapeReceiptText(receipt.ownerBankDetails?.ifsc || "")}</p>
         <p>UPI: ${escapeReceiptText(receipt.ownerBankDetails?.upiId || "")}</p>
       </aside>
-      <footer>${escapeReceiptText(receipt.footerNote)}</footer>
+      <footer>${escapeReceiptText(receipt.footerNote)}<br />${escapeReceiptText(receipt.receiptDisclaimer || RECEIPT_DISCLAIMER)}<br />Software powered by ${escapeReceiptText(receipt.softwareProvider || SOFTWARE_PROVIDER)}</footer>
     </section>
   `.trim();
 }

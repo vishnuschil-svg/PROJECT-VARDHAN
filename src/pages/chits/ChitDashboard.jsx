@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, ArrowRight, Bell, Bot, CalendarDays, CircleHelp, FileText, Landmark, Plus, ReceiptText, Search, Sparkles, Target, Users, WalletCards, X } from "lucide-react";
+import { AlertTriangle, ArrowRight, Bell, Bot, CalendarDays, CircleHelp, FileText, Landmark, Plus, ReceiptText, Search, Sparkles, Users, WalletCards, X } from "lucide-react";
 import ChitLayout from "../../components/chit/ChitLayout";
 import TrialRunChecklist from "../../components/dashboard/TrialRunChecklist";
 import { useAuth } from "../../hooks/useAuth";
@@ -10,7 +10,7 @@ import "./ChitDashboard.css";
 import "./ChitCommandDashboard.css";
 
 const KPI_ICONS=[Landmark,WalletCards,WalletCards,AlertTriangle,Landmark,Users,WalletCards];
-const QUICK_ACTIONS=[[Plus,"Create Chit","/chits/ai-chit"],[FileText,"Import Chit","/chits/ai-chit/upload"],[Users,"Add Member","/chits/members"],[WalletCards,"Record Collection","/chits/collections"],[ReceiptText,"Generate Receipt","/chits/receipts"],[Target,"Run Auction","/chits/auctions"],[Sparkles,"Lucky Draw","/chits/lucky-draw"],[FileText,"Reports","/chits/reports"]];
+const QUICK_ACTIONS=[[Plus,"Create Chit","/chits/ai-chit"],[FileText,"Import Chit","/chits/ai-chit/upload"],[Users,"Add Member","/chits/members"],[WalletCards,"Record Collection","/chits/collections"],[ReceiptText,"Generate Receipt","/chits/receipts"],[FileText,"Reports","/chits/reports"]];
 
 function ChitDashboard(){
   const navigate=useNavigate();const {activeTenantContext,profile}=useAuth();const [search,setSearch]=useState("");const [aiOpen,setAiOpen]=useState(true);const [trialOpen,setTrialOpen]=useState(false);const [trial,setTrial]=useState(()=>getTrialRunChecklist(activeTenantContext));

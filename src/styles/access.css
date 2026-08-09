@@ -5,6 +5,22 @@
   max-width: 380px;
 }
 
+.access-declaration {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 12px;
+  background: rgba(248, 250, 252, 0.9);
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.access-declaration input { margin-top: 3px; }
+
 .access-card header {
   margin-bottom: 22px;
 }
@@ -102,6 +118,77 @@
   background: transparent;
   color: var(--ink, #1a1a1a);
   font: inherit;
+}
+
+.access-field input,
+.access-field select {
+  min-height: 46px;
+  padding: 0 12px;
+  border: 1px solid var(--line, rgba(26, 26, 26, 0.14));
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink, #1a1a1a);
+  font: inherit;
+}
+
+.access-field input:focus,
+.access-field select:focus {
+  border-color: #714b67;
+  outline: 3px solid rgba(113, 75, 103, 0.12);
+}
+
+.access-field small {
+  color: var(--ink-soft, #5b5560);
+  font-size: 11.5px;
+}
+
+.access-error {
+  color: var(--red, #b42318) !important;
+  font-size: 12px;
+}
+
+.access-phone-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 12px;
+}
+
+.access-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  color: var(--ink, #1a1a1a);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.access-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: #714b67;
+}
+
+.access-otp {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+
+.access-otp input {
+  width: 100%;
+  min-width: 0;
+  height: 52px;
+  border: 1px solid var(--line, rgba(26, 26, 26, 0.14));
+  border-radius: 8px;
+  color: var(--ink, #1a1a1a);
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.access-otp input:focus {
+  border-color: #714b67;
+  outline: 3px solid rgba(113, 75, 103, 0.12);
 }
 
 .access-primary,
@@ -242,5 +329,13 @@
   .access-grid-2,
   .access-choice-grid {
     grid-template-columns: 1fr;
+  }
+
+  .access-phone-row {
+    grid-template-columns: 110px 1fr;
+  }
+
+  .access-otp {
+    gap: 5px;
   }
 }

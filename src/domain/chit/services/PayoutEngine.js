@@ -1,7 +1,9 @@
 import { PayoutPlan, PAYOUT_MODES } from "../entities/PayoutPlan.js";
+import { assertRegisteredOperationEnabled } from "../../../config/groupManagerSafety.js";
 
 export const PayoutEngine = {
-  createPlan(input = {}) {
+  createPlan(input = {}, featureFlags) {
+    assertRegisteredOperationEnabled("REGISTERED_OPERATIONS", featureFlags);
     const totalPayout = Number(input.totalPayout || input.payoutAmount || 0);
     const payoutMode = input.payoutMode || PAYOUT_MODES.FULL;
     const installmentCount = payoutMode === PAYOUT_MODES.INSTALLMENTS ? Number(input.installmentCount || 2) : 0;

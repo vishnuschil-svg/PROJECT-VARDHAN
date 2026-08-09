@@ -111,9 +111,6 @@ function BusinessHealthDashboard() {
         <Button variant="default" icon={<Users size={16} />} onClick={() => navigate("/chits/members")}>
           Add Member
         </Button>
-        <Button variant="default" icon={<Trophy size={16} />} onClick={() => navigate("/chits/auctions")}>
-          Start Auction
-        </Button>
         <Button variant="default" icon={<FileBarChart size={16} />} onClick={() => navigate("/chits/reports")}>
           Generate Report
         </Button>

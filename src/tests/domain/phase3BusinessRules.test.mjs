@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it, beforeEach, afterEach } from "node:test";
 import { PayoutEngine } from "../../domain/chit/services/PayoutEngine.js";
+
+const FEATURE_BANK_FLAGS = { REGISTERED_OPERATIONS_ENABLED: true, AUTOMATED_AUCTION_ENABLED: true, AUTOMATED_LUCKY_DRAW_ENABLED: true, AUTOMATED_WINNER_SELECTION_ENABLED: true };
 import { BusinessHealthV2Engine } from "../../domain/chit/services/BusinessHealthV2Engine.js";
 import { BatchRepository } from "../../repositories/BatchRepository.js";
 import { calculateExpenseImpact } from "../../services/expenseService.js";
@@ -59,7 +61,7 @@ describe("phase 3 final business rules", () => {
       payoutMode: "INSTALLMENTS",
       installmentCount: 3,
       startDate: "2026-07-01",
-    });
+    }, FEATURE_BANK_FLAGS);
     const updated = PayoutEngine.applyPayment(plan, 30000);
 
     assert.equal(plan.installmentSchedule.length, 3);

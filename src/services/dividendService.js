@@ -3,8 +3,10 @@ import {
   listDividendsPersistent,
   postDividendBatchPersistent,
 } from "./closingLifecyclePersistence.js";
+import { assertRegisteredOperationEnabled } from "../config/groupManagerSafety.js";
 
 export function previewDividendAllocation(input = {}) {
+  assertRegisteredOperationEnabled("AUTOMATED_AUCTION");
   return DividendEngine.allocateMonthDividends(input);
 }
 
@@ -13,6 +15,7 @@ export async function listDividends(activeTenantContext) {
 }
 
 export async function postDividendBatch(input, activeTenantContext) {
+  assertRegisteredOperationEnabled("AUTOMATED_AUCTION");
   return postDividendBatchPersistent(input, activeTenantContext);
 }
 

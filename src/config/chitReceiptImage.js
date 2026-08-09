@@ -1,4 +1,5 @@
 import { formatCurrency } from "./chitPhaseOneData";
+import { RECEIPT_DISCLAIMER, SOFTWARE_PROVIDER } from "./groupManagerSafety.js";
 
 export function buildReceiptNumber(collectionCount = 0) {
   const datePart = new Date().toISOString().slice(0, 10).replaceAll("-", "");
@@ -10,7 +11,7 @@ export function createReceiptPayload({
   member,
   group,
   activeTenantContext,
-  companyName = "VARDHAN Own Chit Business",
+  companyName = "Organizer",
 }) {
   const installmentAmount = Number(collection.installment_amount || group?.monthly_amount || 0);
   const fineAmount = Number(collection.fine_amount || 0);
@@ -40,8 +41,11 @@ export function createReceiptPayload({
     balance_amount: balanceAmount,
     payment_date: collection.payment_date,
     payment_mode: collection.payment_method,
-    collected_by: collection.collected_by || "VARDHAN Collector",
+    collected_by: collection.collected_by || "Organizer",
     company_name: companyName,
+    issuer_name: companyName,
+    receipt_disclaimer: RECEIPT_DISCLAIMER,
+    software_provider: SOFTWARE_PROVIDER,
     tenant_id: activeTenantContext?.tenant_id || collection.tenant_id || "",
     data_scope: activeTenantContext?.data_scope || collection.data_scope || "",
   };
@@ -103,7 +107,8 @@ export function createReceiptSvg(receipt) {
   <rect x="86" y="1050" width="728" height="76" rx="26" fill="#ecfdf5" stroke="#10b981" stroke-width="2"/>
   <text x="120" y="1097" font-family="Segoe UI, Arial" font-size="22" font-weight="900" fill="#047857">Amount Received</text>
   <text x="780" y="1097" text-anchor="end" font-family="Segoe UI, Arial" font-size="32" font-weight="900" fill="#047857">${escapeXml(formatCurrency(receipt.paid_amount))}</text>
-  <text x="450" y="1184" text-anchor="middle" font-family="Segoe UI, Arial" font-size="20" font-weight="900" fill="#07111f">Thank you for your payment</text>
+  <text x="450" y="1170" text-anchor="middle" font-family="Segoe UI, Arial" font-size="15" font-weight="900" fill="#07111f">Issued by ${escapeXml(receipt.issuer_name || receipt.company_name || "Organizer")}</text>
+  <text x="450" y="1196" text-anchor="middle" font-family="Segoe UI, Arial" font-size="12" fill="#475569">Payment recorded by organizer. VARDHAN SOFTWARE SOLUTIONS is technology and record-management software only.</text>
 </svg>`.trim();
 }
 
@@ -151,6 +156,9 @@ export function createReceiptPdfFile(receipt) {
     `Company / Business: ${receipt.company_name}`,
     `Tenant: ${receipt.tenant_id}`,
     `Data Scope: ${receipt.data_scope}`,
+    `Issuer: ${receipt.issuer_name || receipt.company_name || "Organizer"}`,
+    receipt.receipt_disclaimer || RECEIPT_DISCLAIMER,
+    `Software powered by ${receipt.software_provider || SOFTWARE_PROVIDER}`,
   ];
   const pdf = createSimplePdf(pdfText);
   const blob = new Blob([pdf], { type: "application/pdf" });
@@ -179,6 +187,8 @@ export function buildWhatsAppReceiptMessage(receipt) {
     `Collected By: ${receipt.collected_by}`,
     `Notes: ${receipt.notes || "-"}`,
     receipt.company_name,
+    receipt.receipt_disclaimer || RECEIPT_DISCLAIMER,
+    `Software powered by ${receipt.software_provider || SOFTWARE_PROVIDER}`,
   ].join("\n");
 }
 

@@ -1,4 +1,5 @@
 import { MEMBER_STATUS } from "./chitMemberData";
+import { assertRegisteredOperationEnabled } from "./groupManagerSafety.js";
 
 export const LUCKY_DRAW_DURATION_MS = 12000;
 
@@ -14,6 +15,7 @@ export function getEligibleLuckyDrawMembers(members = [], previousDraws = []) {
 }
 
 export function selectTransparentWinner(eligibleMembers = []) {
+  assertRegisteredOperationEnabled("AUTOMATED_LUCKY_DRAW");
   if (!eligibleMembers.length) return null;
 
   const randomValue = getSecureRandomValue();

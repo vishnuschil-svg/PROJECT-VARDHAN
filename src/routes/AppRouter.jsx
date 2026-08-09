@@ -2,11 +2,15 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import ErrorBoundary from "../components/common/ErrorBoundary";
 import ProtectedRoute from "./ProtectedRoute";
+import RegisteredOperationsGuard from "./guards/RegisteredOperationsGuard";
 import { CHIT_MANAGEMENT_ERP } from "../config/erpModules";
+import { GROUP_MANAGER_PERMISSIONS } from "../config/groupManagerSafety";
 
 const AuthLayout = lazy(() => import("../layouts/AuthLayout"));
 const PremiumLogin = lazy(() => import("../pages/auth/PremiumLogin"));
 const Register = lazy(() => import("../pages/auth/Register"));
+const EmailVerification = lazy(() => import("../pages/auth/EmailVerification"));
+const Onboarding = lazy(() => import("../pages/auth/Onboarding"));
 const ForgotPassword = lazy(() => import("../pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("../pages/auth/ResetPassword"));
 const Logout = lazy(() => import("../pages/auth/Logout"));
@@ -14,6 +18,7 @@ const Dashboard = lazy(() => import("../pages/dashboard/Dashboard"));
 const ProductCatalog = lazy(() => import("../pages/products/ProductCatalog"));
 const ProductWorkspace = lazy(() => import("../pages/products/ProductWorkspace"));
 const UpgradeSubscription = lazy(() => import("../pages/products/UpgradeSubscription"));
+const ReferralCenter = lazy(() => import("../pages/referrals/ReferralCenter"));
 
 const AdminDashboard = lazy(() => import("../pages/platform-admin/AdminDashboard"));
 const Companies = lazy(() => import("../pages/platform-admin/Companies"));
@@ -34,6 +39,7 @@ const AuditLogs = lazy(() => import("../pages/platform-admin/AuditLogs"));
 const BackupRestore = lazy(() => import("../pages/platform-admin/BackupRestore"));
 const SystemSettings = lazy(() => import("../pages/platform-admin/SystemSettings"));
 const ProductionHealth = lazy(() => import("../pages/platform-admin/ProductionHealth"));
+const GrowthManagement = lazy(() => import("../pages/platform-admin/GrowthManagement"));
 
 const ChitDashboard = lazy(() => import("../pages/chits/ChitDashboard"));
 const ChitGroups = lazy(() => import("../pages/chits/ChitGroups"));
@@ -45,6 +51,7 @@ const PendingCollections = lazy(() => import("../pages/chits/PendingCollections"
 const Auctions = lazy(() => import("../pages/chits/Auctions"));
 const FinanceAccounts = lazy(() => import("../pages/chits/FinanceAccounts"));
 const LuckyDraw = lazy(() => import("../pages/chits/LuckyDraw"));
+const ManualRecords = lazy(() => import("../pages/chits/ManualRecords"));
 const Payouts = lazy(() => import("../pages/chits/Payouts"));
 const Dividends = lazy(() => import("../pages/chits/Dividends"));
 const Receipts = lazy(() => import("../pages/chits/Receipts"));
@@ -84,6 +91,8 @@ function AppRouter() {
             <Route path="/login" element={<PremiumLogin />} />
           </Route>
           <Route path="/register" element={<Register />} />
+          <Route path="/verify-email" element={<EmailVerification />} />
+          <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/logout" element={<Logout />} />
@@ -129,6 +138,7 @@ function AppRouter() {
               </ProtectedRoute>
             }
           />
+          <Route path="/refer-and-earn" element={<ProtectedRoute><ReferralCenter /></ProtectedRoute>} />
 
         {/* Platform Admin Routes */}
         <Route
@@ -243,6 +253,8 @@ function AppRouter() {
             </ProtectedRoute>
           }
         />
+        <Route path="/admin/referrals" element={<ProtectedRoute platformOnly><GrowthManagement mode="referrals" /></ProtectedRoute>} />
+        <Route path="/admin/marketing" element={<ProtectedRoute platformOnly><GrowthManagement mode="marketing" /></ProtectedRoute>} />
         <Route
           path="/admin/support"
           element={
@@ -353,9 +365,17 @@ function AppRouter() {
           path="/chits/auctions"
           element={
             <ProtectedRoute moduleId={CHIT_MANAGEMENT_ERP}>
-              <Auctions />
+              <RegisteredOperationsGuard operation="AUTOMATED_AUCTION"><Auctions /></RegisteredOperationsGuard>
             </ProtectedRoute>
           }
+        />
+        <Route
+          path="/chits/manual-records"
+          element={<ProtectedRoute moduleId={CHIT_MANAGEMENT_ERP} permission={GROUP_MANAGER_PERMISSIONS.MANUAL_BID_RECORD_CREATE}><ManualRecords /></ProtectedRoute>}
+        />
+        <Route
+          path="/chits/distributions"
+          element={<ProtectedRoute moduleId={CHIT_MANAGEMENT_ERP} permission={GROUP_MANAGER_PERMISSIONS.DISTRIBUTION_RECORD_CREATE}><ManualRecords /></ProtectedRoute>}
         />
         <Route
           path="/chits/finance"
@@ -369,7 +389,7 @@ function AppRouter() {
           path="/chits/lucky-draw"
           element={
             <ProtectedRoute moduleId={CHIT_MANAGEMENT_ERP}>
-              <LuckyDraw />
+              <RegisteredOperationsGuard operation="AUTOMATED_LUCKY_DRAW"><LuckyDraw /></RegisteredOperationsGuard>
             </ProtectedRoute>
           }
         />
@@ -377,7 +397,7 @@ function AppRouter() {
           path="/chits/payouts"
           element={
             <ProtectedRoute moduleId={CHIT_MANAGEMENT_ERP}>
-              <Payouts />
+              <RegisteredOperationsGuard><Payouts /></RegisteredOperationsGuard>
             </ProtectedRoute>
           }
         />

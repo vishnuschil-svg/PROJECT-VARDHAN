@@ -1,0 +1,34 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+
+const backend = await readFile(new URL("../../../backend/razorpay_payments.py", import.meta.url), "utf8");
+const migration = await readFile(new URL("../../../supabase/migrations/014_payment_reliability_reconciliation.sql", import.meta.url), "utf8");
+const service = await readFile(new URL("../../services/growthPlatformService.js", import.meta.url), "utf8");
+const customerUi = await readFile(new URL("../../pages/products/UpgradeSubscription.jsx", import.meta.url), "utf8");
+const adminUi = await readFile(new URL("../../pages/platform-admin/SubscriptionManagement.jsx", import.meta.url), "utf8");
+const plans = await readFile(new URL("../../domain/subscriptions/VardhanPlanCatalog.js", import.meta.url), "utf8");
+const referralMigration = await readFile(new URL("../../../supabase/migrations/012_annual_subscriptions_referrals_marketing.sql", import.meta.url), "utf8");
+
+test("callback timeout is represented as pending, not authoritative failure", () => { assert.match(customerUi, /catch[\s\S]*PENDING_CONFIRMATION/); });
+test("webhook delay remains reconcilable", () => { assert.match(backend, /RECONCILABLE_STATES[\s\S]*PENDING_CONFIRMATION/); assert.match(migration, /next_reconcile_at/); });
+test("captured provider state enters existing activation RPC", () => { assert.match(backend, /outcome == "PAYMENT_CAPTURED"[\s\S]*process_verified_annual_payment/); });
+test("reconciliation evidence has a deterministic idempotency key", () => { assert.match(backend, /reconcile:\{locked\['id'\]\}:\{payment_id\}:captured/); });
+test("duplicate reconciliation reuses provider evidence", () => { assert.match(backend, /on conflict\(provider,event_id\) do nothing/); });
+test("activation and referral rewards share one idempotent RPC", () => { assert.match(referralMigration, /idx_referral_rewards_grant_once/); assert.match(backend, /process_verified_annual_payment/); });
+test("customer status lookup is workspace and user scoped", () => { assert.match(backend, /id=\$1 and workspace_id=\$2 and user_id=\$3/); });
+test("temporary provider errors remain pending", () => { assert.match(backend, /PAYMENT_PROVIDER_TEMPORARY_ERROR[\s\S]*PENDING_CONFIRMATION/); });
+test("authoritative provider failure can transition to failed", () => { assert.match(backend, /PAYMENT_CONFIRMED_FAILED[\s\S]*state='FAILED'/); });
+test("expired attempt is released from unresolved checkout blocking", () => { assert.doesNotMatch(backend.match(/unresolved = await[\s\S]*?if unresolved is not None/)?.[0] || "", /EXPIRED/); });
+test("unresolved order blocks accidental second checkout", () => { assert.match(backend, /An unresolved payment already exists/); });
+test("refresh loads persisted attempts", () => { assert.match(customerUi, /useEffect\(\(\) => \{ refreshBilling\(\)/); });
+test("polling has a finite attempt count and backoff", () => { assert.match(service, /attempts = 9/); assert.match(service, /21000/); });
+test("customer can manually check payment status", () => { assert.match(customerUi, /Check Payment Status/); assert.match(customerUi, /getPaymentAttempt/); });
+test("captured webhook and reconciliation converge on one activation RPC", () => { assert.equal((backend.match(/process_verified_annual_payment/g) || []).length, 2); });
+test("callback only moves to verifying", () => { assert.match(backend, /state='VERIFYING',callback_verified_at/); });
+test("duplicate provider event is acknowledged harmlessly", () => { assert.match(backend, /WEBHOOK_REPLAY_IGNORED/); assert.match(backend, /"duplicate": True/); });
+test("refund and reversal preserve verified audit paths", () => { assert.match(backend, /process_verified_payment_reversal/); assert.match(backend, /REFUNDED/); });
+test("elapsed verification UX is informational", () => { assert.match(customerUi, /elapsedSeconds/); assert.doesNotMatch(customerUi, /percent|progress/i); });
+test("unresolved payment warns against paying again", () => { assert.match(customerUi, /Do not make another payment yet/); });
+test("client and diagnostics expose no payment secrets", () => { assert.doesNotMatch(`${service}\n${customerUi}\n${adminUi}`, /RAZORPAY_KEY_SECRET|RAZORPAY_WEBHOOK_SECRET|service.?role/i); });
+test("locked annual plans and referral reward rules remain exact", () => { assert.match(plans, /149900[\s\S]*299900[\s\S]*499900/); assert.match(referralMigration, /reward_months = 2/); });

@@ -6,6 +6,7 @@ import {
   SCHOOL_ERP,
 } from "./erpModules.js";
 import { CUSTOMER_ACCESS_SEED } from "./customerAccess.js";
+import { VARDHAN_ANNUAL_PLANS } from "../domain/subscriptions/VardhanPlanCatalog.js";
 
 export const PRODUCT_STATUS = {
   ACTIVE: "Active",
@@ -42,13 +43,7 @@ export const PRODUCT_CATALOG = [
     isActive: true,
     path: "/chits",
     dataScope: "tenant_chit_operations",
-    plans: {
-      monthly: 2999,
-      quarterly: 7999,
-      halfYearly: 14999,
-      yearly: 24999,
-      lifetime: 149999,
-    },
+    plans: Object.fromEntries(VARDHAN_ANNUAL_PLANS.map((plan) => [`${plan.code.toLowerCase()}Annual`, plan.pricePaise / 100])),
   },
   {
     id: SCHOOL_ERP,

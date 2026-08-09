@@ -3,6 +3,8 @@ import { describe, it } from "node:test";
 import { WinnerEligibilityEngine } from "../../domain/chit/services/WinnerEligibilityEngine.js";
 import { AuctionEngine } from "../../domain/chit/services/AuctionEngine.js";
 import { LuckyDrawEngine } from "../../domain/chit/services/LuckyDrawEngine.js";
+
+const FEATURE_BANK_FLAGS = { REGISTERED_OPERATIONS_ENABLED: true, AUTOMATED_AUCTION_ENABLED: true, AUTOMATED_LUCKY_DRAW_ENABLED: true, AUTOMATED_WINNER_SELECTION_ENABLED: true };
 import { LuckyDrawValidator } from "../../domain/chit/validators/LuckyDrawValidator.js";
 import { AIConversationSetup } from "../../ai/AIConversationSetup.js";
 import { previewRunningMigration } from "../../services/runningMigrationService.js";
@@ -32,8 +34,8 @@ describe("phase 2 winner and setup engines", () => {
   });
 
   it("validates auction bid min/max and calculates payout values", () => {
-    const belowMin = AuctionEngine.buildAuctionPreview({ group, ruleSet, bidAmount: 5000 });
-    const inRange = AuctionEngine.buildAuctionPreview({ group, ruleSet, bidAmount: 40000 });
+    const belowMin = AuctionEngine.buildAuctionPreview({ group, ruleSet, bidAmount: 5000, featureFlags: FEATURE_BANK_FLAGS });
+    const inRange = AuctionEngine.buildAuctionPreview({ group, ruleSet, bidAmount: 40000, featureFlags: FEATURE_BANK_FLAGS });
 
     assert.equal(belowMin.bidValidation.isValid, false);
     assert.equal(inRange.bidValidation.isValid, true);
@@ -53,8 +55,8 @@ describe("phase 2 winner and setup engines", () => {
   });
 
   it("selects deterministic lucky draw winner for tests", () => {
-    const selectionA = LuckyDrawEngine.selectWinner({ eligibleMembers: [{ id: "a" }, { id: "b" }], deterministicSeed: "seed" });
-    const selectionB = LuckyDrawEngine.selectWinner({ eligibleMembers: [{ id: "a" }, { id: "b" }], deterministicSeed: "seed" });
+    const selectionA = LuckyDrawEngine.selectWinner({ eligibleMembers: [{ id: "a" }, { id: "b" }], deterministicSeed: "seed", featureFlags: FEATURE_BANK_FLAGS });
+    const selectionB = LuckyDrawEngine.selectWinner({ eligibleMembers: [{ id: "a" }, { id: "b" }], deterministicSeed: "seed", featureFlags: FEATURE_BANK_FLAGS });
 
     assert.equal(selectionA.winner.id, selectionB.winner.id);
   });

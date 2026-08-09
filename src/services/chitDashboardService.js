@@ -49,7 +49,7 @@ function paymentModes(rows) {
   return [...modes].map(([name,value])=>({name,value}));
 }
 function reminders(groups, collections, now) {
-  const today=localDate(now); const future=groups.filter(x=>x.next_auction_date&&x.next_auction_date>=today).sort((a,b)=>String(a.next_auction_date).localeCompare(String(b.next_auction_date))).slice(0,3).map(x=>({id:`auction-${x.id}`,type:"Auction",title:x.chit_name||x.chit_code,date:x.next_auction_date,route:"/chits/auctions"}));
+  const today=localDate(now); const future=groups.filter(x=>x.next_auction_date&&x.next_auction_date>=today).sort((a,b)=>String(a.next_auction_date).localeCompare(String(b.next_auction_date))).slice(0,3).map(x=>({id:`auction-${x.id}`,type:"Organizer record",title:x.chit_name||x.chit_code,date:x.next_auction_date,route:"/chits/manual-records"}));
   const pending=collections.filter(x=>Number(x.pending_amount||0)>0).slice(0,3).map(x=>({id:`pending-${x.id}`,type:"Follow-up",title:`${formatMoney(x.pending_amount)} pending`,date:recordDate(x),route:"/chits/collections/pending"}));
   return [...future,...pending].slice(0,5);
 }
