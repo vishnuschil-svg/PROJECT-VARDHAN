@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import {
   applyReviewValue,
@@ -157,4 +158,22 @@ test("component contract covers extraction, correction, draft save, workspace de
   for (const constraint of ["created_by = auth.uid()", "status = 'PENDING_REVIEW'", "membership.workspace_id = extraction.workspace_id"]) {
     assert.match(cleanupMigration, new RegExp(constraint.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
+});
+
+test("Smart Capture renders its initial state without initialization-order errors", () => {
+  const componentUrl = new URL("../../components/ai/SmartChitCapture.jsx", import.meta.url).href;
+  const script = `
+    import React from "react";
+    import { renderToString } from "react-dom/server";
+    globalThis.React = React;
+    const { default: SmartChitCapture } = await import(${JSON.stringify(componentUrl)});
+    renderToString(React.createElement(SmartChitCapture, {
+      activeTenantContext: { workspace_id: "workspace-1" },
+    }));
+  `;
+  const rendered = spawnSync(process.execPath, ["--import", "tsx", "--input-type=module", "--eval", script], {
+    encoding: "utf8",
+  });
+
+  assert.equal(rendered.status, 0, rendered.stderr || rendered.stdout);
 });

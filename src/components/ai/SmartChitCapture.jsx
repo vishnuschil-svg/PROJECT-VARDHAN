@@ -39,6 +39,14 @@ function SmartChitCapture({
   const workspaceId = activeTenantContext?.workspace_id || activeTenantContext?.workspaceId;
   const busy = ["loading", "uploading", "extracting", "saving", "creating"].includes(phase);
 
+  const handleError = useCallback((captureError) => {
+    setPhase("failed");
+    setError(smartChitErrorMessage(captureError));
+    if (captureError?.code === "SESSION_EXPIRED" || captureError?.status === 401) {
+      onSessionExpired?.();
+    }
+  }, [onSessionExpired]);
+
   useEffect(() => {
     if (!file?.type?.startsWith("image/") || !(file instanceof Blob)) {
       setPreviewUrl("");
@@ -125,14 +133,6 @@ function SmartChitCapture({
       if (abortRef.current === controller) abortRef.current = null;
     }
   };
-
-  const handleError = useCallback((captureError) => {
-    setPhase("failed");
-    setError(smartChitErrorMessage(captureError));
-    if (captureError?.code === "SESSION_EXPIRED" || captureError?.status === 401) {
-      onSessionExpired?.();
-    }
-  }, [onSessionExpired]);
 
   const cancel = () => {
     abortRef.current?.abort();
