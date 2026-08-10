@@ -93,3 +93,8 @@ build/
 *.log
 
 VARDHAN_ERP_v1.0_FINAL_MERGED_SOURCE.zip
+.vercel/
+.vercel-backup/
+.env
+.env.local
+.env.*.local
