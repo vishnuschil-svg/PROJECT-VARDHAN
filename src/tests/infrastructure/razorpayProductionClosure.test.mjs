@@ -28,10 +28,10 @@ test("webhook replay and payment identities cannot duplicate activation", async 
   assert.match(infrastructureMigration, /provider_webhook_events_unique unique \(provider,event_id\)/);
 });
 
-test("Vercel schedules the protected existing reconciler every fifteen minutes", async () => {
+test("Vercel schedules the protected existing reconciler once daily", async () => {
   const [vercel, backend] = await Promise.all([read("vercel.json"), read("backend/razorpay_payments.py")]);
   const config = JSON.parse(vercel);
-  assert.deepEqual(config.crons, [{ path: "/api/payments/razorpay/reconcile-pending", schedule: "*/15 * * * *" }]);
+  assert.deepEqual(config.crons, [{ path: "/api/payments/razorpay/reconcile-pending", schedule: "0 2 * * *" }]);
   assert.match(backend, /hmac\.compare_digest\(authorization, f"Bearer \{cron_secret\}"\)/);
   assert.match(backend, /for update skip locked/);
   assert.match(backend, /limit 1 for update skip locked/);
