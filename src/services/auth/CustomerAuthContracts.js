@@ -1,3 +1,5 @@
+import { isPlatformOwner } from "../../config/erpModules.js";
+
 export const ONBOARDING_STATUS = Object.freeze({
   PROFILE_PENDING: "profile_pending",
   PROFILE_READY: "profile_ready",
@@ -55,7 +57,10 @@ export function resolvePostAuthRoute(session = {}) {
   const status = session.profile?.onboarding_status || session.onboardingStatus;
   const workspaceId = session.company?.workspace_id || session.company?.workspaceId || session.activeWorkspace?.workspace_id || session.activeWorkspace?.id;
   const approvedLegacySession = session.profile?.status === "approved" && workspaceId && !status;
-  return (status === ONBOARDING_STATUS.COMPLETE && workspaceId) || approvedLegacySession ? "/dashboard" : "/onboarding";
+  if ((status === ONBOARDING_STATUS.COMPLETE && workspaceId) || approvedLegacySession) {
+    return isPlatformOwner(session.profile, session.role) ? "/dashboard" : "/chits";
+  }
+  return "/onboarding";
 }
 
 export function toCustomerAuthMessage(error, fallback = "The request could not be completed. Try again.") {

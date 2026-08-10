@@ -58,7 +58,8 @@ test("verification page has successful-resend countdown and double-submit guards
 });
 
 test("verified and incomplete users route to the correct destination", () => {
-  assert.equal(resolvePostAuthRoute({ user: { id: "u1" }, profile: { onboarding_status: ONBOARDING_STATUS.COMPLETE }, company: { workspace_id: "w1" } }), "/dashboard");
+  assert.equal(resolvePostAuthRoute({ user: { id: "u1" }, profile: { onboarding_status: ONBOARDING_STATUS.COMPLETE }, company: { workspace_id: "w1" } }), "/chits");
+  assert.equal(resolvePostAuthRoute({ user: { id: "u1" }, profile: { onboarding_status: ONBOARDING_STATUS.COMPLETE }, role: { id: "PLATFORM_OWNER" }, company: { workspace_id: "w1" } }), "/dashboard");
   assert.equal(resolvePostAuthRoute({ user: { id: "u1" }, profile: { onboarding_status: ONBOARDING_STATUS.PROFILE_READY } }), "/onboarding");
   assert.equal(resolvePostAuthRoute({}), "/login");
 });
