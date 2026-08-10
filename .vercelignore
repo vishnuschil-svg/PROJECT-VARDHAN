@@ -101,7 +101,6 @@ platform-core/
 public/
 scripts/
 shared/
-src/
 **/*.md
 VARDHAN_ERP_v1.0_FINAL_MERGED_SOURCE.zip
 vardhan-education-platform/
